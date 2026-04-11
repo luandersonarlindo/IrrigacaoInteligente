@@ -329,7 +329,7 @@ void DisplayManager::desenharMenuPrincipal()
     int x = centerX - (itemAtual * (iconW + iconGap));
     for (int i = 0; i < totalItens; i++)
     {
-        if (x > -iconW && x < OLED_LARGURA)
+        if (x >= 0 && (x + iconW) <= OLED_LARGURA)
         {
             desenharIconeMenuPrincipal(_display, x, iconY, i);
         }
@@ -749,7 +749,9 @@ void DisplayManager::desenharTelaConfig()
 {
     EtapaConfiguracao etapa = _menu.etapaConfiguracao();
     static bool animSalvoAtiva = false;
+    static bool animLimpoAtiva = false;
     static unsigned long animSalvoInicioMs = 0;
+    static unsigned long animLimpoInicioMs = 0;
 
     const unsigned long FRAME_DELAY_MS = 42;
     const int FRAME_COUNT = 16;
@@ -760,6 +762,13 @@ void DisplayManager::desenharTelaConfig()
         animSalvoAtiva = true;
         animSalvoInicioMs = millis();
         _menu.limparFeedbackConfiguracaoSalvo();
+    }
+
+    if (_menu.feedbackConfiguracaoLimpo())
+    {
+        animLimpoAtiva = true;
+        animLimpoInicioMs = millis();
+        _menu.limparFeedbackConfiguracaoLimpo();
     }
 
     if (animSalvoAtiva)
@@ -780,16 +789,75 @@ void DisplayManager::desenharTelaConfig()
         return;
     }
 
+    if (animLimpoAtiva)
+    {
+        desenharCabecalho("CONFIGURACOES");
+        unsigned long elapsed = millis() - animLimpoInicioMs;
+        unsigned long frameGlobal = elapsed / FRAME_DELAY_MS;
+        unsigned long totalFrames = (unsigned long)FRAME_COUNT * LOOP_COUNT;
+        if (frameGlobal >= totalFrames)
+        {
+            animLimpoAtiva = false;
+            return;
+        }
+
+        int frameLocal = (int)(frameGlobal % FRAME_COUNT);
+        desenharAnimacaoLixeira48(_display, frameLocal);
+        _display.desenharTextoMini(20, 56, "Agendas apagadas!");
+        return;
+    }
+
     if (etapa == EtapaConfiguracao::MENU)
     {
         desenharCabecalho("CONFIGURACOES");
 
-        const char *opcoes[7] = {
+        const char *opcoes[3] = {
+            "Relogio",
+            "Sistema",
+            "Voltar"};
+
+        int selecionada = _menu.opcaoConfiguracao();
+        for (int idx = 0; idx < 3; idx++)
+        {
+            int y = 18 + (idx * 12);
+            if (idx == selecionada)
+            {
+                _display.desenharRetanguloPreenchido(0, y - 1, OLED_LARGURA, 10);
+                _display.setCorDesenho(0);
+            }
+
+            if (idx == 0)
+                desenharIconeSubmenu(_display, 2, y, 0);
+            else if (idx == 1)
+                desenharIconeSubmenu(_display, 2, y, 2);
+            else
+            {
+                _display.desenharLinha(3, y + 4, 10, y + 4);
+                _display.desenharLinha(3, y + 4, 6, y + 1);
+                _display.desenharLinha(3, y + 4, 6, y + 7);
+            }
+
+            _display.desenharTexto(14, y, opcoes[idx]);
+            if (idx == selecionada)
+                _display.setCorDesenho(1);
+        }
+
+        _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
+        _display.desenharTextoMini(0, 56, "OK entra | Segure sair");
+        return;
+    }
+
+    if (etapa == EtapaConfiguracao::SUBMENU_RELOGIO)
+    {
+        desenharCabecalho("CONFIG > RELOGIO");
+
+        const char *opcoes[8] = {
             "Hora",
             "Minuto",
             "Dia",
             "Mes",
             "Ano",
+            "Timeout",
             "Salvar relogio",
             "Voltar"};
 
@@ -797,14 +865,14 @@ void DisplayManager::desenharTelaConfig()
         int inicio = 0;
         if (selecionada > 2)
             inicio = selecionada - 2;
-        if (inicio > 3)
-            inicio = 3;
+        if (inicio > 4)
+            inicio = 4;
 
         for (int i = 0; i < 4; i++)
         {
             int idx = inicio + i;
             int y = 16 + (i * 10);
-            if (idx >= 7)
+            if (idx >= 8)
                 break;
 
             if (idx == selecionada)
@@ -824,29 +892,76 @@ void DisplayManager::desenharTelaConfig()
                 snprintf(linha, sizeof(linha), "Mes: %02d", _menu.configMes());
             else if (idx == 4)
                 snprintf(linha, sizeof(linha), "Ano: %04d", _menu.configAno());
+            else if (idx == 5)
+                snprintf(linha, sizeof(linha), "Timeout: %d min", _menu.configTimeoutManualMin());
             else
                 snprintf(linha, sizeof(linha), "%s", opcoes[idx]);
 
-            if (idx <= 5)
-            {
-                desenharIconeSubmenu(_display, 2, y, idx);
-            }
+            if (idx <= 6)
+                desenharIconeSubmenu(_display, 2, y, idx <= 5 ? idx : 5);
             else
             {
-                // Icone de voltar: seta para esquerda
                 _display.desenharLinha(3, y + 4, 10, y + 4);
                 _display.desenharLinha(3, y + 4, 6, y + 1);
                 _display.desenharLinha(3, y + 4, 6, y + 7);
             }
 
             _display.desenharTexto(14, y, linha);
-
             if (idx == selecionada)
                 _display.setCorDesenho(1);
         }
 
         _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        _display.desenharTextoMini(0, 56, "OK entra | Segure voltar");
+        _display.desenharTextoMini(0, 56, "OK entra | Segure menu");
+        return;
+    }
+
+    if (etapa == EtapaConfiguracao::SUBMENU_SISTEMA)
+    {
+        desenharCabecalho("CONFIG > SISTEMA");
+
+        const char *opcoes[4] = {
+            "Duracao padrao",
+            "Limpar agendas",
+            "Info do sistema",
+            "Voltar"};
+
+        int selecionada = _menu.opcaoConfiguracao();
+        for (int idx = 0; idx < 4; idx++)
+        {
+            int y = 16 + (idx * 10);
+            if (idx == selecionada)
+            {
+                _display.desenharRetanguloPreenchido(0, y - 1, OLED_LARGURA, 9);
+                _display.setCorDesenho(0);
+            }
+
+            char linha[32];
+            if (idx == 0)
+                snprintf(linha, sizeof(linha), "Duracao: %d min", _menu.configDuracaoPadraoMin());
+            else
+                snprintf(linha, sizeof(linha), "%s", opcoes[idx]);
+
+            if (idx == 0)
+                desenharIconeSubmenu(_display, 2, y, 2);
+            else if (idx == 1)
+                desenharIconeSubmenu(_display, 2, y, 6);
+            else if (idx == 2)
+                desenharIconeSubmenu(_display, 2, y, 1);
+            else
+            {
+                _display.desenharLinha(3, y + 4, 10, y + 4);
+                _display.desenharLinha(3, y + 4, 6, y + 1);
+                _display.desenharLinha(3, y + 4, 6, y + 7);
+            }
+
+            _display.desenharTexto(14, y, linha);
+            if (idx == selecionada)
+                _display.setCorDesenho(1);
+        }
+
+        _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
+        _display.desenharTextoMini(0, 56, "OK entra | Segure menu");
         return;
     }
 
@@ -897,6 +1012,81 @@ void DisplayManager::desenharTelaConfig()
         snprintf(valor, sizeof(valor), "%04d", _menu.configAno());
         _display.desenharTextoGrande(40, 22, valor);
         _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
+        return;
+    }
+
+    if (etapa == EtapaConfiguracao::EDIT_TIMEOUT_MANUAL)
+    {
+        desenharCabecalho("TIMEOUT MANUAL");
+        char valor[16];
+        snprintf(valor, sizeof(valor), "%dmin", _menu.configTimeoutManualMin());
+        _display.desenharTextoGrande(36, 22, valor);
+        _display.desenharTextoMini(0, 56, "Gire ajusta | OK salva");
+        return;
+    }
+
+    if (etapa == EtapaConfiguracao::EDIT_DURACAO_PADRAO)
+    {
+        desenharCabecalho("DURACAO PADRAO");
+        char valor[16];
+        snprintf(valor, sizeof(valor), "%dmin", _menu.configDuracaoPadraoMin());
+        _display.desenharTextoGrande(36, 22, valor);
+        _display.desenharTextoMini(0, 56, "Gire ajusta | OK salva");
+        return;
+    }
+
+    if (etapa == EtapaConfiguracao::CONFIRMAR_LIMPAR_AGENDAS)
+    {
+        desenharCabecalho("LIMPAR AGENDAS?");
+        _display.desenharTextoMini(0, 20, "Apagar todas as agendas?");
+        _display.desenharTextoMini(0, 30, "Gire: SIM/NAO | OK confirma");
+
+        int opc = _menu.opcaoConfirmarLimparAgendas();
+        if (opc == 0)
+        {
+            _display.desenharRetanguloPreenchido(8, 40, 48, 12);
+            _display.setCorDesenho(0);
+            _display.desenharTexto(22, 42, "SIM");
+            _display.setCorDesenho(1);
+
+            _display.desenharRetangulo(72, 40, 48, 12);
+            _display.desenharTexto(88, 42, "NAO");
+        }
+        else
+        {
+            _display.desenharRetangulo(8, 40, 48, 12);
+            _display.desenharTexto(22, 42, "SIM");
+
+            _display.desenharRetanguloPreenchido(72, 40, 48, 12);
+            _display.setCorDesenho(0);
+            _display.desenharTexto(88, 42, "NAO");
+            _display.setCorDesenho(1);
+        }
+        return;
+    }
+
+    if (etapa == EtapaConfiguracao::INFO_SISTEMA)
+    {
+        desenharCabecalho("INFO SISTEMA");
+        DateTime agora = _rtc.agora();
+
+        char linha1[24];
+        snprintf(linha1, sizeof(linha1), "Agendas: %d", _menu.totalAgendasAtivas());
+        _display.desenharTexto(0, 16, linha1);
+
+        char linha2[24];
+        snprintf(linha2, sizeof(linha2), "RTC: %02d/%02d %02d:%02d", agora.day(), agora.month(), agora.hour(), agora.minute());
+        _display.desenharTextoMini(0, 30, linha2);
+
+        char linha3[24];
+        snprintf(linha3, sizeof(linha3), "T.Man: %dmin", _menu.configTimeoutManualMin());
+        _display.desenharTextoMini(0, 40, linha3);
+
+        char linha4[24];
+        snprintf(linha4, sizeof(linha4), "Dur.Pad: %dmin", _menu.configDuracaoPadraoMin());
+        _display.desenharTextoMini(0, 48, linha4);
+
+        _display.desenharTextoMini(0, 56, "OK/Segure para voltar");
         return;
     }
 }

@@ -12,6 +12,7 @@
 
 #include <Arduino.h>
 #include "Config.h"
+#include "runtime_config_manager.h"
 
 enum class EstadoValvula
 {
@@ -22,7 +23,7 @@ enum class EstadoValvula
 class IrrigationController
 {
 public:
-    IrrigationController();
+    explicit IrrigationController(RuntimeConfigManager &config);
 
     void begin();
 
@@ -51,6 +52,7 @@ public:
     int atualizar();
 
 private:
+    RuntimeConfigManager &_config;
     EstadoValvula _estados[NUM_VALVULAS];
     unsigned long _tempoAbertura[NUM_VALVULAS]; // millis() de quando abriu
     unsigned long _deadlineFechamento[NUM_VALVULAS];

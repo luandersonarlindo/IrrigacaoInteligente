@@ -10,12 +10,14 @@ const char *MenuController::_nomesItens[] = {
     "Programar",
     "Configuracoes"};
 
-MenuController::MenuController(ScheduleManager &schedule, RtcDriverDs3231 &rtc)
+MenuController::MenuController(ScheduleManager &schedule, RtcDriverDs3231 &rtc, RuntimeConfigManager &config)
     : _schedule(schedule),
       _rtc(rtc),
+      _config(config),
       _estado(EstadoMenu::STATUS),
       _itemAtual(0),
       _menuAtivo(false),
+      _ultimoEventoMenuMs(0),
       _setorAtual(0),
       _timeoutOcorreu(false),
       _setorTimeout(-1),
@@ -33,10 +35,14 @@ MenuController::MenuController(ScheduleManager &schedule, RtcDriverDs3231 &rtc)
       _configDia(1),
       _configMes(1),
       _configAno(2026),
-      _feedbackConfiguracaoSalvo(false)
+      _configTimeoutManualMin(10),
+      _configDuracaoPadraoMin(DURACAO_PADRAO_MIN),
+      _feedbackConfiguracaoSalvo(false),
+      _feedbackConfiguracaoLimpo(false),
+      _opcaoConfirmarLimparAgendas(1)
 {
-    _agendaEdicao = {true, 6, 0, DURACAO_PADRAO_MIN, 0, 0};
-    _agendaSelecionada = {false, 6, 0, DURACAO_PADRAO_MIN, 0, 0};
+    _agendaEdicao = {true, 6, 0, _config.duracaoPadraoMin(), 0, 0};
+    _agendaSelecionada = {false, 6, 0, _config.duracaoPadraoMin(), 0, 0};
 }
 
 void MenuController::begin()
@@ -44,6 +50,7 @@ void MenuController::begin()
     _estado = EstadoMenu::STATUS;
     _itemAtual = 0;
     _menuAtivo = false;
+    _ultimoEventoMenuMs = millis();
     _setorAtual = 0;
     _timeoutOcorreu = false;
     _setorTimeout = -1;
@@ -54,8 +61,8 @@ void MenuController::begin()
     _opcaoConfirmarExclusao = 1;
     _cursorDiaProgramacao = 0;
     _cursorSetorProgramacao = 0;
-    _agendaEdicao = {true, 6, 0, DURACAO_PADRAO_MIN, 0, 0};
-    _agendaSelecionada = {false, 6, 0, DURACAO_PADRAO_MIN, 0, 0};
+    _agendaEdicao = {true, 6, 0, _config.duracaoPadraoMin(), 0, 0};
+    _agendaSelecionada = {false, 6, 0, _config.duracaoPadraoMin(), 0, 0};
     _etapaConfiguracao = EtapaConfiguracao::MENU;
     _opcaoConfiguracao = 0;
     _configHora = 0;
@@ -63,7 +70,11 @@ void MenuController::begin()
     _configDia = 1;
     _configMes = 1;
     _configAno = 2026;
+    _configTimeoutManualMin = (uint16_t)(_config.timeoutManualMs() / 60000UL);
+    _configDuracaoPadraoMin = _config.duracaoPadraoMin();
     _feedbackConfiguracaoSalvo = false;
+    _feedbackConfiguracaoLimpo = false;
+    _opcaoConfirmarLimparAgendas = 1;
 
     if (DEBUG_SERIAL)
     {
@@ -73,6 +84,25 @@ void MenuController::begin()
 
 void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bool botaoLongoPressionado)
 {
+    bool houveInteracao = (direcao != DirecaoEncoder::NENHUMA) || botaoPressionado || botaoLongoPressionado;
+    if (houveInteracao)
+    {
+        _ultimoEventoMenuMs = millis();
+    }
+
+    if (_menuAtivo && !houveInteracao)
+    {
+        if ((unsigned long)(millis() - _ultimoEventoMenuMs) >= MENU_TIMEOUT_MS)
+        {
+            if (DEBUG_SERIAL)
+            {
+                Serial.println("[Menu] Timeout de inatividade. Voltando ao status.");
+            }
+            voltar();
+            return;
+        }
+    }
+
     switch (_estado)
     {
 
@@ -199,8 +229,14 @@ int MenuController::configMinuto() const { return _configMinuto; }
 int MenuController::configDia() const { return _configDia; }
 int MenuController::configMes() const { return _configMes; }
 int MenuController::configAno() const { return _configAno; }
+int MenuController::configTimeoutManualMin() const { return _configTimeoutManualMin; }
+int MenuController::configDuracaoPadraoMin() const { return _configDuracaoPadraoMin; }
 bool MenuController::feedbackConfiguracaoSalvo() const { return _feedbackConfiguracaoSalvo; }
 void MenuController::limparFeedbackConfiguracaoSalvo() { _feedbackConfiguracaoSalvo = false; }
+bool MenuController::feedbackConfiguracaoLimpo() const { return _feedbackConfiguracaoLimpo; }
+void MenuController::limparFeedbackConfiguracaoLimpo() { _feedbackConfiguracaoLimpo = false; }
+int MenuController::opcaoConfirmarLimparAgendas() const { return _opcaoConfirmarLimparAgendas; }
+int MenuController::totalAgendasAtivas() const { return _schedule.totalAtivas(); }
 
 // --- Privados ---
 
@@ -454,7 +490,7 @@ void MenuController::prepararEdicaoDaAgenda()
     _agendaEdicao = _agendaSelecionada;
     if (_agendaEdicao.duracaoMin < 1)
     {
-        _agendaEdicao.duracaoMin = DURACAO_PADRAO_MIN;
+        _agendaEdicao.duracaoMin = _schedule.duracaoPadraoMin();
     }
     if (_agendaEdicao.diasMask == 0)
     {
@@ -506,7 +542,7 @@ bool MenuController::excluirAgendaSelecionada()
         return false;
     }
 
-    _agendaSelecionada = {false, 6, 0, DURACAO_PADRAO_MIN, 0, 0};
+    _agendaSelecionada = {false, 6, 0, _schedule.duracaoPadraoMin(), 0, 0};
     _agendaEdicao = _agendaSelecionada;
     return true;
 }
@@ -585,7 +621,11 @@ void MenuController::entrarConfiguracoes()
     _configDia = agora.day();
     _configMes = agora.month();
     _configAno = agora.year();
+    _configTimeoutManualMin = (uint16_t)(_config.timeoutManualMs() / 60000UL);
+    _configDuracaoPadraoMin = _config.duracaoPadraoMin();
     _feedbackConfiguracaoSalvo = false;
+    _feedbackConfiguracaoLimpo = false;
+    _opcaoConfirmarLimparAgendas = 1;
 }
 
 void MenuController::processarConfiguracoes(DirecaoEncoder direcao, bool botaoPressionado, bool botaoLongoPressionado)
@@ -598,11 +638,62 @@ void MenuController::processarConfiguracoes(DirecaoEncoder direcao, bool botaoPr
             return;
         }
 
-        _etapaConfiguracao = EtapaConfiguracao::MENU;
+        if (_etapaConfiguracao == EtapaConfiguracao::SUBMENU_RELOGIO ||
+            _etapaConfiguracao == EtapaConfiguracao::SUBMENU_SISTEMA)
+        {
+            _etapaConfiguracao = EtapaConfiguracao::MENU;
+            _opcaoConfiguracao = 0;
+            return;
+        }
+
+        if (_etapaConfiguracao == EtapaConfiguracao::EDIT_HORA ||
+            _etapaConfiguracao == EtapaConfiguracao::EDIT_MINUTO ||
+            _etapaConfiguracao == EtapaConfiguracao::EDIT_DIA ||
+            _etapaConfiguracao == EtapaConfiguracao::EDIT_MES ||
+            _etapaConfiguracao == EtapaConfiguracao::EDIT_ANO ||
+            _etapaConfiguracao == EtapaConfiguracao::EDIT_TIMEOUT_MANUAL)
+        {
+            _etapaConfiguracao = EtapaConfiguracao::SUBMENU_RELOGIO;
+            return;
+        }
+
+        _etapaConfiguracao = EtapaConfiguracao::SUBMENU_SISTEMA;
         return;
     }
 
     if (_etapaConfiguracao == EtapaConfiguracao::MENU)
+    {
+        if (direcao == DirecaoEncoder::HORARIO)
+        {
+            _opcaoConfiguracao = (_opcaoConfiguracao + 1) % totalOpcoesConfiguracao();
+        }
+        else if (direcao == DirecaoEncoder::ANTI_HORARIO)
+        {
+            _opcaoConfiguracao = (_opcaoConfiguracao - 1 + totalOpcoesConfiguracao()) % totalOpcoesConfiguracao();
+        }
+
+        if (botaoPressionado)
+        {
+            switch (_opcaoConfiguracao)
+            {
+            case 0:
+                _etapaConfiguracao = EtapaConfiguracao::SUBMENU_RELOGIO;
+                _opcaoConfiguracao = 0;
+                break;
+            case 1:
+                _etapaConfiguracao = EtapaConfiguracao::SUBMENU_SISTEMA;
+                _opcaoConfiguracao = 0;
+                break;
+            case 2:
+                voltar();
+                break;
+            }
+        }
+
+        return;
+    }
+
+    if (_etapaConfiguracao == EtapaConfiguracao::SUBMENU_RELOGIO)
     {
         if (direcao == DirecaoEncoder::HORARIO)
         {
@@ -633,24 +724,104 @@ void MenuController::processarConfiguracoes(DirecaoEncoder direcao, bool botaoPr
                 _etapaConfiguracao = EtapaConfiguracao::EDIT_ANO;
                 break;
             case 5:
+                _etapaConfiguracao = EtapaConfiguracao::EDIT_TIMEOUT_MANUAL;
+                break;
+            case 6:
                 if (salvarConfiguracaoRelogio())
                 {
                     _feedbackConfiguracaoSalvo = true;
                 }
                 break;
-            case 6:
-                voltar();
+            case 7:
+                _etapaConfiguracao = EtapaConfiguracao::MENU;
+                _opcaoConfiguracao = 0;
                 break;
             }
         }
+        return;
+    }
 
+    if (_etapaConfiguracao == EtapaConfiguracao::SUBMENU_SISTEMA)
+    {
+        if (direcao == DirecaoEncoder::HORARIO)
+        {
+            _opcaoConfiguracao = (_opcaoConfiguracao + 1) % totalOpcoesConfiguracao();
+        }
+        else if (direcao == DirecaoEncoder::ANTI_HORARIO)
+        {
+            _opcaoConfiguracao = (_opcaoConfiguracao - 1 + totalOpcoesConfiguracao()) % totalOpcoesConfiguracao();
+        }
+
+        if (botaoPressionado)
+        {
+            switch (_opcaoConfiguracao)
+            {
+            case 0:
+                _etapaConfiguracao = EtapaConfiguracao::EDIT_DURACAO_PADRAO;
+                break;
+            case 1:
+                _opcaoConfirmarLimparAgendas = 1;
+                _etapaConfiguracao = EtapaConfiguracao::CONFIRMAR_LIMPAR_AGENDAS;
+                break;
+            case 2:
+                _etapaConfiguracao = EtapaConfiguracao::INFO_SISTEMA;
+                break;
+            case 3:
+                _etapaConfiguracao = EtapaConfiguracao::MENU;
+                _opcaoConfiguracao = 0;
+                break;
+            }
+        }
         return;
     }
 
     ajustarCampoConfiguracao(direcao);
+    if (_etapaConfiguracao == EtapaConfiguracao::CONFIRMAR_LIMPAR_AGENDAS)
+    {
+        if (botaoPressionado)
+        {
+            if (_opcaoConfirmarLimparAgendas == 0)
+            {
+                if (_schedule.limparTodasAgendas())
+                {
+                    _feedbackConfiguracaoLimpo = true;
+                }
+            }
+            _etapaConfiguracao = EtapaConfiguracao::SUBMENU_SISTEMA;
+            _opcaoConfiguracao = 0;
+        }
+        return;
+    }
+
+    if (_etapaConfiguracao == EtapaConfiguracao::INFO_SISTEMA)
+    {
+        if (botaoPressionado)
+        {
+            _etapaConfiguracao = EtapaConfiguracao::SUBMENU_SISTEMA;
+            _opcaoConfiguracao = 0;
+        }
+        return;
+    }
+
     if (botaoPressionado)
     {
-        _etapaConfiguracao = EtapaConfiguracao::MENU;
+        if (_etapaConfiguracao == EtapaConfiguracao::EDIT_TIMEOUT_MANUAL)
+        {
+            salvarConfiguracoesRuntime();
+            _feedbackConfiguracaoSalvo = true;
+            _etapaConfiguracao = EtapaConfiguracao::SUBMENU_RELOGIO;
+            return;
+        }
+
+        if (_etapaConfiguracao == EtapaConfiguracao::EDIT_DURACAO_PADRAO)
+        {
+            salvarConfiguracoesRuntime();
+            _feedbackConfiguracaoSalvo = true;
+            _etapaConfiguracao = EtapaConfiguracao::SUBMENU_SISTEMA;
+            return;
+        }
+
+        _etapaConfiguracao = EtapaConfiguracao::SUBMENU_RELOGIO;
     }
 }
 
@@ -708,6 +879,37 @@ void MenuController::ajustarCampoConfiguracao(DirecaoEncoder direcao)
             _configDia = (uint8_t)maxDia;
         break;
     }
+    case EtapaConfiguracao::EDIT_TIMEOUT_MANUAL:
+    {
+        int novoValor = (int)_configTimeoutManualMin + delta;
+        if (novoValor < 1)
+            novoValor = 1;
+        if (novoValor > 120)
+            novoValor = 120;
+        _configTimeoutManualMin = (uint16_t)novoValor;
+        break;
+    }
+    case EtapaConfiguracao::EDIT_DURACAO_PADRAO:
+    {
+        int novoValor = (int)_configDuracaoPadraoMin + delta;
+        if (novoValor < 1)
+            novoValor = 1;
+        if (novoValor > 240)
+            novoValor = 240;
+        _configDuracaoPadraoMin = (uint16_t)novoValor;
+        break;
+    }
+    case EtapaConfiguracao::SUBMENU_RELOGIO:
+    case EtapaConfiguracao::SUBMENU_SISTEMA:
+        break;
+    case EtapaConfiguracao::CONFIRMAR_LIMPAR_AGENDAS:
+        if (direcao == DirecaoEncoder::HORARIO || direcao == DirecaoEncoder::ANTI_HORARIO)
+        {
+            _opcaoConfirmarLimparAgendas = (_opcaoConfirmarLimparAgendas == 0) ? 1 : 0;
+        }
+        break;
+    case EtapaConfiguracao::INFO_SISTEMA:
+        break;
     case EtapaConfiguracao::MENU:
     default:
         break;
@@ -729,7 +931,20 @@ bool MenuController::salvarConfiguracaoRelogio()
 
 int MenuController::totalOpcoesConfiguracao() const
 {
-    return 7;
+    if (_etapaConfiguracao == EtapaConfiguracao::MENU)
+        return 3;
+    if (_etapaConfiguracao == EtapaConfiguracao::SUBMENU_RELOGIO)
+        return 8;
+    if (_etapaConfiguracao == EtapaConfiguracao::SUBMENU_SISTEMA)
+        return 4;
+    return 3;
+}
+
+bool MenuController::salvarConfiguracoesRuntime()
+{
+    bool okTimeout = _config.salvarTimeoutManualMs((uint32_t)_configTimeoutManualMin * 60000UL);
+    bool okDuracao = _config.salvarDuracaoPadraoMin(_configDuracaoPadraoMin);
+    return okTimeout && okDuracao;
 }
 
 bool MenuController::anoBissexto(int ano)

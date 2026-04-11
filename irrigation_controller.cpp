@@ -16,7 +16,8 @@ const uint8_t IrrigationController::_pinos[NUM_VALVULAS] = {
     PIN_RELAY_7,
     PIN_RELAY_8};
 
-IrrigationController::IrrigationController()
+IrrigationController::IrrigationController(RuntimeConfigManager &config)
+    : _config(config)
 {
     for (int i = 0; i < NUM_VALVULAS; i++)
     {
@@ -51,7 +52,7 @@ EstadoValvula IrrigationController::toggleValvula(int indice)
     if (_estados[indice] == EstadoValvula::FECHADA)
     {
         abrirValvula(indice);
-        atualizarDeadline(indice, millis() + TIMEOUT_MANUAL_MS, true);
+        atualizarDeadline(indice, millis() + _config.timeoutManualMs(), true);
     }
     else
     {

@@ -16,14 +16,16 @@
 #include "display_manager.h"
 #include "irrigation_controller.h"
 #include "schedule_manager.h"
+#include "runtime_config_manager.h"
 
 // --- Instâncias globais ---
 EncoderDriver         encoder;
 DisplayDriverOled     oled;
 RtcDriverDs3231       rtc;
-ScheduleManager       scheduleManager;
-MenuController        menu(scheduleManager, rtc);
-IrrigationController  irrigacao;
+RuntimeConfigManager  runtimeConfig;
+ScheduleManager       scheduleManager(runtimeConfig);
+MenuController        menu(scheduleManager, rtc, runtimeConfig);
+IrrigationController  irrigacao(runtimeConfig);
 DisplayManager        displayManager(oled, menu, rtc, irrigacao);
 bool                  rtcDisponivel = false;
 
@@ -53,6 +55,7 @@ void setup() {
     }
 
     menu.begin();
+    runtimeConfig.begin();
     scheduleManager.begin();
     irrigacao.begin();     // configura GPIOs e garante relés desligados
     displayManager.begin();

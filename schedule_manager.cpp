@@ -1,7 +1,8 @@
 #include "schedule_manager.h"
 
-ScheduleManager::ScheduleManager()
-    : _ultimaChaveMinuto(-1)
+ScheduleManager::ScheduleManager(RuntimeConfigManager &config)
+    : _config(config),
+      _ultimaChaveMinuto(-1)
 {
     inicializarBancoPadrao();
 }
@@ -87,11 +88,26 @@ bool ScheduleManager::removerAgenda(int slot)
     limpa.ativa = false;
     limpa.hora = 0;
     limpa.minuto = 0;
-    limpa.duracaoMin = DURACAO_PADRAO_MIN;
+    limpa.duracaoMin = _config.duracaoPadraoMin();
     limpa.diasMask = 0;
     limpa.setoresMask = 0;
 
     _banco.agendas[slot] = limpa;
+    return salvarBanco();
+}
+
+bool ScheduleManager::limparTodasAgendas()
+{
+    for (int slot = 0; slot < MAX_AGENDAS_TOTAIS; slot++)
+    {
+        _banco.agendas[slot].ativa = false;
+        _banco.agendas[slot].hora = 6;
+        _banco.agendas[slot].minuto = 0;
+        _banco.agendas[slot].duracaoMin = _config.duracaoPadraoMin();
+        _banco.agendas[slot].diasMask = 0;
+        _banco.agendas[slot].setoresMask = 0;
+    }
+
     return salvarBanco();
 }
 
@@ -106,6 +122,11 @@ int ScheduleManager::totalAtivas() const
         }
     }
     return total;
+}
+
+uint16_t ScheduleManager::duracaoPadraoMin() const
+{
+    return _config.duracaoPadraoMin();
 }
 
 void ScheduleManager::avaliarDisparos(const DateTime &agora, uint16_t duracoesMinPorSetor[NUM_VALVULAS])
@@ -166,7 +187,7 @@ void ScheduleManager::inicializarBancoPadrao()
         _banco.agendas[slot].ativa = false;
         _banco.agendas[slot].hora = 6;
         _banco.agendas[slot].minuto = 0;
-        _banco.agendas[slot].duracaoMin = DURACAO_PADRAO_MIN;
+        _banco.agendas[slot].duracaoMin = _config.duracaoPadraoMin();
         _banco.agendas[slot].diasMask = 0;
         _banco.agendas[slot].setoresMask = 0;
     }

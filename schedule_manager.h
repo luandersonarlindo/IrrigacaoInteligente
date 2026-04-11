@@ -4,6 +4,7 @@
 #include <Preferences.h>
 #include <RTClib.h>
 #include "Config.h"
+#include "runtime_config_manager.h"
 
 enum DiaSemanaBit
 {
@@ -36,21 +37,24 @@ struct BancoAgendas
 class ScheduleManager
 {
 public:
-    ScheduleManager();
+    explicit ScheduleManager(RuntimeConfigManager &config);
 
     bool begin();
 
     bool obterAgenda(int slot, AgendaSetor &agenda) const;
     bool salvarAgenda(int slot, const AgendaSetor &agenda, String &erro);
     bool removerAgenda(int slot);
+    bool limparTodasAgendas();
 
     int totalAtivas() const;
+    uint16_t duracaoPadraoMin() const;
 
     // Preenche duracoesMinPorSetor para disparos do minuto atual.
     // Se nenhum disparo no minuto, o vetor sai com zeros.
     void avaliarDisparos(const DateTime &agora, uint16_t duracoesMinPorSetor[NUM_VALVULAS]);
 
 private:
+    RuntimeConfigManager &_config;
     static const uint16_t VERSAO_BANCO = 1;
     static constexpr const char *NAMESPACE_NVS = "irrig_sched";
     static constexpr const char *KEY_BANCO = "bank";

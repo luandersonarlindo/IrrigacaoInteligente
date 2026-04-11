@@ -13,6 +13,7 @@
 #include "encoder_driver.h"
 #include "schedule_manager.h"
 #include "rtc_driver_ds3231.h"
+#include "runtime_config_manager.h"
 
 // Itens do menu principal
 enum class ItemMenu
@@ -59,17 +60,23 @@ enum class FeedbackProgramacao
 enum class EtapaConfiguracao
 {
     MENU,
+    SUBMENU_RELOGIO,
+    SUBMENU_SISTEMA,
     EDIT_HORA,
     EDIT_MINUTO,
     EDIT_DIA,
     EDIT_MES,
-    EDIT_ANO
+    EDIT_ANO,
+    EDIT_TIMEOUT_MANUAL,
+    EDIT_DURACAO_PADRAO,
+    CONFIRMAR_LIMPAR_AGENDAS,
+    INFO_SISTEMA
 };
 
 class MenuController
 {
 public:
-    MenuController(ScheduleManager &schedule, RtcDriverDs3231 &rtc);
+    MenuController(ScheduleManager &schedule, RtcDriverDs3231 &rtc, RuntimeConfigManager &config);
 
     void begin();
 
@@ -117,16 +124,24 @@ public:
     int configDia() const;
     int configMes() const;
     int configAno() const;
+    int configTimeoutManualMin() const;
+    int configDuracaoPadraoMin() const;
     bool feedbackConfiguracaoSalvo() const;
     void limparFeedbackConfiguracaoSalvo();
+    bool feedbackConfiguracaoLimpo() const;
+    void limparFeedbackConfiguracaoLimpo();
+    int opcaoConfirmarLimparAgendas() const;
+    int totalAgendasAtivas() const;
 
 private:
     ScheduleManager &_schedule;
     RtcDriverDs3231 &_rtc;
+    RuntimeConfigManager &_config;
 
     EstadoMenu _estado;
     int _itemAtual;
     bool _menuAtivo;
+    unsigned long _ultimoEventoMenuMs;
 
     // Irrigação manual
     int _setorAtual;      // setor em foco no encoder (0 a NUM_VALVULAS-1)
@@ -152,7 +167,11 @@ private:
     uint8_t _configDia;
     uint8_t _configMes;
     uint16_t _configAno;
+    uint16_t _configTimeoutManualMin;
+    uint16_t _configDuracaoPadraoMin;
     bool _feedbackConfiguracaoSalvo;
+    bool _feedbackConfiguracaoLimpo;
+    int _opcaoConfirmarLimparAgendas;
 
     void navegarProximo();
     void navegarAnterior();
@@ -171,6 +190,7 @@ private:
     void processarConfiguracoes(DirecaoEncoder direcao, bool botaoPressionado, bool botaoLongoPressionado);
     void ajustarCampoConfiguracao(DirecaoEncoder direcao);
     bool salvarConfiguracaoRelogio();
+    bool salvarConfiguracoesRuntime();
     int totalOpcoesConfiguracao() const;
     static bool anoBissexto(int ano);
     static int diasNoMes(int ano, int mes);
