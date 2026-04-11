@@ -1,0 +1,52 @@
+#pragma once
+
+// ============================================================
+//  Config.h — Configurações centralizadas do sistema
+//  Altere aqui sem precisar tocar nos outros arquivos
+// ============================================================
+
+// --- Pinos: Encoder ---
+#define PIN_ENCODER_CLK 18
+#define PIN_ENCODER_DT 19
+#define PIN_ENCODER_BTN 4
+
+// --- Pinos: Display OLED (I2C) ---
+#define PIN_OLED_SDA 21
+#define PIN_OLED_SCL 22
+
+// --- Pinos: RTC DS3231 (I2C — mesmo barramento do OLED) ---
+// DS3231 compartilha SDA/SCL com o OLED
+// Endereço I2C do OLED:  0x3C
+// Endereço I2C do RTC:   0x68
+
+// --- Pinos: Relés (2 módulos de 4 canais 12V, trigger HIGH) ---
+#define PIN_RELAY_1 23
+#define PIN_RELAY_2 25
+#define PIN_RELAY_3 26
+#define PIN_RELAY_4 27
+#define PIN_RELAY_5 32
+#define PIN_RELAY_6 33
+#define PIN_RELAY_7 13
+#define PIN_RELAY_8 14
+
+// --- Display OLED ---
+#define OLED_LARGURA 128
+#define OLED_ALTURA 64
+
+// --- Menu ---
+#define MENU_ITENS_MAX 5      // Número máximo de itens no menu principal
+#define MENU_TIMEOUT_MS 30000 // Tempo sem interação para voltar ao início (ms)
+
+// --- Encoder ---
+#define ENCODER_STEPS_POR_ITEM 2 // Pulsos necessários para mudar 1 item no menu
+
+// --- Irrigação ---
+#define NUM_VALVULAS 8           // Fase atual: 2 módulos de 4 canais
+#define MAX_AGENDAS_POR_SETOR 4  // Fase 5: limite de agendas por setor
+#define MAX_AGENDAS_TOTAIS 4     // Fase 5 (refino): agendas globais com seleção de setores
+#define DURACAO_PADRAO_MIN 10    // Duração padrão de irrigação em minutos
+#define TIMEOUT_MANUAL_MS 600000 // 10 min — desliga válvula esquecida (modo manual)
+
+// --- Debug ---
+#define DEBUG_SERIAL true // true = habilita Serial.println para debug
+#define BAUD_RATE 115200
