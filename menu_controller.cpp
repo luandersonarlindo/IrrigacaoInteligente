@@ -409,11 +409,11 @@ void MenuController::processarProgramacao(DirecaoEncoder direcao, bool botaoPres
     case EtapaProgramacao::SUBMENU_AGENDA:
         if (direcao == DirecaoEncoder::HORARIO)
         {
-            _opcaoSubmenuProgramacao = (_opcaoSubmenuProgramacao + 1) % 7;
+            _opcaoSubmenuProgramacao = (_opcaoSubmenuProgramacao + 1) % 8;
         }
         if (direcao == DirecaoEncoder::ANTI_HORARIO)
         {
-            _opcaoSubmenuProgramacao = (_opcaoSubmenuProgramacao - 1 + 7) % 7;
+            _opcaoSubmenuProgramacao = (_opcaoSubmenuProgramacao - 1 + 8) % 8;
         }
         if (botaoPressionado)
         {
@@ -445,6 +445,9 @@ void MenuController::processarProgramacao(DirecaoEncoder direcao, bool botaoPres
             case 6:
                 _opcaoConfirmarExclusao = 1; // 0=SIM, 1=NAO (default seguro)
                 _etapaProgramacao = EtapaProgramacao::CONFIRMAR_EXCLUSAO;
+                break;
+            case 7:
+                _etapaProgramacao = EtapaProgramacao::SELECIONAR_AGENDA;
                 break;
             }
         }
@@ -601,7 +604,7 @@ void MenuController::ajustarCampoEdicao(DirecaoEncoder direcao)
         _cursorDiaProgramacao = (_cursorDiaProgramacao + 7 + delta) % 7;
         break;
     case EtapaProgramacao::EDIT_SETORES:
-        _cursorSetorProgramacao = (_cursorSetorProgramacao + NUM_VALVULAS + delta) % NUM_VALVULAS;
+        _cursorSetorProgramacao = (_cursorSetorProgramacao + (NUM_VALVULAS + 1) + delta) % (NUM_VALVULAS + 1);
         break;
     default:
         break;
@@ -623,6 +626,12 @@ void MenuController::alternarDiaCursor()
 
 void MenuController::alternarSetorCursor()
 {
+    if (_cursorSetorProgramacao == NUM_VALVULAS)
+    {
+        _etapaProgramacao = EtapaProgramacao::SUBMENU_AGENDA;
+        return;
+    }
+
     uint8_t bit = (1 << _cursorSetorProgramacao);
     if (_agendaEdicao.setoresMask & bit)
     {

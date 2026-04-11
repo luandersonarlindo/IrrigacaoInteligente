@@ -566,27 +566,28 @@ void DisplayManager::desenharTelaProgramar()
     {
         desenharCabecalho("EDITAR AGENDA");
 
-        const char *opcoes[7] = {
+        const char *opcoes[8] = {
             "Hora",
             "Minuto",
             "Duracao",
             "Dias",
             "Setores",
             "Salvar",
-            "Excluir"};
+            "Excluir",
+            "Voltar"};
 
         int selecionada = _menu.opcaoSubmenuProgramacao();
         int inicio = 0;
         if (selecionada > 2)
             inicio = selecionada - 2;
-        if (inicio > 3)
-            inicio = 3;
+        if (inicio > 4)
+            inicio = 4;
 
         for (int i = 0; i < 4; i++)
         {
             int idx = inicio + i;
             int y = 16 + (i * 10);
-            if (idx >= 7)
+            if (idx >= 8)
                 break;
 
             if (idx == selecionada)
@@ -605,7 +606,16 @@ void DisplayManager::desenharTelaProgramar()
             else
                 snprintf(linha, sizeof(linha), "%s", opcoes[idx]);
 
-            desenharIconeSubmenu(_display, 2, y, idx);
+            if (idx <= 6)
+            {
+                desenharIconeSubmenu(_display, 2, y, idx);
+            }
+            else
+            {
+                _display.desenharLinha(3, y + 4, 10, y + 4);
+                _display.desenharLinha(3, y + 4, 6, y + 1);
+                _display.desenharLinha(3, y + 4, 6, y + 7);
+            }
             _display.desenharTexto(14, y, linha);
 
             if (idx == selecionada)
@@ -717,16 +727,22 @@ void DisplayManager::desenharTelaProgramar()
 
         const int linhasVisiveis = 3;
         int cursor = _menu.cursorSetorProgramacao();
+        int totalItens = NUM_VALVULAS + 1; // setores + voltar
         int inicio = (cursor / linhasVisiveis) * linhasVisiveis;
         int fim = inicio + linhasVisiveis;
-        if (fim > NUM_VALVULAS)
-            fim = NUM_VALVULAS;
+        if (fim > totalItens)
+            fim = totalItens;
 
         for (int i = inicio; i < fim; i++)
         {
             int linhaIdx = i - inicio;
             int y = 16 + (linhaIdx * 11);
-            bool marcado = (ag.setoresMask & (1 << i)) != 0;
+            bool itemVoltar = (i == NUM_VALVULAS);
+            bool marcado = false;
+            if (!itemVoltar)
+            {
+                marcado = (ag.setoresMask & (1 << i)) != 0;
+            }
             if (i == _menu.cursorSetorProgramacao())
             {
                 _display.desenharRetanguloPreenchido(0, y - 1, OLED_LARGURA, 10);
@@ -734,7 +750,10 @@ void DisplayManager::desenharTelaProgramar()
             }
 
             char linha[24];
-            snprintf(linha, sizeof(linha), "Setor %d   [%c]", i + 1, marcado ? 'X' : ' ');
+            if (itemVoltar)
+                snprintf(linha, sizeof(linha), "< Voltar");
+            else
+                snprintf(linha, sizeof(linha), "Setor %d   [%c]", i + 1, marcado ? 'X' : ' ');
             _display.desenharTexto(2, y, linha);
 
             if (i == _menu.cursorSetorProgramacao())
@@ -743,9 +762,14 @@ void DisplayManager::desenharTelaProgramar()
             }
         }
         char rodape[26];
-        snprintf(rodape, sizeof(rodape), "Gire/OK marca Pg %d/%d",
-                 (inicio / linhasVisiveis) + 1,
-                 (NUM_VALVULAS + linhasVisiveis - 1) / linhasVisiveis);
+        if (_menu.cursorSetorProgramacao() == NUM_VALVULAS)
+            snprintf(rodape, sizeof(rodape), "OK voltar Pg %d/%d",
+                     (inicio / linhasVisiveis) + 1,
+                     (totalItens + linhasVisiveis - 1) / linhasVisiveis);
+        else
+            snprintf(rodape, sizeof(rodape), "Gire/OK marca Pg %d/%d",
+                     (inicio / linhasVisiveis) + 1,
+                     (totalItens + linhasVisiveis - 1) / linhasVisiveis);
         _display.desenharTextoMini(0, 56, rodape);
     }
 
