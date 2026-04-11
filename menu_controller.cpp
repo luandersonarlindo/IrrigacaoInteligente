@@ -10,8 +10,9 @@ const char *MenuController::_nomesItens[] = {
     "Programar",
     "Configuracoes"};
 
-MenuController::MenuController(ScheduleManager &schedule)
+MenuController::MenuController(ScheduleManager &schedule, RtcDriverDs3231 &rtc)
     : _schedule(schedule),
+      _rtc(rtc),
       _estado(EstadoMenu::STATUS),
       _itemAtual(0),
       _menuAtivo(false),
@@ -24,7 +25,15 @@ MenuController::MenuController(ScheduleManager &schedule)
       _opcaoSubmenuProgramacao(0),
       _opcaoConfirmarExclusao(1),
       _cursorDiaProgramacao(0),
-      _cursorSetorProgramacao(0)
+      _cursorSetorProgramacao(0),
+      _etapaConfiguracao(EtapaConfiguracao::MENU),
+      _opcaoConfiguracao(0),
+      _configHora(0),
+      _configMinuto(0),
+      _configDia(1),
+      _configMes(1),
+      _configAno(2026),
+      _feedbackConfiguracaoSalvo(false)
 {
     _agendaEdicao = {true, 6, 0, DURACAO_PADRAO_MIN, 0, 0};
     _agendaSelecionada = {false, 6, 0, DURACAO_PADRAO_MIN, 0, 0};
@@ -47,6 +56,14 @@ void MenuController::begin()
     _cursorSetorProgramacao = 0;
     _agendaEdicao = {true, 6, 0, DURACAO_PADRAO_MIN, 0, 0};
     _agendaSelecionada = {false, 6, 0, DURACAO_PADRAO_MIN, 0, 0};
+    _etapaConfiguracao = EtapaConfiguracao::MENU;
+    _opcaoConfiguracao = 0;
+    _configHora = 0;
+    _configMinuto = 0;
+    _configDia = 1;
+    _configMes = 1;
+    _configAno = 2026;
+    _feedbackConfiguracaoSalvo = false;
 
     if (DEBUG_SERIAL)
     {
@@ -121,9 +138,7 @@ void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bo
         break;
 
     case EstadoMenu::CONFIGURACOES:
-        // Submenus futuros — botão volta por enquanto
-        if (botaoPressionado || botaoLongoPressionado)
-            voltar();
+        processarConfiguracoes(direcao, botaoPressionado, botaoLongoPressionado);
         break;
     }
 }
@@ -177,6 +192,15 @@ AgendaSetor MenuController::agendaEdicao() const { return _agendaEdicao; }
 AgendaSetor MenuController::agendaSelecionada() const { return _agendaSelecionada; }
 FeedbackProgramacao MenuController::feedbackProgramacao() const { return _feedbackProgramacao; }
 void MenuController::limparFeedbackProgramacao() { _feedbackProgramacao = FeedbackProgramacao::NENHUM; }
+EtapaConfiguracao MenuController::etapaConfiguracao() const { return _etapaConfiguracao; }
+int MenuController::opcaoConfiguracao() const { return _opcaoConfiguracao; }
+int MenuController::configHora() const { return _configHora; }
+int MenuController::configMinuto() const { return _configMinuto; }
+int MenuController::configDia() const { return _configDia; }
+int MenuController::configMes() const { return _configMes; }
+int MenuController::configAno() const { return _configAno; }
+bool MenuController::feedbackConfiguracaoSalvo() const { return _feedbackConfiguracaoSalvo; }
+void MenuController::limparFeedbackConfiguracaoSalvo() { _feedbackConfiguracaoSalvo = false; }
 
 // --- Privados ---
 
@@ -220,6 +244,7 @@ void MenuController::selecionar()
         break;
     case ItemMenu::CONFIGURACOES:
         _estado = EstadoMenu::CONFIGURACOES;
+        entrarConfiguracoes();
         break;
     default:
         break;
@@ -548,4 +573,182 @@ void MenuController::alternarSetorCursor()
     {
         _agendaEdicao.setoresMask |= bit;
     }
+}
+
+void MenuController::entrarConfiguracoes()
+{
+    DateTime agora = _rtc.agora();
+    _etapaConfiguracao = EtapaConfiguracao::MENU;
+    _opcaoConfiguracao = 0;
+    _configHora = agora.hour();
+    _configMinuto = agora.minute();
+    _configDia = agora.day();
+    _configMes = agora.month();
+    _configAno = agora.year();
+    _feedbackConfiguracaoSalvo = false;
+}
+
+void MenuController::processarConfiguracoes(DirecaoEncoder direcao, bool botaoPressionado, bool botaoLongoPressionado)
+{
+    if (botaoLongoPressionado)
+    {
+        if (_etapaConfiguracao == EtapaConfiguracao::MENU)
+        {
+            voltar();
+            return;
+        }
+
+        _etapaConfiguracao = EtapaConfiguracao::MENU;
+        return;
+    }
+
+    if (_etapaConfiguracao == EtapaConfiguracao::MENU)
+    {
+        if (direcao == DirecaoEncoder::HORARIO)
+        {
+            _opcaoConfiguracao = (_opcaoConfiguracao + 1) % totalOpcoesConfiguracao();
+        }
+        else if (direcao == DirecaoEncoder::ANTI_HORARIO)
+        {
+            _opcaoConfiguracao = (_opcaoConfiguracao - 1 + totalOpcoesConfiguracao()) % totalOpcoesConfiguracao();
+        }
+
+        if (botaoPressionado)
+        {
+            switch (_opcaoConfiguracao)
+            {
+            case 0:
+                _etapaConfiguracao = EtapaConfiguracao::EDIT_HORA;
+                break;
+            case 1:
+                _etapaConfiguracao = EtapaConfiguracao::EDIT_MINUTO;
+                break;
+            case 2:
+                _etapaConfiguracao = EtapaConfiguracao::EDIT_DIA;
+                break;
+            case 3:
+                _etapaConfiguracao = EtapaConfiguracao::EDIT_MES;
+                break;
+            case 4:
+                _etapaConfiguracao = EtapaConfiguracao::EDIT_ANO;
+                break;
+            case 5:
+                if (salvarConfiguracaoRelogio())
+                {
+                    _feedbackConfiguracaoSalvo = true;
+                }
+                break;
+            case 6:
+                voltar();
+                break;
+            }
+        }
+
+        return;
+    }
+
+    ajustarCampoConfiguracao(direcao);
+    if (botaoPressionado)
+    {
+        _etapaConfiguracao = EtapaConfiguracao::MENU;
+    }
+}
+
+void MenuController::ajustarCampoConfiguracao(DirecaoEncoder direcao)
+{
+    if (direcao == DirecaoEncoder::NENHUMA)
+    {
+        return;
+    }
+
+    int delta = (direcao == DirecaoEncoder::HORARIO) ? 1 : -1;
+
+    switch (_etapaConfiguracao)
+    {
+    case EtapaConfiguracao::EDIT_HORA:
+        _configHora = (_configHora + 24 + delta) % 24;
+        break;
+    case EtapaConfiguracao::EDIT_MINUTO:
+        _configMinuto = (_configMinuto + 60 + delta) % 60;
+        break;
+    case EtapaConfiguracao::EDIT_DIA:
+    {
+        int maxDia = diasNoMes(_configAno, _configMes);
+        int novoDia = (int)_configDia + delta;
+        if (novoDia < 1)
+            novoDia = maxDia;
+        if (novoDia > maxDia)
+            novoDia = 1;
+        _configDia = (uint8_t)novoDia;
+        break;
+    }
+    case EtapaConfiguracao::EDIT_MES:
+    {
+        int novoMes = (int)_configMes + delta;
+        if (novoMes < 1)
+            novoMes = 12;
+        if (novoMes > 12)
+            novoMes = 1;
+        _configMes = (uint8_t)novoMes;
+        int maxDia = diasNoMes(_configAno, _configMes);
+        if (_configDia > maxDia)
+            _configDia = (uint8_t)maxDia;
+        break;
+    }
+    case EtapaConfiguracao::EDIT_ANO:
+    {
+        int novoAno = (int)_configAno + delta;
+        if (novoAno < 2000)
+            novoAno = 2099;
+        if (novoAno > 2099)
+            novoAno = 2000;
+        _configAno = (uint16_t)novoAno;
+        int maxDia = diasNoMes(_configAno, _configMes);
+        if (_configDia > maxDia)
+            _configDia = (uint8_t)maxDia;
+        break;
+    }
+    case EtapaConfiguracao::MENU:
+    default:
+        break;
+    }
+}
+
+bool MenuController::salvarConfiguracaoRelogio()
+{
+    int maxDia = diasNoMes(_configAno, _configMes);
+    if (_configDia > maxDia)
+    {
+        _configDia = (uint8_t)maxDia;
+    }
+
+    DateTime novoHorario(_configAno, _configMes, _configDia, _configHora, _configMinuto, 0);
+    _rtc.ajustarHora(novoHorario);
+    return true;
+}
+
+int MenuController::totalOpcoesConfiguracao() const
+{
+    return 7;
+}
+
+bool MenuController::anoBissexto(int ano)
+{
+    if ((ano % 400) == 0)
+        return true;
+    if ((ano % 100) == 0)
+        return false;
+    return (ano % 4) == 0;
+}
+
+int MenuController::diasNoMes(int ano, int mes)
+{
+    static const uint8_t diasPorMes[12] = {
+        31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+    if (mes < 1 || mes > 12)
+        return 31;
+    if (mes == 2 && anoBissexto(ano))
+        return 29;
+    return diasPorMes[mes - 1];
 }

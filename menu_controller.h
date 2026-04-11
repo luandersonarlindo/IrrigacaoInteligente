@@ -12,6 +12,7 @@
 #include "Config.h"
 #include "encoder_driver.h"
 #include "schedule_manager.h"
+#include "rtc_driver_ds3231.h"
 
 // Itens do menu principal
 enum class ItemMenu
@@ -55,10 +56,20 @@ enum class FeedbackProgramacao
     ERRO_EXCLUSAO
 };
 
+enum class EtapaConfiguracao
+{
+    MENU,
+    EDIT_HORA,
+    EDIT_MINUTO,
+    EDIT_DIA,
+    EDIT_MES,
+    EDIT_ANO
+};
+
 class MenuController
 {
 public:
-    explicit MenuController(ScheduleManager &schedule);
+    MenuController(ScheduleManager &schedule, RtcDriverDs3231 &rtc);
 
     void begin();
 
@@ -98,8 +109,20 @@ public:
     FeedbackProgramacao feedbackProgramacao() const;
     void limparFeedbackProgramacao();
 
+    // Configuracoes
+    EtapaConfiguracao etapaConfiguracao() const;
+    int opcaoConfiguracao() const;
+    int configHora() const;
+    int configMinuto() const;
+    int configDia() const;
+    int configMes() const;
+    int configAno() const;
+    bool feedbackConfiguracaoSalvo() const;
+    void limparFeedbackConfiguracaoSalvo();
+
 private:
     ScheduleManager &_schedule;
+    RtcDriverDs3231 &_rtc;
 
     EstadoMenu _estado;
     int _itemAtual;
@@ -121,6 +144,16 @@ private:
     AgendaSetor _agendaEdicao;
     AgendaSetor _agendaSelecionada;
 
+    // Configuracoes
+    EtapaConfiguracao _etapaConfiguracao;
+    int _opcaoConfiguracao;
+    uint8_t _configHora;
+    uint8_t _configMinuto;
+    uint8_t _configDia;
+    uint8_t _configMes;
+    uint16_t _configAno;
+    bool _feedbackConfiguracaoSalvo;
+
     void navegarProximo();
     void navegarAnterior();
     void selecionar();
@@ -134,6 +167,13 @@ private:
     void ajustarCampoEdicao(DirecaoEncoder direcao);
     void alternarDiaCursor();
     void alternarSetorCursor();
+    void entrarConfiguracoes();
+    void processarConfiguracoes(DirecaoEncoder direcao, bool botaoPressionado, bool botaoLongoPressionado);
+    void ajustarCampoConfiguracao(DirecaoEncoder direcao);
+    bool salvarConfiguracaoRelogio();
+    int totalOpcoesConfiguracao() const;
+    static bool anoBissexto(int ano);
+    static int diasNoMes(int ano, int mes);
 
     static const char *_nomesItens[];
 };

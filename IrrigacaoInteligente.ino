@@ -22,7 +22,7 @@ EncoderDriver         encoder;
 DisplayDriverOled     oled;
 RtcDriverDs3231       rtc;
 ScheduleManager       scheduleManager;
-MenuController        menu(scheduleManager);
+MenuController        menu(scheduleManager, rtc);
 IrrigationController  irrigacao;
 DisplayManager        displayManager(oled, menu, rtc, irrigacao);
 bool                  rtcDisponivel = false;

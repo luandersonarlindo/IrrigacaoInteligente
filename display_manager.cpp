@@ -15,8 +15,8 @@ namespace
         if (tipo == 0)
         {
             // Irrigar agora: aspersor com gotas e jatos (estilo tecnico mono)
-            d.desenharRetanguloPreenchido(x + 11, y + 4, 10, 4);   // topo do bico
-            d.desenharRetanguloPreenchido(x + 13, y + 9, 6, 11);   // corpo central
+            d.desenharRetanguloPreenchido(x + 11, y + 4, 10, 4); // topo do bico
+            d.desenharRetanguloPreenchido(x + 13, y + 9, 6, 11); // corpo central
 
             // gotas superiores
             d.desenharRetanguloPreenchido(x + 3, y + 8, 2, 2);
@@ -348,7 +348,6 @@ void DisplayManager::desenharMenuPrincipal()
     if (xRotulo < 0)
         xRotulo = 0;
 
-    _display.desenharLinha(0, 52, OLED_LARGURA - 1, 52);
     _display.desenharTexto(xRotulo, 54, rotulo);
 }
 
@@ -708,8 +707,8 @@ void DisplayManager::desenharTelaProgramar()
 
         for (int i = inicio; i < fim; i++)
         {
-                int linhaIdx = i - inicio;
-                int y = 16 + (linhaIdx * 11);
+            int linhaIdx = i - inicio;
+            int y = 16 + (linhaIdx * 11);
             bool marcado = (ag.setoresMask & (1 << i)) != 0;
             if (i == _menu.cursorSetorProgramacao())
             {
@@ -748,9 +747,158 @@ void DisplayManager::desenharTelaProgramar()
 
 void DisplayManager::desenharTelaConfig()
 {
-    desenharCabecalho("CONFIGURACOES");
-    _display.desenharTexto(0, 24, "Em desenvolvimento.");
-    _display.desenharTexto(0, 36, "Pressione para voltar");
+    EtapaConfiguracao etapa = _menu.etapaConfiguracao();
+    static bool animSalvoAtiva = false;
+    static unsigned long animSalvoInicioMs = 0;
+
+    const unsigned long FRAME_DELAY_MS = 42;
+    const int FRAME_COUNT = 16;
+    const int LOOP_COUNT = 3;
+
+    if (_menu.feedbackConfiguracaoSalvo())
+    {
+        animSalvoAtiva = true;
+        animSalvoInicioMs = millis();
+        _menu.limparFeedbackConfiguracaoSalvo();
+    }
+
+    if (animSalvoAtiva)
+    {
+        desenharCabecalho("CONFIGURACOES");
+        unsigned long elapsed = millis() - animSalvoInicioMs;
+        unsigned long frameGlobal = elapsed / FRAME_DELAY_MS;
+        unsigned long totalFrames = (unsigned long)FRAME_COUNT * LOOP_COUNT;
+        if (frameGlobal >= totalFrames)
+        {
+            animSalvoAtiva = false;
+            return;
+        }
+
+        int frameLocal = (int)(frameGlobal % FRAME_COUNT);
+        desenharAnimacaoCheck48(_display, frameLocal);
+        _display.desenharTextoMini(34, 56, "Relogio salvo!");
+        return;
+    }
+
+    if (etapa == EtapaConfiguracao::MENU)
+    {
+        desenharCabecalho("CONFIGURACOES");
+
+        const char *opcoes[7] = {
+            "Hora",
+            "Minuto",
+            "Dia",
+            "Mes",
+            "Ano",
+            "Salvar relogio",
+            "Voltar"};
+
+        int selecionada = _menu.opcaoConfiguracao();
+        int inicio = 0;
+        if (selecionada > 2)
+            inicio = selecionada - 2;
+        if (inicio > 3)
+            inicio = 3;
+
+        for (int i = 0; i < 4; i++)
+        {
+            int idx = inicio + i;
+            int y = 16 + (i * 10);
+            if (idx >= 7)
+                break;
+
+            if (idx == selecionada)
+            {
+                _display.desenharRetanguloPreenchido(0, y - 1, OLED_LARGURA, 9);
+                _display.setCorDesenho(0);
+            }
+
+            char linha[32];
+            if (idx == 0)
+                snprintf(linha, sizeof(linha), "Hora: %02d", _menu.configHora());
+            else if (idx == 1)
+                snprintf(linha, sizeof(linha), "Minuto: %02d", _menu.configMinuto());
+            else if (idx == 2)
+                snprintf(linha, sizeof(linha), "Dia: %02d", _menu.configDia());
+            else if (idx == 3)
+                snprintf(linha, sizeof(linha), "Mes: %02d", _menu.configMes());
+            else if (idx == 4)
+                snprintf(linha, sizeof(linha), "Ano: %04d", _menu.configAno());
+            else
+                snprintf(linha, sizeof(linha), "%s", opcoes[idx]);
+
+            if (idx <= 5)
+            {
+                desenharIconeSubmenu(_display, 2, y, idx);
+            }
+            else
+            {
+                // Icone de voltar: seta para esquerda
+                _display.desenharLinha(3, y + 4, 10, y + 4);
+                _display.desenharLinha(3, y + 4, 6, y + 1);
+                _display.desenharLinha(3, y + 4, 6, y + 7);
+            }
+
+            _display.desenharTexto(14, y, linha);
+
+            if (idx == selecionada)
+                _display.setCorDesenho(1);
+        }
+
+        _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
+        _display.desenharTextoMini(0, 56, "OK entra | Segure voltar");
+        return;
+    }
+
+    if (etapa == EtapaConfiguracao::EDIT_HORA)
+    {
+        desenharCabecalho("AJUSTAR HORA");
+        char valor[16];
+        snprintf(valor, sizeof(valor), "%02d", _menu.configHora());
+        _display.desenharTextoGrande(52, 22, valor);
+        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
+        return;
+    }
+
+    if (etapa == EtapaConfiguracao::EDIT_MINUTO)
+    {
+        desenharCabecalho("AJUSTAR MINUTO");
+        char valor[16];
+        snprintf(valor, sizeof(valor), "%02d", _menu.configMinuto());
+        _display.desenharTextoGrande(52, 22, valor);
+        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
+        return;
+    }
+
+    if (etapa == EtapaConfiguracao::EDIT_DIA)
+    {
+        desenharCabecalho("AJUSTAR DIA");
+        char valor[16];
+        snprintf(valor, sizeof(valor), "%02d", _menu.configDia());
+        _display.desenharTextoGrande(52, 22, valor);
+        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
+        return;
+    }
+
+    if (etapa == EtapaConfiguracao::EDIT_MES)
+    {
+        desenharCabecalho("AJUSTAR MES");
+        char valor[16];
+        snprintf(valor, sizeof(valor), "%02d", _menu.configMes());
+        _display.desenharTextoGrande(52, 22, valor);
+        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
+        return;
+    }
+
+    if (etapa == EtapaConfiguracao::EDIT_ANO)
+    {
+        desenharCabecalho("AJUSTAR ANO");
+        char valor[16];
+        snprintf(valor, sizeof(valor), "%04d", _menu.configAno());
+        _display.desenharTextoGrande(40, 22, valor);
+        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
+        return;
+    }
 }
 
 // ============================================================
