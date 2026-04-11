@@ -92,6 +92,7 @@ public:
 
     // Irrigação manual — setor selecionado no encoder (0 a NUM_VALVULAS-1)
     int setorAtual() const;
+    bool opcaoVoltarIrrigacaoSelecionada() const;
 
     // Notificação de timeout — display_manager consulta para exibir aviso
     bool timeoutOcorreu() const;

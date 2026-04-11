@@ -378,20 +378,26 @@ void DisplayManager::desenharTelaIrrigacao()
     desenharCabecalho("IRRIGAR AGORA");
 
     int setorAtual = _menu.setorAtual();
+    int totalItens = NUM_VALVULAS + 1; // setores + item Voltar
 
     const int linhasVisiveis = 3;
     int inicio = (setorAtual / linhasVisiveis) * linhasVisiveis;
     int fim = inicio + linhasVisiveis;
-    if (fim > NUM_VALVULAS)
-        fim = NUM_VALVULAS;
+    if (fim > totalItens)
+        fim = totalItens;
 
-    // Exibe uma janela de 4 setores por vez (pagina)
+    // Exibe uma janela paginada com setores e item Voltar
     for (int i = inicio; i < fim; i++)
     {
         int linhaIdx = i - inicio;
         int y = 16 + (linhaIdx * 11);
 
-        bool aberta = (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA);
+        bool itemVoltar = (i == NUM_VALVULAS);
+        bool aberta = false;
+        if (!itemVoltar)
+        {
+            aberta = (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA);
+        }
         bool selecionado = (i == setorAtual);
 
         if (selecionado)
@@ -401,11 +407,17 @@ void DisplayManager::desenharTelaIrrigacao()
             _display.setCorDesenho(0);
         }
 
-        // Monta linha: "S1 [LIGADO ]" ou "S1 [------]"
         char linha[22];
-        snprintf(linha, sizeof(linha), "Setor %d  %s",
-                 i + 1,
-                 aberta ? "[LIGADO ]" : "[------]");
+        if (itemVoltar)
+        {
+            snprintf(linha, sizeof(linha), "< Voltar");
+        }
+        else
+        {
+            snprintf(linha, sizeof(linha), "Setor %d  %s",
+                     i + 1,
+                     aberta ? "[LIGADO ]" : "[------]");
+        }
 
         _display.desenharTexto(2, y, linha);
 
@@ -422,9 +434,14 @@ void DisplayManager::desenharTelaIrrigacao()
     else
     {
         _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        char rodape[24];
+        char rodape[28];
         snprintf(rodape, sizeof(rodape), "OK=toggle Pg %d/%d", (inicio / linhasVisiveis) + 1,
-                 (NUM_VALVULAS + linhasVisiveis - 1) / linhasVisiveis);
+                 (totalItens + linhasVisiveis - 1) / linhasVisiveis);
+        if (_menu.opcaoVoltarIrrigacaoSelecionada())
+        {
+            snprintf(rodape, sizeof(rodape), "OK=voltar Pg %d/%d", (inicio / linhasVisiveis) + 1,
+                     (totalItens + linhasVisiveis - 1) / linhasVisiveis);
+        }
         _display.desenharTextoMini(0, 56, rodape);
     }
 }
@@ -1044,6 +1061,8 @@ void DisplayManager::desenharTelaConfig()
         char rodape[28];
         snprintf(rodape, sizeof(rodape), "OK toggle | Pg %d/%d", (inicio / linhasVisiveis) + 1,
                  (NUM_VALVULAS + linhasVisiveis - 1) / linhasVisiveis);
+        _display.desenharLinha(0, 50, OLED_LARGURA - 1, 50);
+        _display.desenharTextoMini(0, 52, "MODO MANUTENCAO");
         _display.desenharTextoMini(0, 56, rodape);
         return;
     }

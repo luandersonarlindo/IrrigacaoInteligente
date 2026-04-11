@@ -98,7 +98,7 @@ void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bo
 
     if (_menuAtivo && !houveInteracao)
     {
-        if ((unsigned long)(millis() - _ultimoEventoMenuMs) >= MENU_TIMEOUT_MS)
+        if ((unsigned long)(millis() - _ultimoEventoMenuMs) >= _config.timeoutManualMs())
         {
             if (DEBUG_SERIAL)
             {
@@ -137,20 +137,26 @@ void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bo
         // Girar navega entre setores
         if (direcao == DirecaoEncoder::HORARIO)
         {
-            _setorAtual = (_setorAtual + 1) % NUM_VALVULAS;
+            _setorAtual = (_setorAtual + 1) % (NUM_VALVULAS + 1);
             if (DEBUG_SERIAL)
             {
                 Serial.print("[Menu] Setor selecionado: ");
-                Serial.println(_setorAtual + 1);
+                if (_setorAtual == NUM_VALVULAS)
+                    Serial.println("Voltar");
+                else
+                    Serial.println(_setorAtual + 1);
             }
         }
         if (direcao == DirecaoEncoder::ANTI_HORARIO)
         {
-            _setorAtual = (_setorAtual - 1 + NUM_VALVULAS) % NUM_VALVULAS;
+            _setorAtual = (_setorAtual - 1 + (NUM_VALVULAS + 1)) % (NUM_VALVULAS + 1);
             if (DEBUG_SERIAL)
             {
                 Serial.print("[Menu] Setor selecionado: ");
-                Serial.println(_setorAtual + 1);
+                if (_setorAtual == NUM_VALVULAS)
+                    Serial.println("Voltar");
+                else
+                    Serial.println(_setorAtual + 1);
             }
         }
         // Botão: toggle do setor OU sair se pressão longa (futuro)
@@ -158,6 +164,12 @@ void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bo
         // será adicionado na Fase 5. Por ora pressionar no menu nav volta.
         if (botaoPressionado)
         {
+            if (_setorAtual == NUM_VALVULAS)
+            {
+                voltar();
+                break;
+            }
+
             // Sinaliza toggle — quem executa é o main.ino
             // MenuController só muda estado de UI, não aciona hardware
             // O main.ino consulta setorAtual() e chama irrigacao.toggleValvula()
@@ -185,6 +197,7 @@ EstadoMenu MenuController::estadoAtual() const { return _estado; }
 int MenuController::itemSelecionado() const { return _itemAtual; }
 bool MenuController::menuAtivo() const { return _menuAtivo; }
 int MenuController::setorAtual() const { return _setorAtual; }
+bool MenuController::opcaoVoltarIrrigacaoSelecionada() const { return _setorAtual == NUM_VALVULAS; }
 bool MenuController::timeoutOcorreu() const { return _timeoutOcorreu; }
 
 void MenuController::limparTimeout()

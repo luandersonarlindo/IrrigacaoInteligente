@@ -76,6 +76,10 @@ void loop() {
     bool           botaoCurto = encoder.botaoPressionado();
     bool           botaoLongo = encoder.botaoLongoPressionado();
 
+    bool emTesteValvulasAntes =
+        (menu.estadoAtual() == EstadoMenu::CONFIGURACOES &&
+         menu.etapaConfiguracao() == EtapaConfiguracao::TESTE_VALVULAS);
+
     // 3. Processa navegação no menu
     //    Se está na tela de irrigação e botão pressionado → toggle do setor
     if (menu.estadoAtual() == EstadoMenu::IRRIGACAO_MANUAL) {
@@ -83,11 +87,16 @@ void loop() {
             // Clique longo: voltar para tela inicial
             menu.processar(direcao, false, true);
         } else if (botaoCurto) {
-            // Clique curto: alterna estado da válvula do setor selecionado
-            int setor = menu.setorAtual();
-            irrigacao.toggleValvula(setor);
-            // Não passa o botão curto ao menu — foi consumido aqui
-            menu.processar(direcao, false, false);
+            if (menu.opcaoVoltarIrrigacaoSelecionada()) {
+                // Clique curto no item Voltar: deixa o MenuController retornar ao status
+                menu.processar(direcao, true, false);
+            } else {
+                // Clique curto: alterna estado da válvula do setor selecionado
+                int setor = menu.setorAtual();
+                irrigacao.toggleValvula(setor);
+                // Não passa o botão curto ao menu — foi consumido aqui
+                menu.processar(direcao, false, false);
+            }
         } else {
             menu.processar(direcao, false, false);
         }
@@ -103,6 +112,15 @@ void loop() {
         }
     } else {
         menu.processar(direcao, botaoCurto, botaoLongo);
+    }
+
+    bool emTesteValvulasDepois =
+        (menu.estadoAtual() == EstadoMenu::CONFIGURACOES &&
+         menu.etapaConfiguracao() == EtapaConfiguracao::TESTE_VALVULAS);
+
+    if (emTesteValvulasAntes && !emTesteValvulasDepois)
+    {
+        irrigacao.fecharTodas();
     }
 
     // 4. Verifica timeout de segurança nas válvulas
