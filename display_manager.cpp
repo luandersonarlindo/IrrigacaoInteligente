@@ -750,8 +750,10 @@ void DisplayManager::desenharTelaConfig()
     EtapaConfiguracao etapa = _menu.etapaConfiguracao();
     static bool animSalvoAtiva = false;
     static bool animLimpoAtiva = false;
+    static bool animRestauradoAtiva = false;
     static unsigned long animSalvoInicioMs = 0;
     static unsigned long animLimpoInicioMs = 0;
+    static unsigned long animRestauradoInicioMs = 0;
 
     const unsigned long FRAME_DELAY_MS = 42;
     const int FRAME_COUNT = 16;
@@ -769,6 +771,13 @@ void DisplayManager::desenharTelaConfig()
         animLimpoAtiva = true;
         animLimpoInicioMs = millis();
         _menu.limparFeedbackConfiguracaoLimpo();
+    }
+
+    if (_menu.feedbackConfiguracaoRestaurado())
+    {
+        animRestauradoAtiva = true;
+        animRestauradoInicioMs = millis();
+        _menu.limparFeedbackConfiguracaoRestaurado();
     }
 
     if (animSalvoAtiva)
@@ -804,6 +813,24 @@ void DisplayManager::desenharTelaConfig()
         int frameLocal = (int)(frameGlobal % FRAME_COUNT);
         desenharAnimacaoLixeira48(_display, frameLocal);
         _display.desenharTextoMini(20, 56, "Agendas apagadas!");
+        return;
+    }
+
+    if (animRestauradoAtiva)
+    {
+        desenharCabecalho("CONFIGURACOES");
+        unsigned long elapsed = millis() - animRestauradoInicioMs;
+        unsigned long frameGlobal = elapsed / FRAME_DELAY_MS;
+        unsigned long totalFrames = (unsigned long)FRAME_COUNT * LOOP_COUNT;
+        if (frameGlobal >= totalFrames)
+        {
+            animRestauradoAtiva = false;
+            return;
+        }
+
+        int frameLocal = (int)(frameGlobal % FRAME_COUNT);
+        desenharAnimacaoCheck48(_display, frameLocal);
+        _display.desenharTextoMini(16, 56, "Padrao restaurado!");
         return;
     }
 
@@ -920,16 +947,28 @@ void DisplayManager::desenharTelaConfig()
     {
         desenharCabecalho("CONFIG > SISTEMA");
 
-        const char *opcoes[4] = {
+        const char *opcoes[6] = {
             "Duracao padrao",
+            "Teste valvulas",
             "Limpar agendas",
+            "Restaurar padrao",
             "Info do sistema",
             "Voltar"};
 
         int selecionada = _menu.opcaoConfiguracao();
-        for (int idx = 0; idx < 4; idx++)
+        int inicio = 0;
+        if (selecionada > 2)
+            inicio = selecionada - 2;
+        if (inicio > 2)
+            inicio = 2;
+
+        for (int i = 0; i < 4; i++)
         {
-            int y = 16 + (idx * 10);
+            int idx = inicio + i;
+            int y = 16 + (i * 10);
+            if (idx >= 6)
+                break;
+
             if (idx == selecionada)
             {
                 _display.desenharRetanguloPreenchido(0, y - 1, OLED_LARGURA, 9);
@@ -945,8 +984,12 @@ void DisplayManager::desenharTelaConfig()
             if (idx == 0)
                 desenharIconeSubmenu(_display, 2, y, 2);
             else if (idx == 1)
-                desenharIconeSubmenu(_display, 2, y, 6);
+                desenharIconeSubmenu(_display, 2, y, 4);
             else if (idx == 2)
+                desenharIconeSubmenu(_display, 2, y, 6);
+            else if (idx == 3)
+                desenharIconeSubmenu(_display, 2, y, 5);
+            else if (idx == 4)
                 desenharIconeSubmenu(_display, 2, y, 1);
             else
             {
@@ -962,6 +1005,46 @@ void DisplayManager::desenharTelaConfig()
 
         _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
         _display.desenharTextoMini(0, 56, "OK entra | Segure menu");
+        return;
+    }
+
+    if (etapa == EtapaConfiguracao::TESTE_VALVULAS)
+    {
+        desenharCabecalho("TESTE VALVULAS");
+
+        int setorAtual = _menu.configSetorTeste();
+        const int linhasVisiveis = 3;
+        int inicio = (setorAtual / linhasVisiveis) * linhasVisiveis;
+        int fim = inicio + linhasVisiveis;
+        if (fim > NUM_VALVULAS)
+            fim = NUM_VALVULAS;
+
+        for (int i = inicio; i < fim; i++)
+        {
+            int linhaIdx = i - inicio;
+            int y = 16 + (linhaIdx * 11);
+            bool aberta = (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA);
+
+            if (i == setorAtual)
+            {
+                _display.desenharRetanguloPreenchido(0, y - 1, OLED_LARGURA, 10);
+                _display.setCorDesenho(0);
+            }
+
+            char linha[24];
+            snprintf(linha, sizeof(linha), "Setor %d   [%c]", i + 1, aberta ? 'X' : ' ');
+            _display.desenharTexto(2, y, linha);
+
+            if (i == setorAtual)
+            {
+                _display.setCorDesenho(1);
+            }
+        }
+
+        char rodape[28];
+        snprintf(rodape, sizeof(rodape), "OK toggle | Pg %d/%d", (inicio / linhasVisiveis) + 1,
+                 (NUM_VALVULAS + linhasVisiveis - 1) / linhasVisiveis);
+        _display.desenharTextoMini(0, 56, rodape);
         return;
     }
 
@@ -1042,6 +1125,36 @@ void DisplayManager::desenharTelaConfig()
         _display.desenharTextoMini(0, 30, "Gire: SIM/NAO | OK confirma");
 
         int opc = _menu.opcaoConfirmarLimparAgendas();
+        if (opc == 0)
+        {
+            _display.desenharRetanguloPreenchido(8, 40, 48, 12);
+            _display.setCorDesenho(0);
+            _display.desenharTexto(22, 42, "SIM");
+            _display.setCorDesenho(1);
+
+            _display.desenharRetangulo(72, 40, 48, 12);
+            _display.desenharTexto(88, 42, "NAO");
+        }
+        else
+        {
+            _display.desenharRetangulo(8, 40, 48, 12);
+            _display.desenharTexto(22, 42, "SIM");
+
+            _display.desenharRetanguloPreenchido(72, 40, 48, 12);
+            _display.setCorDesenho(0);
+            _display.desenharTexto(88, 42, "NAO");
+            _display.setCorDesenho(1);
+        }
+        return;
+    }
+
+    if (etapa == EtapaConfiguracao::CONFIRMAR_RESTAURAR_PADRAO)
+    {
+        desenharCabecalho("RESTAURAR PADRAO?");
+        _display.desenharTextoMini(0, 20, "Resetar timeout/duracao?");
+        _display.desenharTextoMini(0, 30, "Gire: SIM/NAO | OK confirma");
+
+        int opc = _menu.opcaoConfirmarRestaurarPadrao();
         if (opc == 0)
         {
             _display.desenharRetanguloPreenchido(8, 40, 48, 12);

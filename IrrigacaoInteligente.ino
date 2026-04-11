@@ -91,6 +91,16 @@ void loop() {
         } else {
             menu.processar(direcao, false, false);
         }
+    } else if (menu.estadoAtual() == EstadoMenu::CONFIGURACOES &&
+               menu.etapaConfiguracao() == EtapaConfiguracao::TESTE_VALVULAS) {
+        if (botaoLongo) {
+            menu.processar(direcao, false, true);
+        } else if (botaoCurto) {
+            irrigacao.toggleValvula(menu.configSetorTeste());
+            menu.processar(direcao, false, false);
+        } else {
+            menu.processar(direcao, false, false);
+        }
     } else {
         menu.processar(direcao, botaoCurto, botaoLongo);
     }

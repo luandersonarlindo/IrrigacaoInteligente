@@ -69,7 +69,9 @@ enum class EtapaConfiguracao
     EDIT_ANO,
     EDIT_TIMEOUT_MANUAL,
     EDIT_DURACAO_PADRAO,
+    TESTE_VALVULAS,
     CONFIRMAR_LIMPAR_AGENDAS,
+    CONFIRMAR_RESTAURAR_PADRAO,
     INFO_SISTEMA
 };
 
@@ -126,11 +128,15 @@ public:
     int configAno() const;
     int configTimeoutManualMin() const;
     int configDuracaoPadraoMin() const;
+    int configSetorTeste() const;
     bool feedbackConfiguracaoSalvo() const;
     void limparFeedbackConfiguracaoSalvo();
     bool feedbackConfiguracaoLimpo() const;
     void limparFeedbackConfiguracaoLimpo();
+    bool feedbackConfiguracaoRestaurado() const;
+    void limparFeedbackConfiguracaoRestaurado();
     int opcaoConfirmarLimparAgendas() const;
+    int opcaoConfirmarRestaurarPadrao() const;
     int totalAgendasAtivas() const;
 
 private:
@@ -169,9 +175,12 @@ private:
     uint16_t _configAno;
     uint16_t _configTimeoutManualMin;
     uint16_t _configDuracaoPadraoMin;
+    int _configSetorTeste;
     bool _feedbackConfiguracaoSalvo;
     bool _feedbackConfiguracaoLimpo;
+    bool _feedbackConfiguracaoRestaurado;
     int _opcaoConfirmarLimparAgendas;
+    int _opcaoConfirmarRestaurarPadrao;
 
     void navegarProximo();
     void navegarAnterior();

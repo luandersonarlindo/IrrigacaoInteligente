@@ -65,6 +65,12 @@ bool RuntimeConfigManager::salvarDuracaoPadraoMin(uint16_t valorMin)
     return salvarBanco();
 }
 
+bool RuntimeConfigManager::restaurarPadrao()
+{
+    inicializarPadrao();
+    return salvarBanco();
+}
+
 void RuntimeConfigManager::inicializarPadrao()
 {
     _banco.versao = VERSAO_BANCO;

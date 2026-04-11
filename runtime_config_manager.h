@@ -24,6 +24,7 @@ public:
 
     bool salvarTimeoutManualMs(uint32_t valorMs);
     bool salvarDuracaoPadraoMin(uint16_t valorMin);
+    bool restaurarPadrao();
 
 private:
     static const uint16_t VERSAO_BANCO = 1;
