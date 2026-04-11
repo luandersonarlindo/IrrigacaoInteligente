@@ -1,192 +1,255 @@
 # IrrigacaoInteligente
 
-Projeto educacional de irrigacao automatizada com ESP32, display OLED, encoder rotativo, RTC DS3231 e acionamento de reles para valvulas.
+Sistema de irrigacao inteligente com ESP32, OLED, encoder, RTC DS3231 e controle de ate 8 valvulas por rele.
 
-Este README descreve o estado atual do codigo (implementado) para servir como documento tecnico do projeto.
+Documento tecnico do projeto (estado atual implementado).
 
-## 1. Objetivo
+## Sumario
 
-Construir um sistema de irrigacao inteligente que permita:
+1. Escopo do projeto
+2. Requisitos de hardware
+3. Parametros de configuracao
+4. Arquitetura de software
+5. Fluxo de execucao
+6. Interface do usuario (menu e encoder)
+7. Agendamento automatico
+8. Persistencia de dados
+9. Estrutura de arquivos
+10. Como montar e executar
+11. Validacao e testes recomendados
+12. Limites atuais e roadmap
 
-- Acionamento manual de setores (valvulas) pelo menu.
-- Programacao de irrigacao automatica por horario e dias da semana.
-- Persistencia de agendas em memoria flash do ESP32 (NVS).
-- Interface local em display OLED usando encoder (giro + clique curto + clique longo).
+## 1. Escopo do projeto
 
-## 2. Visao geral da arquitetura
+O firmware entrega:
 
-O projeto esta separado em modulos com responsabilidades claras:
+- Irrigacao manual por setor com feedback visual no OLED.
+- Programacao semanal com hora, minuto, duracao, dias e setores.
+- Disparo automatico por minuto com base no RTC.
+- Persistencia de agendas em flash do ESP32 (NVS).
+- Mecanismo de seguranca para desligamento automatico de valvula em modo manual.
 
-- Drivers: acesso ao hardware.
-- Controllers/Managers: logica de negocio e estado da interface.
-- Arquivo `.ino`: orquestracao do sistema no `setup()` e `loop()`.
+## 2. Requisitos de hardware
 
-### Modulos principais
+Plataforma principal:
 
-- `encoder_driver.*`: leitura de rotacao e botao do encoder, com debounce e clique longo.
-- `display_driver_oled.*`: primitives de desenho no OLED (U8g2).
-- `rtc_driver_ds3231.*`: leitura/ajuste de data e hora do RTC (RTClib).
-- `irrigation_controller.*`: controle das valvulas (reles), incluindo timeout de seguranca.
-- `schedule_manager.*`: CRUD de agendas, validacao, persistencia em NVS e avaliacao de disparos por minuto.
-- `menu_controller.*`: maquina de estados da navegacao e da tela de programacao.
-- `display_manager.*`: renderizacao das telas conforme estado do menu e dados do sistema.
-- `Config.h`: constantes globais (pinos, limites, timeouts e debug).
-- `IrrigacaoInteligente.ino`: integracao de todos os modulos.
+- ESP32
+- Encoder rotativo com botao (HW-040 ou equivalente)
+- Display OLED SSD1306 128x64 via I2C
+- Modulo RTC DS3231 via I2C
+- 2 modulos de rele 4 canais (total 8 canais), acionamento trigger HIGH
 
-## 3. Hardware e pinos (estado atual)
+Mapeamento de pinos (em Config.h):
 
-Definidos em `Config.h`:
+| Recurso     | Pino |
+| ----------- | ---- |
+| Encoder CLK | 18   |
+| Encoder DT  | 19   |
+| Encoder BTN | 4    |
+| OLED SDA    | 21   |
+| OLED SCL    | 22   |
+| Rele 1      | 23   |
+| Rele 2      | 25   |
+| Rele 3      | 26   |
+| Rele 4      | 27   |
+| Rele 5      | 32   |
+| Rele 6      | 33   |
+| Rele 7      | 13   |
+| Rele 8      | 14   |
 
-- Encoder:
-	- `PIN_ENCODER_CLK = 18`
-	- `PIN_ENCODER_DT = 19`
-	- `PIN_ENCODER_BTN = 4`
-- OLED I2C:
-	- `PIN_OLED_SDA = 21`
-	- `PIN_OLED_SCL = 22`
-- RTC DS3231 no mesmo barramento I2C do OLED.
-- Reles (8 canais): `23, 25, 26, 27, 32, 33, 13, 14`.
+Observacao: OLED e DS3231 compartilham o mesmo barramento I2C.
 
-Parametros importantes:
+## 3. Parametros de configuracao
+
+Constantes relevantes em `Config.h`:
 
 - `NUM_VALVULAS = 8`
 - `MAX_AGENDAS_TOTAIS = 4`
+- `MAX_AGENDAS_POR_SETOR = 4` (referencia contratual)
 - `DURACAO_PADRAO_MIN = 10`
-- `TIMEOUT_MANUAL_MS = 600000` (10 min)
+- `TIMEOUT_MANUAL_MS = 600000` (10 minutos)
+- `BAUD_RATE = 115200`
 - `DEBUG_SERIAL = true`
 
-## 4. Fluxo principal do firmware
+## 4. Arquitetura de software
 
-No `loop()` a ordem atual e:
+### 4.1 Principio de separacao
 
-1. Atualizar o encoder (debounce e deteccao de clique).
-2. Ler eventos do encoder (direcao, clique curto, clique longo).
-3. Processar navegacao no menu.
-4. Se em irrigacao manual e clique curto: fazer `toggle` da valvula selecionada.
-5. Rodar `irrigacao.atualizar()` para fechar valvulas por timeout/deadline.
-6. Se RTC disponivel: avaliar disparos da agenda no minuto atual.
-7. Para cada setor disparado: iniciar irrigacao automatica com duracao definida.
-8. Atualizar o display.
+- Drivers: acessam hardware.
+- Controllers/Managers: aplicam regras de negocio e estado.
+- Arquivo `.ino`: integra modulos e define ciclo principal.
 
-## 5. Funcionalidades implementadas
+### 4.2 Modulos e responsabilidades
 
-## 5.1 Navegacao e interface
+- `encoder_driver.*`
+  - Le direcao de giro.
+  - Detecta clique curto e clique longo com debounce.
 
-- Tela STATUS com hora/data.
-- Menu principal com 3 itens:
-	- Irrigar Agora
-	- Programar
-	- Configuracoes
-- Irrigacao manual:
-	- Giro do encoder troca setor.
-	- Clique curto alterna valvula do setor selecionado.
-	- Clique longo retorna ao STATUS.
-- Programacao:
-	- Selecao de agenda.
-	- Submenu com opcoes de editar/excluir.
-	- Edicao de hora, minuto, duracao, dias e setores.
-	- Feedback visual de salvo/excluido/erros de validacao.
+- `display_driver_oled.*`
+  - Inicializa o display (U8g2).
+  - Oferece primitivas de desenho (texto, linhas, retangulos, icones).
 
-## 5.2 Irrigacao manual e automatica
+- `rtc_driver_ds3231.*`
+  - Inicializa e le horario atual.
+  - Ajusta para hora de compilacao caso RTC tenha perdido energia.
 
-- Acionamento real de GPIO para rele (trigger HIGH).
-- Ao abrir manualmente, aplica timeout de seguranca (10 min).
-- Disparos automaticos por agenda usam deadline por duracao em minutos.
-- Se ja estiver aberto e chegar novo disparo, prevalece o maior tempo restante.
+- `menu_controller.*`
+  - Maquina de estados da navegacao.
+  - Fluxo de irrigacao manual.
+  - Fluxo de programacao (edicao e exclusao de agendas).
 
-## 5.3 Agendamento e persistencia
+- `display_manager.*`
+  - Decide qual tela desenhar conforme estado atual.
+  - Mostra status, menu principal, irrigacao, programacao e mensagens de feedback.
 
-- Banco de agendas salvo em NVS (`Preferences`).
-- Estrutura persistida com:
-	- versao
-	- crc
-	- vetor de agendas
-- Na inicializacao:
-	- se banco invalido/incompativel, reinicializa padrao e salva.
-- Validacoes ao salvar agenda:
-	- hora 0..23
-	- minuto 0..59
-	- duracao >= 1
-	- pelo menos 1 dia selecionado
-	- pelo menos 1 setor selecionado
-	- bloqueio de duplicidade exata
-- Avaliacao de disparo por minuto:
-	- evita repetir disparo no mesmo minuto com chave de data/hora.
+- `schedule_manager.*`
+  - CRUD de agendas.
+  - Validacao de regras de agenda.
+  - Persistencia em NVS com versao e CRC.
+  - Avaliacao de disparos por minuto.
 
-## 6. Modelo de dados da agenda (implementado)
+- `irrigation_controller.*`
+  - Aciona/desaciona pinos de rele.
+  - Gerencia timeout manual.
+  - Gerencia deadlines de irrigacao por agendamento.
 
-`AgendaSetor` atual:
+- `IrrigacaoInteligente.ino`
+  - Inicializa tudo no `setup()`.
+  - Executa ciclo completo no `loop()`.
 
-- `ativa` (bool)
-- `hora` (uint8_t)
-- `minuto` (uint8_t)
-- `duracaoMin` (uint16_t)
-- `diasMask` (bits DOM..SAB)
-- `setoresMask` (bits de setores 1..8)
+## 5. Fluxo de execucao
 
-Observacao importante: no estado atual, o projeto usa **4 agendas globais** (`MAX_AGENDAS_TOTAIS = 4`) com mascara de setores, em vez de 4 agendas por setor.
+### 5.1 Setup
 
-## 7. Estrutura de arquivos
+1. Inicia serial (se debug ativo).
+2. Inicia I2C (`Wire.begin`).
+3. Inicializa encoder e display.
+4. Inicializa RTC (opcional: sistema continua sem RTC).
+5. Inicializa menu, agenda, irrigacao e display manager.
 
-- `IrrigacaoInteligente.ino`: ponto de entrada.
-- `Config.h`: configuracoes globais.
-- `encoder_driver.h/.cpp`: entrada do encoder.
-- `display_driver_oled.h/.cpp`: driver OLED.
-- `rtc_driver_ds3231.h/.cpp`: driver RTC.
-- `irrigation_controller.h/.cpp`: logica de acionamento de valvulas.
-- `schedule_manager.h/.cpp`: agendamento e persistencia.
-- `menu_controller.h/.cpp`: maquina de estados do menu.
-- `display_manager.h/.cpp`: composicao das telas.
-- `GUIA_DIDATICO_PROJETO.md`: guia didatico para ensino.
-- `FASE5_CONTRATO_TECNICO.md`: contrato tecnico de referencia da fase 5.
+### 5.2 Loop principal
 
-## 8. Como usar no dispositivo
+1. Atualiza encoder.
+2. Le direcao, clique curto e clique longo.
+3. Processa menu e navegacao.
+4. Na tela de irrigacao manual: clique curto faz toggle da valvula selecionada.
+5. Atualiza controlador de irrigacao (timeouts e fechamento por deadline).
+6. Se RTC disponivel: verifica disparos de agendas no minuto atual.
+7. Aciona irrigacao automatica por setor quando houver disparo.
+8. Atualiza o display.
 
-1. Ligue o sistema.
-2. Aguarde inicializacao dos modulos.
-3. Na tela de STATUS, gire o encoder para abrir o menu.
-4. Em `Irrigar Agora`:
-	 - gire para escolher setor;
-	 - clique curto para abrir/fechar;
-	 - clique longo para voltar.
-5. Em `Programar`:
-	 - escolha uma agenda;
-	 - edite campos (hora, minuto, duracao, dias, setores);
-	 - confirme para salvar.
+## 6. Interface do usuario (menu e encoder)
 
-## 9. Dependencias (Arduino)
+Menu principal:
 
-Bibliotecas utilizadas no codigo:
+- Irrigar Agora
+- Programar
+- Configuracoes
 
-- `U8g2`
-- `RTClib`
-- `ESP32Encoder`
-- `Preferences` (core ESP32)
-- `Wire` (I2C)
+Controles:
 
-## 10. Logs de depuracao
+- Girar encoder: navega itens/campos.
+- Clique curto: seleciona/edita/aciona.
+- Clique longo:
+  - em irrigacao manual: retorna para STATUS.
+  - em programacao: confirma salvamento na etapa de dias/setores.
 
-Com `DEBUG_SERIAL = true`, o firmware envia mensagens no monitor serial com:
+Tela de irrigacao manual:
 
-- Status de inicializacao de modulos.
-- Eventos de menu.
-- Mudancas de valvulas.
-- Erros de RTC/NVS.
+- Seleciona setor de 1 a 8.
+- Clique curto abre/fecha rele do setor selecionado.
+- Timeout de seguranca fecha automaticamente apos 10 min quando origem for manual.
 
-Baud rate: `115200`.
+## 7. Agendamento automatico
 
-## 11. Estado atual x contrato da Fase 5
+Modelo atual implementado:
 
-O projeto ja implementa grande parte da Fase 5 (edicao, validacao, persistencia e disparo), porem com uma decisao de modelagem atual:
+- Ate 4 agendas globais (`MAX_AGENDAS_TOTAIS = 4`).
+- Cada agenda pode selecionar multiplos setores por mascara de bits (`setoresMask`).
+- Dias da semana em mascara de bits (`diasMask`, DOM..SAB).
 
-- Implementado hoje: 4 agendas globais com `setoresMask`.
-- Contrato tecnico citado: ate 4 setores x 4 agendas por setor (16 agendas).
+Regras de validacao atuais:
 
-Se for necessario aderir estritamente ao contrato, o proximo passo e ajustar o modelo de dados e a UI para a estrategia por setor.
+- Hora valida: `0..23`
+- Minuto valido: `0..59`
+- Duracao minima: `>= 1`
+- Necessario ao menos 1 dia selecionado
+- Necessario ao menos 1 setor selecionado
+- Nao permite duplicidade exata (hora + minuto + dias + setores)
 
-## 12. Proximos passos sugeridos
+Regras de disparo:
 
-- Alinhar modelo de agenda ao contrato final escolhido (global por mascara ou por setor).
-- Expandir testes de campo com RTC ausente/presente.
-- Incluir testes automatizados de validacao de agenda e regras de disparo.
-- Evoluir tela de configuracoes (ainda placeholder).
+- Verificacao por minuto (nao repete no mesmo minuto).
+- Se houver conflitos para o mesmo setor no mesmo minuto, aplica maior duracao.
+- Se valvula ja estiver aberta, preserva o maior deadline.
+
+## 8. Persistencia de dados
+
+Implementacao com `Preferences` (NVS):
+
+- Namespace: `irrig_sched`
+- Chave principal: `bank`
+- Estrutura persistida inclui:
+  - versao do banco
+  - CRC de integridade
+  - vetor de agendas
+
+No boot:
+
+- Se leitura/versao/CRC falhar, banco e reinicializado para padrao seguro (agendas inativas).
+
+## 9. Estrutura de arquivos
+
+- `IrrigacaoInteligente.ino` - entrada do firmware
+- `Config.h` - configuracoes globais
+- `encoder_driver.h/.cpp` - driver do encoder
+- `display_driver_oled.h/.cpp` - driver do OLED
+- `display_manager.h/.cpp` - logica de telas
+- `rtc_driver_ds3231.h/.cpp` - driver RTC
+- `menu_controller.h/.cpp` - estado de navegacao e programacao
+- `schedule_manager.h/.cpp` - agenda, validacao e NVS
+- `irrigation_controller.h/.cpp` - controle de reles/valvulas
+- `GUIA_DIDATICO_PROJETO.md` - visao didatica para ensino
+- `FASE5_CONTRATO_TECNICO.md` - contrato tecnico de referencia
+
+## 10. Como montar e executar
+
+1. Monte o hardware conforme mapeamento de pinos.
+2. Instale as bibliotecas Arduino:
+   - `U8g2`
+   - `RTClib`
+   - `ESP32Encoder`
+3. Selecione placa ESP32 na IDE.
+4. Compile e grave o firmware.
+5. Abra o monitor serial em `115200` para diagnostico.
+
+## 11. Validacao e testes recomendados
+
+Teste funcional minimo:
+
+1. Navegar no menu e alternar setores manualmente.
+2. Confirmar fechamento automatico por timeout manual.
+3. Criar agenda com dia e setor validos.
+4. Reiniciar o ESP32 e confirmar persistencia da agenda.
+5. Simular horario de disparo e confirmar acionamento.
+6. Testar regra de duplicidade de agenda.
+7. Testar comportamento com RTC ausente.
+
+## 12. Limites atuais e roadmap
+
+Estado atual:
+
+- O sistema esta funcional com 4 agendas globais por mascara de setores.
+- Tela de configuracoes ainda esta em placeholder.
+
+Ponto de alinhamento com contrato:
+
+- O contrato da Fase 5 descreve 4 setores x 4 agendas por setor (16 agendas).
+- O codigo atual adota 4 agendas totais globais.
+
+Proximos passos sugeridos:
+
+- Definir oficialmente o modelo final (global por mascara ou por setor).
+- Evoluir a tela de configuracoes.
+- Adicionar testes automatizados para regras de agenda e persistencia.
+- Criar checklist de homologacao em campo (eletrica, RTC, rele e UX).
