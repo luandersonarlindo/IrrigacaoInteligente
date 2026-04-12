@@ -80,6 +80,8 @@ bool ScheduleManager::salvarAgenda(int slot, const AgendaSetor &agenda, String &
 
     // Forca nova avaliacao no loop mesmo dentro do mesmo minuto.
     _ultimaChaveMinuto = -1;
+    // Permite novo disparo do slot no mesmo dia apos edicao/salvamento.
+    _ultimaExecucaoDiaPorSlot[slot] = -1;
 
     erro = "";
     return true;
@@ -106,6 +108,8 @@ bool ScheduleManager::removerAgenda(int slot)
     {
         // Evita cache do minuto anterior apos alteracao de agenda.
         _ultimaChaveMinuto = -1;
+        // Libera o slot para nova execucao no dia atual.
+        _ultimaExecucaoDiaPorSlot[slot] = -1;
     }
     return ok;
 }
@@ -126,6 +130,10 @@ bool ScheduleManager::limparTodasAgendas()
     if (ok)
     {
         _ultimaChaveMinuto = -1;
+        for (int slot = 0; slot < MAX_AGENDAS_TOTAIS; slot++)
+        {
+            _ultimaExecucaoDiaPorSlot[slot] = -1;
+        }
     }
     return ok;
 }
@@ -180,9 +188,14 @@ bool ScheduleManager::obterProximaExecucao(const DateTime &agora, DateTime &prox
             DateTime candidata(dataBase.year(), dataBase.month(), dataBase.day(), atual.hora, atual.minuto, 0);
             uint32_t epoch = candidata.unixtime();
 
-            if (deltaDia == 0 && epoch <= agora.unixtime())
+            if (deltaDia == 0)
             {
-                continue;
+                bool minutoJaPassou = (agora.hour() > atual.hora) ||
+                                      (agora.hour() == atual.hora && agora.minute() > atual.minuto);
+                if (minutoJaPassou)
+                {
+                    continue;
+                }
             }
 
             if (!encontrou || epoch < menorEpoch)
@@ -215,7 +228,7 @@ void ScheduleManager::avaliarDisparos(const DateTime &agora, uint16_t duracoesMi
         duracoesMinPorSetor[i] = 0;
     }
 
-    int chave = chaveMinuto(agora);
+    int32_t chave = chaveMinuto(agora);
     if (chave == _ultimaChaveMinuto)
     {
         return;
@@ -383,6 +396,7 @@ void ScheduleManager::inicializarBancoPadrao()
         _banco.agendas[slot].duracaoMin = _config.duracaoPadraoMin();
         _banco.agendas[slot].diasMask = 0;
         _banco.agendas[slot].setoresMask = 0;
+        _ultimaExecucaoDiaPorSlot[slot] = -1;
     }
 }
 
@@ -534,14 +548,10 @@ uint16_t ScheduleManager::calcularCrc16(const uint8_t *dados, size_t tamanho)
     return crc;
 }
 
-int ScheduleManager::chaveMinuto(const DateTime &agora)
+int32_t ScheduleManager::chaveMinuto(const DateTime &agora)
 {
-    int chave = agora.year();
-    chave = (chave * 100) + agora.month();
-    chave = (chave * 100) + agora.day();
-    chave = (chave * 100) + agora.hour();
-    chave = (chave * 100) + agora.minute();
-    return chave;
+    // Chave monotonica por minuto, sem risco de overflow em concatenacao decimal.
+    return (int32_t)(agora.unixtime() / 60UL);
 }
 
 int ScheduleManager::chaveDia(const DateTime &agora)

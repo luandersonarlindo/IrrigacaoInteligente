@@ -66,7 +66,7 @@ private:
     BancoAgendas _banco;
     Preferences _prefs;
 
-    int _ultimaChaveMinuto;
+    int32_t _ultimaChaveMinuto;
     int _ultimaExecucaoDiaPorSlot[MAX_AGENDAS_TOTAIS];
 
     void inicializarBancoPadrao();
@@ -80,7 +80,7 @@ private:
 
     static uint16_t calcularCrc16(const uint8_t *dados, size_t tamanho);
     static int chaveDia(const DateTime &agora);
-    static int chaveMinuto(const DateTime &agora);
+    static int32_t chaveMinuto(const DateTime &agora);
     static uint8_t bitDiaSemana(const DateTime &agora);
     static uint8_t bitDiaPorIndice(int indiceDiaSemana);
 };
