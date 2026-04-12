@@ -16,16 +16,18 @@ Este README descreve o estado atual implementado no firmware.
 
 1. Escopo
 2. Hardware
-3. Configuracoes principais
-4. Arquitetura
-5. Fluxo do firmware
-6. Operacao da interface
-7. Agendamento
-8. Persistencia
-9. Estrutura do projeto
-10. Build e gravacao
-11. Validacao recomendada
-12. Limites atuais e roadmap
+3. Configuracao rapida
+4. Configuracoes principais
+5. Arquitetura
+6. Fluxo do firmware
+7. Operacao da interface
+8. Agendamento
+9. Persistencia
+10. Estrutura do projeto
+11. Build e gravacao
+12. Troubleshooting rapido
+13. Validacao recomendada
+14. Limites atuais e roadmap
 
 ## 1. Escopo
 
@@ -72,7 +74,21 @@ Mapeamento de pinos (Config.h):
 
 Observacao: OLED e DS3231 compartilham o barramento I2C.
 
-## 3. Configuracoes principais
+## 3. Configuracao rapida
+
+Passo a passo curto para colocar o sistema para rodar:
+
+1. Monte os componentes conforme os pinos definidos em Config.h.
+2. Instale as bibliotecas na IDE Arduino:
+  - U8g2
+  - RTClib
+  - ESP32Encoder
+3. Selecione a placa ESP32 e a porta serial.
+4. Compile e grave o firmware.
+5. Abra o monitor serial em 115200 para acompanhar logs.
+6. Gire o encoder para abrir o menu e testar irrigacao manual.
+
+## 4. Configuracoes principais
 
 Constantes relevantes em Config.h:
 
@@ -84,7 +100,7 @@ Constantes relevantes em Config.h:
 - BAUD_RATE = 115200
 - DEBUG_SERIAL = true
 
-## 4. Arquitetura
+## 5. Arquitetura
 
 Separacao adotada:
 
@@ -103,9 +119,9 @@ Modulos:
 - schedule_manager.*: CRUD de agenda, validacao, NVS e disparo por minuto.
 - IrrigacaoInteligente.ino: setup e loop.
 
-## 5. Fluxo do firmware
+## 6. Fluxo do firmware
 
-### 5.1 Setup
+### 6.1 Setup
 
 1. Inicializa Serial (se debug ativo).
 2. Inicializa I2C (Wire.begin).
@@ -113,7 +129,7 @@ Modulos:
 4. Inicializa RTC (se indisponivel, continua sem hora real).
 5. Inicializa menu, schedule manager, irrigacao e display manager.
 
-### 5.2 Loop
+### 6.2 Loop
 
 1. Atualiza encoder.
 2. Le direcao e botoes.
@@ -124,7 +140,7 @@ Modulos:
 7. Aciona setores disparados por agendamento.
 8. Atualiza display.
 
-## 6. Operacao da interface
+## 7. Operacao da interface
 
 Menu principal:
 
@@ -146,12 +162,13 @@ Irrigacao manual:
 - Clique curto abre/fecha rele do setor.
 - Timeout manual fecha automaticamente apos 10 min.
 
-## 7. Agendamento
+## 8. Agendamento
 
 Modelo implementado atualmente:
 
 - Ate 4 agendas globais (MAX_AGENDAS_TOTAIS = 4).
 - Cada agenda possui diasMask (DOM..SAB) e setoresMask (setores 1..8).
+- Cada agenda pode acionar mais de um setor no mesmo horario.
 
 Validacoes:
 
@@ -167,7 +184,7 @@ Disparo:
 - Avaliacao por minuto (evita repeticao no mesmo minuto).
 - Em conflito no mesmo setor/minuto, aplica maior duracao.
 
-## 8. Persistencia
+## 9. Persistencia
 
 Persistencia com Preferences (NVS):
 
@@ -179,7 +196,7 @@ No boot:
 
 - Se versao/CRC/leitura estiver invalida, reinicializa banco padrao seguro.
 
-## 9. Estrutura do projeto
+## 10. Estrutura do projeto
 
 - IrrigacaoInteligente.ino - entrada do firmware
 - Config.h - configuracoes globais
@@ -193,18 +210,34 @@ No boot:
 - GUIA_DIDATICO_PROJETO.md - guia pedagogico
 - FASE5_CONTRATO_TECNICO.md - contrato tecnico
 
-## 10. Build e gravacao
+## 11. Build e gravacao
 
-1. Monte o hardware conforme pinos do Config.h.
-2. Instale bibliotecas na IDE Arduino:
-   - U8g2
-   - RTClib
-   - ESP32Encoder
-3. Selecione placa ESP32.
-4. Compile e grave o firmware.
-5. Abra monitor serial em 115200.
+1. Abra o projeto na IDE Arduino.
+2. Selecione a placa ESP32 correta.
+3. Verifique se as bibliotecas estao instaladas.
+4. Compile o projeto.
+5. Grave no ESP32.
+6. Abra o monitor serial em 115200.
 
-## 11. Validacao recomendada
+## 12. Troubleshooting rapido
+
+Problemas comuns e verificacoes:
+
+- OLED nao liga:
+  - confira SDA/SCL (21/22)
+  - confira alimentacao e GND
+- Encoder nao responde:
+  - confira pinos 18/19/4
+  - confira pull-up do botao
+- RTC nao encontrado:
+  - o sistema continua, mas sem hora real
+  - confira conexoes I2C e bateria do DS3231
+- Agenda nao dispara:
+  - confirme se o RTC esta ativo
+  - confirme se o dia atual esta marcado
+  - confirme hora/minuto e setoresMask da agenda
+
+## 13. Validacao recomendada
 
 Teste funcional minimo:
 
@@ -223,7 +256,7 @@ Checklist de aceite rapido:
 - Dados permanecem apos reboot.
 - Disparo ocorre apenas no minuto esperado.
 
-## 12. Limites atuais e roadmap
+## 14. Limites atuais e roadmap
 
 Estado atual:
 
