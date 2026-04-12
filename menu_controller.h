@@ -118,6 +118,7 @@ public:
     AgendaSetor agendaSelecionada() const;
     FeedbackProgramacao feedbackProgramacao() const;
     void limparFeedbackProgramacao();
+    bool consumirEventoAgendaExcluida();
 
     // Configuracoes
     EtapaConfiguracao etapaConfiguracao() const;
@@ -139,6 +140,7 @@ public:
     int opcaoConfirmarLimparAgendas() const;
     int opcaoConfirmarRestaurarPadrao() const;
     int totalAgendasAtivas() const;
+    bool proximaAgenda(const DateTime &agora, DateTime &proximaDataHora, AgendaSetor &agenda, int &slot) const;
 
 private:
     ScheduleManager &_schedule;
@@ -158,6 +160,7 @@ private:
     // Programacao Fase 5
     EtapaProgramacao _etapaProgramacao;
     FeedbackProgramacao _feedbackProgramacao;
+    bool _eventoAgendaExcluida;
     int _agendaProgramacao;
     int _opcaoSubmenuProgramacao;
     int _opcaoConfirmarExclusao;

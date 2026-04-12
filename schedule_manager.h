@@ -49,6 +49,10 @@ public:
     int totalAtivas() const;
     uint16_t duracaoPadraoMin() const;
 
+    // Localiza a proxima execucao real considerando dia/horario das agendas.
+    // Retorna false quando nao houver nenhuma agenda ativa valida.
+    bool obterProximaExecucao(const DateTime &agora, DateTime &proximaDataHora, AgendaSetor &agenda, int &slot) const;
+
     // Preenche duracoesMinPorSetor para disparos do minuto atual.
     // Se nenhum disparo no minuto, o vetor sai com zeros.
     void avaliarDisparos(const DateTime &agora, uint16_t duracoesMinPorSetor[NUM_VALVULAS]);
@@ -63,6 +67,7 @@ private:
     Preferences _prefs;
 
     int _ultimaChaveMinuto;
+    int _ultimaExecucaoDiaPorSlot[MAX_AGENDAS_TOTAIS];
 
     void inicializarBancoPadrao();
     bool carregarBanco();
@@ -74,6 +79,8 @@ private:
     bool duplicada(int slotIgnorado, const AgendaSetor &agenda) const;
 
     static uint16_t calcularCrc16(const uint8_t *dados, size_t tamanho);
+    static int chaveDia(const DateTime &agora);
     static int chaveMinuto(const DateTime &agora);
     static uint8_t bitDiaSemana(const DateTime &agora);
+    static uint8_t bitDiaPorIndice(int indiceDiaSemana);
 };

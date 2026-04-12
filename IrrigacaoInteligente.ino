@@ -29,6 +29,199 @@ IrrigationController  irrigacao(runtimeConfig);
 DisplayManager        displayManager(oled, menu, rtc, irrigacao);
 bool                  rtcDisponivel = false;
 
+struct ExecucaoAgendaSequencial {
+    bool ativa;
+    bool aguardandoIntervalo;
+    unsigned long proximoLoteMs;
+    bool setorPendente[NUM_VALVULAS];
+    bool setorNoLote[NUM_VALVULAS];
+    uint16_t duracaoPendenteMin[NUM_VALVULAS];
+};
+
+ExecucaoAgendaSequencial execAgenda = {};
+
+bool haSetorPendenteAgenda() {
+    for (int i = 0; i < NUM_VALVULAS; i++) {
+        if (execAgenda.setorPendente[i]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int contarSetoresPendentesAgenda() {
+    int total = 0;
+    for (int i = 0; i < NUM_VALVULAS; i++) {
+        if (execAgenda.setorPendente[i]) {
+            total++;
+        }
+    }
+    return total;
+}
+
+int contarSetoresNoLoteAgenda() {
+    int total = 0;
+    for (int i = 0; i < NUM_VALVULAS; i++) {
+        if (execAgenda.setorNoLote[i]) {
+            total++;
+        }
+    }
+    return total;
+}
+
+uint16_t maskSetoresNoLoteAgenda() {
+    uint16_t mask = 0;
+    for (int i = 0; i < NUM_VALVULAS; i++) {
+        if (execAgenda.setorNoLote[i]) {
+            mask |= (uint16_t)(1U << i);
+        }
+    }
+    return mask;
+}
+
+uint16_t maskSetoresPendentesAgenda() {
+    uint16_t mask = 0;
+    for (int i = 0; i < NUM_VALVULAS; i++) {
+        if (execAgenda.setorPendente[i]) {
+            mask |= (uint16_t)(1U << i);
+        }
+    }
+    return mask;
+}
+
+bool loteAtualAindaAberto() {
+    for (int i = 0; i < NUM_VALVULAS; i++) {
+        if (execAgenda.setorNoLote[i] && irrigacao.estadoValvula(i) == EstadoValvula::ABERTA) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void limparLoteAtual() {
+    for (int i = 0; i < NUM_VALVULAS; i++) {
+        execAgenda.setorNoLote[i] = false;
+    }
+}
+
+void cancelarExecucaoAgendaAutomatica() {
+    execAgenda.ativa = false;
+    execAgenda.aguardandoIntervalo = false;
+    execAgenda.proximoLoteMs = 0;
+
+    for (int i = 0; i < NUM_VALVULAS; i++) {
+        execAgenda.setorPendente[i] = false;
+        execAgenda.setorNoLote[i] = false;
+        execAgenda.duracaoPendenteMin[i] = 0;
+
+        // Fecha apenas setores em origem automatica; manual permanece.
+        if (irrigacao.valvulaEmAgendamento(i)) {
+            irrigacao.fecharValvula(i);
+        }
+    }
+
+    if (DEBUG_SERIAL) {
+        Serial.println("[Agenda] Execucao automatica cancelada por exclusao de agenda.");
+    }
+}
+
+void iniciarProximoLoteAgenda() {
+    int iniciados = 0;
+    for (int i = 0; i < NUM_VALVULAS; i++) {
+        if (!execAgenda.setorPendente[i]) {
+            continue;
+        }
+
+        irrigacao.iniciarAgendamento(i, execAgenda.duracaoPendenteMin[i]);
+        execAgenda.setorPendente[i] = false;
+        execAgenda.setorNoLote[i] = true;
+        execAgenda.duracaoPendenteMin[i] = 0;
+        iniciados++;
+
+        if (iniciados >= MAX_SETOR_SIMULTANEOS_AGENDA) {
+            break;
+        }
+    }
+
+    execAgenda.ativa = (iniciados > 0) || haSetorPendenteAgenda();
+    execAgenda.aguardandoIntervalo = false;
+}
+
+void enfileirarDisparosAgenda(const uint16_t duracoesMinPorSetor[NUM_VALVULAS]) {
+    bool recebeuNovoDisparo = false;
+
+    for (int i = 0; i < NUM_VALVULAS; i++) {
+        uint16_t duracao = duracoesMinPorSetor[i];
+        if (duracao == 0) {
+            continue;
+        }
+
+        recebeuNovoDisparo = true;
+
+        if (execAgenda.setorNoLote[i] && irrigacao.estadoValvula(i) == EstadoValvula::ABERTA) {
+            // Se o setor ja esta em execucao, estende apenas se necessario.
+            irrigacao.iniciarAgendamento(i, duracao);
+            continue;
+        }
+
+        if (!execAgenda.setorPendente[i] || duracao > execAgenda.duracaoPendenteMin[i]) {
+            execAgenda.setorPendente[i] = true;
+            execAgenda.duracaoPendenteMin[i] = duracao;
+        }
+    }
+
+    if (recebeuNovoDisparo) {
+        execAgenda.ativa = true;
+    }
+}
+
+void atualizarExecucaoAgendaSequencial() {
+    if (!execAgenda.ativa) {
+        return;
+    }
+
+    bool tinhaLoteAtual = false;
+    for (int i = 0; i < NUM_VALVULAS; i++) {
+        if (execAgenda.setorNoLote[i]) {
+            tinhaLoteAtual = true;
+            break;
+        }
+    }
+
+    if (loteAtualAindaAberto()) {
+        return;
+    }
+
+    if (tinhaLoteAtual) {
+        limparLoteAtual();
+
+        if (!haSetorPendenteAgenda()) {
+            execAgenda.ativa = false;
+            execAgenda.aguardandoIntervalo = false;
+            return;
+        }
+
+        execAgenda.aguardandoIntervalo = true;
+        execAgenda.proximoLoteMs = millis() + INTERVALO_LOTE_AGENDA_MS;
+        return;
+    }
+
+    if (!haSetorPendenteAgenda()) {
+        execAgenda.ativa = false;
+        execAgenda.aguardandoIntervalo = false;
+        return;
+    }
+
+    if (!execAgenda.aguardandoIntervalo) {
+        iniciarProximoLoteAgenda();
+        return;
+    }
+
+    if ((long)(millis() - execAgenda.proximoLoteMs) >= 0) {
+        iniciarProximoLoteAgenda();
+    }
+}
+
 // ============================================================
 void setup() {
     if (DEBUG_SERIAL) {
@@ -59,6 +252,15 @@ void setup() {
     scheduleManager.begin();
     irrigacao.begin();     // configura GPIOs e garante relés desligados
     displayManager.begin();
+
+    execAgenda.ativa = false;
+    execAgenda.aguardandoIntervalo = false;
+    execAgenda.proximoLoteMs = 0;
+    for (int i = 0; i < NUM_VALVULAS; i++) {
+        execAgenda.setorPendente[i] = false;
+        execAgenda.setorNoLote[i] = false;
+        execAgenda.duracaoPendenteMin[i] = 0;
+    }
 
     if (DEBUG_SERIAL) {
         Serial.println("[SETUP] Todos os modulos inicializados.");
@@ -114,6 +316,11 @@ void loop() {
         menu.processar(direcao, botaoCurto, botaoLongo);
     }
 
+    // Exclusao de agenda interrompe imediatamente a execucao automatica em andamento.
+    if (menu.consumirEventoAgendaExcluida()) {
+        cancelarExecucaoAgendaAutomatica();
+    }
+
     bool emTesteValvulasDepois =
         (menu.estadoAtual() == EstadoMenu::CONFIGURACOES &&
          menu.etapaConfiguracao() == EtapaConfiguracao::TESTE_VALVULAS);
@@ -129,18 +336,26 @@ void loop() {
         menu.notificarTimeout(setorFechado);
     }
 
-    // 5. Avalia disparos de agendamento por minuto
+    // 5. Avalia disparos de agendamento por minuto e enfileira execucao sequencial
     if (rtcDisponivel) {
         DateTime agora = rtc.agora();
         uint16_t duracoesMinPorSetor[NUM_VALVULAS] = {0};
         scheduleManager.avaliarDisparos(agora, duracoesMinPorSetor);
-        for (int setor = 0; setor < NUM_VALVULAS; setor++) {
-            if (duracoesMinPorSetor[setor] > 0) {
-                irrigacao.iniciarAgendamento(setor, duracoesMinPorSetor[setor]);
-            }
-        }
+        enfileirarDisparosAgenda(duracoesMinPorSetor);
     }
 
-    // 6. Renderiza display
+    // 6. Processa lotes da agenda (max simultaneos + intervalo entre lotes)
+    atualizarExecucaoAgendaSequencial();
+
+    // 6.1 Publica estado da agenda sequencial para o dashboard de status
+    displayManager.atualizarEstadoAgendaSequencial(
+        execAgenda.ativa,
+        execAgenda.aguardandoIntervalo,
+        (uint8_t)contarSetoresNoLoteAgenda(),
+        (uint8_t)contarSetoresPendentesAgenda(),
+        maskSetoresNoLoteAgenda(),
+        maskSetoresPendentesAgenda());
+
+    // 7. Renderiza display
     displayManager.atualizar();
 }

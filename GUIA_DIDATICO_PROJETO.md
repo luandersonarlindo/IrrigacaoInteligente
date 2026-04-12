@@ -2,242 +2,174 @@
 
 Este documento explica o projeto de forma simples, para ensino de alunos de 15 a 16 anos.
 
-## 1) O que este projeto faz
+## Visao rapida
 
-Este projeto e um sistema de irrigacao com ESP32.
+- Projeto com ESP32 para irrigacao manual e automatica.
+- Interface local com OLED e encoder.
+- Relogio RTC DS3231 para manter horario.
+- Controle fisico de 8 valvulas por rele.
+- Agendas salvas na memoria flash (NVS).
 
-Ele ja possui:
+## Sumario
 
-- Menu no display OLED.
-- Controle por encoder rotativo (girar + clique curto + clique longo).
-- Relogio de tempo real (RTC DS3231).
-- Controle real de 8 valvulas por rele.
-- Agendamento automatico semanal com persistencia em memoria flash.
+1. Escopo
+2. Hardware
+3. Configuracoes principais
+4. Arquitetura
+5. Fluxo do firmware
+6. Operacao da interface
+7. Agendamento
+8. Persistencia
+9. Estrutura do projeto
+10. Resumo pedagogico
+11. Proximos passos didaticos
 
-## 2) Ideia de arquitetura (quem faz o que)
+## 1. Escopo
 
-Cada arquivo tem uma responsabilidade. Isso deixa o projeto mais facil de entender e evoluir.
+Este projeto entrega:
 
-- Driver = conversa com o hardware.
-- Controller/Manager = decide regras e comportamento.
-- Arquivo .ino = ponto de entrada, so conecta os modulos.
+- Irrigacao manual por setor.
+- Irrigacao automatica por agenda semanal.
+- Persistencia de dados apos reiniciar o ESP32.
+- Estrutura modular para facilitar manutencao e ensino.
 
-## 3) Fluxo principal do sistema
+## 2. Hardware
 
-No loop principal, a ordem e:
+Componentes principais:
 
-1. Ler o encoder (giro e botoes).
-2. Atualizar o estado do menu.
-3. Em irrigacao manual, ligar/desligar o setor escolhido.
-4. Atualizar logica de irrigacao (timeout e deadlines).
-5. Verificar disparos de agenda pelo RTC (a cada minuto).
-6. Atualizar o display.
+- ESP32
+- Encoder rotativo com botao
+- OLED SSD1306 (I2C)
+- RTC DS3231 (I2C)
+- 2 modulos de rele 4 canais (8 canais no total)
 
-Resumo rapido: entrada do usuario -> decisao da logica -> acao nos reles -> saida na tela.
+Observacao importante:
 
----
+- OLED e RTC compartilham o barramento I2C.
 
-## 4) Explicacao arquivo por arquivo
+## 3. Configuracoes principais
 
-## Config.h
+As configuracoes ficam em Config.h.
 
-### Para que serve
-Centraliza configuracoes globais do projeto.
+Exemplos importantes:
 
-### O que existe nele
+- Quantidade de valvulas: 8
+- Limite de agendas globais: 4
+- Duracao padrao: 10 min
+- Timeout manual de seguranca: 10 min
 
-- Pinos do encoder.
-- Pinos do OLED (I2C).
-- Pinos dos 8 reles.
-- Tamanho do display.
-- Limites de irrigacao e agenda.
-- Tempo de seguranca (timeout manual).
-- Configuracao de debug serial.
+Ideia para aula:
 
-### Ideia para aula
-Se for trocar um pino, altere em um unico lugar.
+- Se for trocar pino ou limite, altere primeiro no Config.h.
 
----
+## 4. Arquitetura
 
-## display_driver_oled.h / display_driver_oled.cpp
+Regra de organizacao:
 
-### Para que serve
-E o driver do display OLED. Ele desenha, mas nao decide o conteudo.
+- Driver = conversa com hardware.
+- Manager/Controller = decide logica.
+- .ino = conecta os modulos e executa o ciclo principal.
 
-### Metodos principais
+### Modulos e papeis
 
-- begin(): inicializa display e fonte.
-- limpar(): limpa buffer.
-- renderizar(): envia buffer para tela.
-- desenharTexto / desenharTextoGrande / desenharTextoMini.
-- desenharLinha / desenharRetangulo / desenharRetanguloPreenchido.
-- larguraTexto() e alturaFonte() para ajudar no layout.
+- encoder_driver.*: leitura do giro e botoes.
+- display_driver_oled.*: desenho no display.
+- rtc_driver_ds3231.*: hora e data.
+- menu_controller.*: estados do menu.
+- display_manager.*: o que mostrar na tela.
+- irrigation_controller.*: abrir/fechar valvulas e controlar tempo.
+- schedule_manager.*: salvar, validar e disparar agendas.
+- IrrigacaoInteligente.ino: setup e loop.
 
-### Ideia para aula
-Pense nele como o "pincel" da tela.
+## 5. Fluxo do firmware
 
----
+No loop principal:
 
-## display_manager.h / display_manager.cpp
+1. Le encoder.
+2. Processa menu.
+3. Executa irrigacao manual (quando houver clique curto na tela manual).
+4. Atualiza irrigacao (timeout e deadlines).
+5. Verifica disparos de agenda por minuto (RTC).
+6. Atualiza display.
 
-### Para que serve
-Decide o que mostrar no OLED com base no estado do menu e no estado do sistema.
+Resumo:
 
-### O que ele desenha
+- entrada do usuario -> decisao da logica -> acao nos reles -> atualizacao da tela
 
-- Tela STATUS (hora e data).
-- Menu principal com icones.
-- Tela de irrigacao manual.
-- Tela de programacao de agendas.
-- Tela de configuracoes (ainda simples).
+## 6. Operacao da interface
 
-### Ideia para aula
-Se o driver e o pincel, o manager e o diretor da tela.
+Menu principal:
 
----
+- Irrigar Agora
+- Programar
+- Configuracoes
 
-## encoder_driver.h / encoder_driver.cpp
+Comandos do encoder:
 
-### Para que serve
-Ler direcao e botoes do encoder.
+- Giro: navega entre itens/campos.
+- Clique curto: seleciona ou altera.
+- Clique longo: volta/confirma dependendo da tela.
 
-### Conceitos importantes
+Na irrigacao manual:
 
-- Direcao: HORARIO, ANTI_HORARIO, NENHUMA.
-- Debounce: evita leituras falsas do botao.
-- Clique curto e clique longo como eventos diferentes.
+- Escolhe setor de 1 a 8.
+- Clique curto abre/fecha rele.
 
-### Ideia para aula
-Debounce e um "filtro" para parar o efeito de tremida eletrica.
+## 7. Agendamento
 
----
+O modulo schedule_manager faz:
 
-## menu_controller.h / menu_controller.cpp
-
-### Para que serve
-Gerenciar a navegacao e a maquina de estados da interface.
-
-### Estados principais
-
-- STATUS
-- IRRIGACAO_MANUAL
-- PROGRAMAR
-- CONFIGURACOES
-
-### O que ele controla
-
-- Navegacao no menu principal.
-- Setor atual na irrigacao manual.
-- Etapas da edicao de agenda (hora, minuto, duracao, dias e setores).
-- Feedback de erro/sucesso na programacao.
-
-### Ideia para aula
-Maquina de estados: cada acao do usuario muda o estado da tela.
-
----
-
-## rtc_driver_ds3231.h / rtc_driver_ds3231.cpp
-
-### Para que serve
-Ler e ajustar data/hora no modulo RTC DS3231.
-
-### Comportamento importante
-
-- Se o RTC nao for encontrado, o sistema continua sem hora real.
-- Se o RTC perdeu energia, o codigo ajusta com hora de compilacao como fallback.
-
-### Ideia para aula
-RTC e um relogio externo que continua contando mesmo com ESP32 desligado.
-
----
-
-## irrigation_controller.h / irrigation_controller.cpp
-
-### Para que serve
-Controlar valvulas (reles) e seguranca de tempo.
-
-### Funcionalidades atuais
-
-- Controle real dos GPIOs dos reles (trigger HIGH).
-- toggleValvula(): abre/fecha no modo manual.
-- iniciarAgendamento(): aciona por duracao (minutos).
-- atualizar(): fecha quando chegar o deadline.
-- Timeout de seguranca no modo manual (10 minutos).
-
-### Ideia para aula
-Este modulo ja faz acionamento fisico real de reles.
-
----
-
-## schedule_manager.h / schedule_manager.cpp
-
-### Para que serve
-Gerenciar agendas automaticas e salvar na NVS.
-
-### O que ele faz
-
-- Salvar, ler e remover agendas.
-- Validar dados (hora, minuto, duracao, dias e setores).
+- Criar, editar e remover agendas.
+- Validar hora, minuto, duracao, dias e setores.
 - Evitar agenda duplicada.
-- Persistir com versao + CRC para checar integridade.
-- Avaliar disparos por minuto usando horario do RTC.
+- Disparar irrigacao no minuto correto.
 
-### Modelo atual
+Modelo atual:
 
-- Ate 4 agendas globais no sistema.
-- Cada agenda pode atuar em varios setores (mascara de bits).
+- Ate 4 agendas globais.
+- Cada agenda pode controlar varios setores por mascara de bits.
 
-### Ideia para aula
-Esse modulo funciona como um "banco de dados pequeno" dentro do ESP32.
+## 8. Persistencia
 
----
+As agendas sao salvas na NVS (flash do ESP32).
 
-## IrrigacaoInteligente.ino
+- Usa versao + CRC para garantir integridade.
+- Se os dados estiverem invalidos no boot, o sistema reinicia banco seguro.
 
-### Para que serve
-E o ponto de entrada do Arduino.
+## 9. Estrutura do projeto
 
-### setup()
+- IrrigacaoInteligente.ino
+- Config.h
+- encoder_driver.h/.cpp
+- display_driver_oled.h/.cpp
+- display_manager.h/.cpp
+- rtc_driver_ds3231.h/.cpp
+- menu_controller.h/.cpp
+- schedule_manager.h/.cpp
+- irrigation_controller.h/.cpp
+- README.md
+- GUIA_DIDATICO_PROJETO.md
+- FASE5_CONTRATO_TECNICO.md
 
-- Inicia serial, I2C e modulos do sistema.
-- Tenta inicializar RTC.
-- Inicia menu, agenda, irrigacao e display.
+## 10. Resumo pedagogico
 
-### loop()
+- O projeto e modularizado.
+- Cada modulo resolve um problema especifico.
+- Isso ajuda em ensino, manutencao e evolucao do sistema.
 
-1. Atualiza encoder.
-2. Le direcao e botoes.
-3. Processa menu.
-4. Executa irrigacao manual (quando aplicavel).
-5. Atualiza irrigacao (timeouts/deadlines).
-6. Dispara agendas automaticas (se RTC disponivel).
-7. Atualiza display.
+Correcoes importantes deste guia (alinhadas ao codigo atual):
 
-### Ideia para aula
-Boa pratica: manter o .ino limpo, apenas orquestrando modulos.
+- Nao e simulacao: os reles sao acionados de verdade.
+- Ja existe modulo de agenda com persistencia (schedule_manager).
+- O loop principal ja inclui disparo automatico por minuto.
 
----
-
-## 5) Resumo pedagogico rapido
-
-- O projeto esta modularizado e organizado.
-- Cada modulo resolve um tipo de problema.
-- Isso ajuda a:
-  - testar por partes
-  - manter mais facil
-  - evoluir sem quebrar tudo
-
-## 6) Correcoes importantes deste guia
-
-Este guia foi atualizado para refletir o codigo real atual:
-
-- Nao e mais simulacao de irrigacao: os reles ja sao acionados fisicamente.
-- Existe modulo de agenda (`schedule_manager`) com persistencia na NVS.
-- O loop principal inclui verificacao de disparos automaticos por minuto.
-
-## 7) Proximos passos didaticos sugeridos
+## 11. Proximos passos didaticos
 
 - Atividade 1: desenhar diagrama de blocos do fluxo completo.
-- Atividade 2: criar uma nova tela no menu (ex.: "Sobre o Sistema").
-- Atividade 3: mostrar no display quanto tempo falta para cada setor desligar.
-- Atividade 4: comparar 2 modelos de agenda (global x por setor) e discutir vantagens.
+- Atividade 2: criar nova opcao de menu (ex.: Sobre o Sistema).
+- Atividade 3: mostrar tempo restante de cada setor no display.
+- Atividade 4: comparar modelo de agenda global vs por setor.
+
+---
+
+Ultima revisao deste guia: 2026-04-12

@@ -41,11 +41,13 @@
 #define ENCODER_STEPS_POR_ITEM 2 // Pulsos necessários para mudar 1 item no menu
 
 // --- Irrigação ---
-#define NUM_VALVULAS 8           // Fase atual: 2 módulos de 4 canais
-#define MAX_AGENDAS_POR_SETOR 4  // Fase 5: limite de agendas por setor
-#define MAX_AGENDAS_TOTAIS 4     // Fase 5 (refino): agendas globais com seleção de setores
-#define DURACAO_PADRAO_MIN 10    // Duração padrão de irrigação em minutos
-#define TIMEOUT_MANUAL_MS 600000 // 10 min — desliga válvula esquecida (modo manual)
+#define NUM_VALVULAS 8                 // Fase atual: 2 módulos de 4 canais
+#define MAX_AGENDAS_POR_SETOR 4        // Fase 5: limite de agendas por setor
+#define MAX_AGENDAS_TOTAIS 4           // Fase 5 (refino): agendas globais com seleção de setores
+#define DURACAO_PADRAO_MIN 10          // Duração padrão de irrigação em minutos
+#define TIMEOUT_MANUAL_MS 600000       // 10 min — desliga válvula esquecida (modo manual)
+#define MAX_SETOR_SIMULTANEOS_AGENDA 2 // Limite de setores simultaneos em agenda
+#define INTERVALO_LOTE_AGENDA_MS 10000 // Intervalo entre lotes da agenda (ms)
 
 // --- Debug ---
 #define DEBUG_SERIAL true // true = habilita Serial.println para debug

@@ -47,6 +47,9 @@ public:
     // Retorna true se alguma válvula está aberta
     bool algumAbertas() const;
 
+    // Origem da valvula aberta: false = manual, true = agendamento automatico.
+    bool valvulaEmAgendamento(int indice) const;
+
     // Deve ser chamado no loop() — verifica timeout de segurança
     // Retorna indice da válvula que foi fechada por timeout, -1 se nenhuma
     int atualizar();

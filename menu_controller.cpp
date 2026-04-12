@@ -23,6 +23,7 @@ MenuController::MenuController(ScheduleManager &schedule, RtcDriverDs3231 &rtc, 
       _setorTimeout(-1),
       _etapaProgramacao(EtapaProgramacao::SELECIONAR_AGENDA),
       _feedbackProgramacao(FeedbackProgramacao::NENHUM),
+      _eventoAgendaExcluida(false),
       _agendaProgramacao(0),
       _opcaoSubmenuProgramacao(0),
       _opcaoConfirmarExclusao(1),
@@ -59,6 +60,7 @@ void MenuController::begin()
     _setorTimeout = -1;
     _etapaProgramacao = EtapaProgramacao::SELECIONAR_AGENDA;
     _feedbackProgramacao = FeedbackProgramacao::NENHUM;
+    _eventoAgendaExcluida = false;
     _agendaProgramacao = 0;
     _opcaoSubmenuProgramacao = 0;
     _opcaoConfirmarExclusao = 1;
@@ -241,6 +243,12 @@ AgendaSetor MenuController::agendaEdicao() const { return _agendaEdicao; }
 AgendaSetor MenuController::agendaSelecionada() const { return _agendaSelecionada; }
 FeedbackProgramacao MenuController::feedbackProgramacao() const { return _feedbackProgramacao; }
 void MenuController::limparFeedbackProgramacao() { _feedbackProgramacao = FeedbackProgramacao::NENHUM; }
+bool MenuController::consumirEventoAgendaExcluida()
+{
+    bool houve = _eventoAgendaExcluida;
+    _eventoAgendaExcluida = false;
+    return houve;
+}
 EtapaConfiguracao MenuController::etapaConfiguracao() const { return _etapaConfiguracao; }
 int MenuController::opcaoConfiguracao() const { return _opcaoConfiguracao; }
 int MenuController::configHora() const { return _configHora; }
@@ -260,6 +268,10 @@ void MenuController::limparFeedbackConfiguracaoRestaurado() { _feedbackConfigura
 int MenuController::opcaoConfirmarLimparAgendas() const { return _opcaoConfirmarLimparAgendas; }
 int MenuController::opcaoConfirmarRestaurarPadrao() const { return _opcaoConfirmarRestaurarPadrao; }
 int MenuController::totalAgendasAtivas() const { return _schedule.totalAtivas(); }
+bool MenuController::proximaAgenda(const DateTime &agora, DateTime &proximaDataHora, AgendaSetor &agenda, int &slot) const
+{
+    return _schedule.obterProximaExecucao(agora, proximaDataHora, agenda, slot);
+}
 
 // --- Privados ---
 
@@ -568,6 +580,7 @@ bool MenuController::excluirAgendaSelecionada()
         return false;
     }
 
+    _eventoAgendaExcluida = true;
     _agendaSelecionada = {false, 6, 0, _schedule.duracaoPadraoMin(), 0, 0};
     _agendaEdicao = _agendaSelecionada;
     return true;
@@ -852,6 +865,7 @@ void MenuController::processarConfiguracoes(DirecaoEncoder direcao, bool botaoPr
                 if (_schedule.limparTodasAgendas())
                 {
                     _feedbackConfiguracaoLimpo = true;
+                    _eventoAgendaExcluida = true;
                 }
             }
             _etapaConfiguracao = EtapaConfiguracao::SUBMENU_SISTEMA;

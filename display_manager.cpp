@@ -145,6 +145,48 @@ namespace
         }
     }
 
+    void desenharIconeStatusIrrigacao(DisplayDriverOled &d, int x, int y, bool ativa)
+    {
+        d.desenharRetangulo(x, y, 10, 10);
+        d.desenharRetanguloPreenchido(x + 4, y + 2, 2, 4);
+        d.desenharLinha(x + 2, y + 7, x + 7, y + 7);
+
+        if (ativa)
+        {
+            d.desenharRetanguloPreenchido(x + 1, y + 8, 1, 1);
+            d.desenharRetanguloPreenchido(x + 4, y + 8, 1, 1);
+            d.desenharRetanguloPreenchido(x + 7, y + 8, 1, 1);
+        }
+    }
+
+    void desenharIconeStatusValvula(DisplayDriverOled &d, int x, int y)
+    {
+        d.desenharRetangulo(x, y, 10, 10);
+        d.desenharRetanguloPreenchido(x + 2, y + 4, 6, 2);
+        d.desenharLinha(x + 2, y + 2, x + 4, y + 4);
+        d.desenharLinha(x + 8, y + 2, x + 6, y + 4);
+        d.desenharLinha(x + 2, y + 8, x + 4, y + 6);
+        d.desenharLinha(x + 8, y + 8, x + 6, y + 6);
+    }
+
+    void desenharIconeStatusAgenda(DisplayDriverOled &d, int x, int y)
+    {
+        d.desenharRetangulo(x, y + 1, 10, 9);
+        d.desenharLinha(x, y + 3, x + 9, y + 3);
+        d.desenharRetanguloPreenchido(x + 2, y, 1, 2);
+        d.desenharRetanguloPreenchido(x + 7, y, 1, 2);
+        d.desenharRetanguloPreenchido(x + 2, y + 5, 1, 1);
+        d.desenharRetanguloPreenchido(x + 4, y + 5, 1, 1);
+        d.desenharRetanguloPreenchido(x + 6, y + 5, 1, 1);
+    }
+
+    void desenharIconeStatusRelogio(DisplayDriverOled &d, int x, int y)
+    {
+        d.desenharRetangulo(x, y, 10, 10);
+        d.desenharLinha(x + 5, y + 5, x + 5, y + 2);
+        d.desenharLinha(x + 5, y + 5, x + 7, y + 6);
+    }
+
     void desenharAnimacaoCheck(DisplayDriverOled &d, int x, int y)
     {
         // Animacao simples baseada no tempo (4 quadros em loop)
@@ -263,8 +305,29 @@ DisplayManager::DisplayManager(DisplayDriverOled &display,
       _menu(menu),
       _rtc(rtc),
       _irrigacao(irrigacao),
-      _ultimaAtualizacao(0)
+      _ultimaAtualizacao(0),
+      _agendaExecucaoAtiva(false),
+      _agendaAguardandoIntervalo(false),
+      _agendaSetoresEmLote(0),
+      _agendaSetoresPendentes(0),
+      _agendaSetoresLoteMask(0),
+      _agendaSetoresPendentesMask(0)
 {
+}
+
+void DisplayManager::atualizarEstadoAgendaSequencial(bool ativa,
+                                                     bool aguardandoIntervalo,
+                                                     uint8_t setoresEmLote,
+                                                     uint8_t setoresPendentes,
+                                                     uint16_t setoresLoteMask,
+                                                     uint16_t setoresPendentesMask)
+{
+    _agendaExecucaoAtiva = ativa;
+    _agendaAguardandoIntervalo = aguardandoIntervalo;
+    _agendaSetoresEmLote = setoresEmLote;
+    _agendaSetoresPendentes = setoresPendentes;
+    _agendaSetoresLoteMask = setoresLoteMask;
+    _agendaSetoresPendentesMask = setoresPendentesMask;
 }
 
 void DisplayManager::begin()
@@ -353,24 +416,124 @@ void DisplayManager::desenharMenuPrincipal()
 
 void DisplayManager::desenharTelaStatus()
 {
-    desenharCabecalho("STATUS");
-
-    // Hora em destaque no centro
+    // Dashboard operacional: foco em irrigacao e agenda.
     DateTime agora = _rtc.agora();
-    char hora[9];
-    snprintf(hora, sizeof(hora), "%02d:%02d:%02d",
-             agora.hour(), agora.minute(), agora.second());
 
-    _display.desenharTextoGrande(20, 22, hora);
+    uint16_t maskAbertas = 0;
+    uint16_t maskAutoAbertaReal = 0;
+    int totalAbertas = 0;
+    for (int i = 0; i < NUM_VALVULAS; i++)
+    {
+        if (_irrigacao.estadoValvula(i) != EstadoValvula::ABERTA)
+            continue;
 
-    // Data abaixo
-    char data[11];
-    snprintf(data, sizeof(data), "%02d/%02d/%04d",
-             agora.day(), agora.month(), agora.year());
-    _display.desenharTexto(28, 46, data);
+        maskAbertas |= (uint16_t)(1U << i);
+        if (_irrigacao.valvulaEmAgendamento(i))
+            maskAutoAbertaReal |= (uint16_t)(1U << i);
+        totalAbertas++;
+    }
+
+    _display.desenharRetangulo(0, 0, OLED_LARGURA, 26);
+    desenharIconeStatusRelogio(_display, 3, 3);
+
+    char linhaHora[16];
+    snprintf(linhaHora, sizeof(linhaHora), "%02d:%02d:%02d", agora.hour(), agora.minute(), agora.second());
+    _display.desenharTexto(17, 2, linhaHora);
+
+    bool agendaAtivaNoCiclo = _agendaExecucaoAtiva &&
+                              (_agendaAguardandoIntervalo || _agendaSetoresEmLote > 0 || _agendaSetoresPendentes > 0);
+    desenharIconeStatusIrrigacao(_display, 82, 3, (totalAbertas > 0) || agendaAtivaNoCiclo);
+    char linhaOn[16];
+    snprintf(linhaOn, sizeof(linhaOn), "ON %d/%d", totalAbertas, NUM_VALVULAS);
+    _display.desenharTextoMini(95, 4, linhaOn);
+
+    char linhaIrrigacao[32];
+    auto contarBits = [](uint16_t mask)
+    {
+        int total = 0;
+        for (int i = 0; i < NUM_VALVULAS; i++)
+        {
+            if (mask & (1U << i))
+                total++;
+        }
+        return total;
+    };
+
+    if (totalAbertas > 0)
+    {
+        uint16_t maskAutoAgora = maskAutoAbertaReal;
+        uint16_t maskManualAgora = (uint16_t)(maskAbertas & (~maskAutoAgora));
+        uint16_t maskAutoLigada = (uint16_t)(maskAbertas & maskAutoAgora);
+
+        int qtdMan = contarBits(maskManualAgora);
+        int qtdAuto = contarBits(maskAutoLigada);
+
+        if (qtdMan > 0 && qtdAuto > 0)
+            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "MAN S%d/%d AUTO S%d/%d", qtdMan, NUM_VALVULAS, qtdAuto, NUM_VALVULAS);
+        else if (qtdMan > 0)
+            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "MANUAL S%d/%d", qtdMan, NUM_VALVULAS);
+        else if (qtdAuto > 0)
+            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "AUTO S%d/%d", qtdAuto, NUM_VALVULAS);
+        else
+            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "ATIVO S%d/%d", totalAbertas, NUM_VALVULAS);
+    }
+    else if (agendaAtivaNoCiclo)
+    {
+        uint16_t mask = (uint16_t)(_agendaSetoresLoteMask | _agendaSetoresPendentesMask);
+        int qtdAutoCiclo = contarBits(mask);
+
+        if (qtdAutoCiclo > 0)
+            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "AUTO S%d/%d", qtdAutoCiclo, NUM_VALVULAS);
+        else if (_agendaAguardandoIntervalo)
+            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "Agenda ativa: intervalo");
+        else if (_agendaSetoresPendentes > 0)
+            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "Agenda ativa: prox lote");
+        else
+            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "Agenda ativa em execucao");
+    }
+    else
+    {
+        snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "Nenhum setor ativo");
+    }
+    _display.desenharTexto(3, 13, linhaIrrigacao);
+
+    _display.desenharRetangulo(0, 29, OLED_LARGURA, 20);
+    _display.desenharTextoMini(3, 31, "PROXIMA AGENDA");
+
+    DateTime proximaDataHora;
+    AgendaSetor proximaAgenda;
+    int slotProximo = -1;
+    bool temProxima = _menu.proximaAgenda(agora, proximaDataHora, proximaAgenda, slotProximo);
+
+    if (temProxima)
+    {
+        const char *dias[7] = {"DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"};
+        int dow = proximaDataHora.dayOfTheWeek();
+        if (dow < 0 || dow > 6)
+            dow = 0;
+
+        desenharIconeStatusAgenda(_display, 4, 38);
+        char linhaProxima[24];
+        snprintf(linhaProxima, sizeof(linhaProxima), "%s %02d:%02d",
+                 dias[dow], proximaDataHora.hour(), proximaDataHora.minute());
+        _display.desenharTextoMini(17, 38, linhaProxima);
+
+        int qtdSetoresProxima = contarBits(proximaAgenda.setoresMask);
+
+        char linhaSetores[32];
+        if (qtdSetoresProxima == 0)
+            snprintf(linhaSetores, sizeof(linhaSetores), "Setores: S0/%d", NUM_VALVULAS);
+        else
+            snprintf(linhaSetores, sizeof(linhaSetores), "Setores: S%d/%d", qtdSetoresProxima, NUM_VALVULAS);
+        _display.desenharTextoMini(64, 38, linhaSetores);
+    }
+    else
+    {
+        _display.desenharTexto(3, 38, "Nenhuma agenda ativa");
+    }
 
     _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-    _display.desenharTexto(0, 56, "Gire para abrir menu");
+    _display.desenharTextoMini(0, 56, "Gire para abrir menu");
 }
 
 void DisplayManager::desenharTelaIrrigacao()

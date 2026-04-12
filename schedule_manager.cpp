@@ -4,6 +4,11 @@ ScheduleManager::ScheduleManager(RuntimeConfigManager &config)
     : _config(config),
       _ultimaChaveMinuto(-1)
 {
+    for (int i = 0; i < MAX_AGENDAS_TOTAIS; i++)
+    {
+        _ultimaExecucaoDiaPorSlot[i] = -1;
+    }
+
     inicializarBancoPadrao();
 }
 
@@ -73,6 +78,9 @@ bool ScheduleManager::salvarAgenda(int slot, const AgendaSetor &agenda, String &
         return false;
     }
 
+    // Forca nova avaliacao no loop mesmo dentro do mesmo minuto.
+    _ultimaChaveMinuto = -1;
+
     erro = "";
     return true;
 }
@@ -93,7 +101,13 @@ bool ScheduleManager::removerAgenda(int slot)
     limpa.setoresMask = 0;
 
     _banco.agendas[slot] = limpa;
-    return salvarBanco();
+    bool ok = salvarBanco();
+    if (ok)
+    {
+        // Evita cache do minuto anterior apos alteracao de agenda.
+        _ultimaChaveMinuto = -1;
+    }
+    return ok;
 }
 
 bool ScheduleManager::limparTodasAgendas()
@@ -108,7 +122,12 @@ bool ScheduleManager::limparTodasAgendas()
         _banco.agendas[slot].setoresMask = 0;
     }
 
-    return salvarBanco();
+    bool ok = salvarBanco();
+    if (ok)
+    {
+        _ultimaChaveMinuto = -1;
+    }
+    return ok;
 }
 
 int ScheduleManager::totalAtivas() const
@@ -129,6 +148,66 @@ uint16_t ScheduleManager::duracaoPadraoMin() const
     return _config.duracaoPadraoMin();
 }
 
+bool ScheduleManager::obterProximaExecucao(const DateTime &agora, DateTime &proximaDataHora, AgendaSetor &agenda, int &slot) const
+{
+    bool encontrou = false;
+    uint32_t menorEpoch = 0;
+    AgendaSetor melhorAgenda = {};
+    int melhorSlot = -1;
+
+    for (int i = 0; i < MAX_AGENDAS_TOTAIS; i++)
+    {
+        const AgendaSetor &atual = _banco.agendas[i];
+        if (!atual.ativa)
+        {
+            continue;
+        }
+
+        if ((atual.diasMask & 0x7F) == 0)
+        {
+            continue;
+        }
+
+        for (int deltaDia = 0; deltaDia <= 7; deltaDia++)
+        {
+            DateTime dataBase = agora + TimeSpan(deltaDia, 0, 0, 0);
+            uint8_t bitDia = bitDiaPorIndice(dataBase.dayOfTheWeek());
+            if ((atual.diasMask & bitDia) == 0)
+            {
+                continue;
+            }
+
+            DateTime candidata(dataBase.year(), dataBase.month(), dataBase.day(), atual.hora, atual.minuto, 0);
+            uint32_t epoch = candidata.unixtime();
+
+            if (deltaDia == 0 && epoch <= agora.unixtime())
+            {
+                continue;
+            }
+
+            if (!encontrou || epoch < menorEpoch)
+            {
+                encontrou = true;
+                menorEpoch = epoch;
+                melhorAgenda = atual;
+                melhorSlot = i;
+            }
+
+            break;
+        }
+    }
+
+    if (!encontrou)
+    {
+        return false;
+    }
+
+    proximaDataHora = DateTime(menorEpoch);
+    agenda = melhorAgenda;
+    slot = melhorSlot;
+    return true;
+}
+
 void ScheduleManager::avaliarDisparos(const DateTime &agora, uint16_t duracoesMinPorSetor[NUM_VALVULAS])
 {
     for (int i = 0; i < NUM_VALVULAS; i++)
@@ -144,6 +223,8 @@ void ScheduleManager::avaliarDisparos(const DateTime &agora, uint16_t duracoesMi
     _ultimaChaveMinuto = chave;
 
     uint8_t bitDia = bitDiaSemana(agora);
+    int chaveDiaAtual = chaveDia(agora);
+    uint32_t agoraEpoch = agora.unixtime();
 
     for (int slot = 0; slot < MAX_AGENDAS_TOTAIS; slot++)
     {
@@ -156,24 +237,136 @@ void ScheduleManager::avaliarDisparos(const DateTime &agora, uint16_t duracoesMi
         {
             continue;
         }
-        if (agenda.hora != agora.hour() || agenda.minuto != agora.minute())
+        if (_ultimaExecucaoDiaPorSlot[slot] == chaveDiaAtual)
         {
             continue;
         }
 
+        DateTime inicioHoje(agora.year(), agora.month(), agora.day(), agenda.hora, agenda.minuto, 0);
+        uint32_t inicioEpoch = inicioHoje.unixtime();
+
+        // Ainda nao chegou no horario da agenda de hoje.
+        if (agoraEpoch < inicioEpoch)
+        {
+            continue;
+        }
+
+        int totalSetoresAgenda = 0;
+        int setoresAgenda[NUM_VALVULAS];
         for (int setor = 0; setor < NUM_VALVULAS; setor++)
         {
-            uint8_t bitSetor = (1 << setor);
-            if ((agenda.setoresMask & bitSetor) == 0)
+            if (agenda.setoresMask & (1 << setor))
             {
-                continue;
-            }
-
-            if (agenda.duracaoMin > duracoesMinPorSetor[setor])
-            {
-                duracoesMinPorSetor[setor] = agenda.duracaoMin;
+                setoresAgenda[totalSetoresAgenda] = setor;
+                totalSetoresAgenda++;
             }
         }
+
+        if (totalSetoresAgenda <= 0)
+        {
+            continue;
+        }
+
+        int lotes = (totalSetoresAgenda + MAX_SETOR_SIMULTANEOS_AGENDA - 1) / MAX_SETOR_SIMULTANEOS_AGENDA;
+        uint32_t totalMinLotes = (uint32_t)lotes * (uint32_t)agenda.duracaoMin;
+        uint32_t totalMinIntervalos = (uint32_t)(((unsigned long)(lotes - 1) * INTERVALO_LOTE_AGENDA_MS + 59999UL) / 60000UL);
+        uint32_t janelaTotalMin = totalMinLotes + totalMinIntervalos;
+        if (janelaTotalMin == 0)
+        {
+            janelaTotalMin = 1;
+        }
+
+        uint32_t fimJanelaEpoch = inicioEpoch + (janelaTotalMin * 60UL);
+        if (agoraEpoch >= fimJanelaEpoch)
+        {
+            continue;
+        }
+
+        // Descobre em qual lote a agenda deveria estar no momento atual.
+        uint32_t duracaoLoteSec = (uint32_t)agenda.duracaoMin * 60UL;
+        uint32_t intervaloSec = (INTERVALO_LOTE_AGENDA_MS + 999UL) / 1000UL;
+        uint32_t elapsedSec = agoraEpoch - inicioEpoch;
+
+        int loteAlvo = -1;
+        bool loteAlvoEmExecucao = false;
+        uint32_t restanteLoteAlvoSec = duracaoLoteSec;
+
+        for (int lote = 0; lote < lotes; lote++)
+        {
+            uint32_t inicioLoteSec = (uint32_t)lote * (duracaoLoteSec + intervaloSec);
+            uint32_t fimLoteSec = inicioLoteSec + duracaoLoteSec;
+
+            if (elapsedSec < fimLoteSec)
+            {
+                loteAlvo = lote;
+                loteAlvoEmExecucao = true;
+                restanteLoteAlvoSec = fimLoteSec - elapsedSec;
+                if (restanteLoteAlvoSec == 0)
+                {
+                    restanteLoteAlvoSec = 1;
+                }
+                break;
+            }
+
+            // Intervalo entre lotes: retoma no proximo lote.
+            if (lote < (lotes - 1))
+            {
+                uint32_t fimIntervaloSec = fimLoteSec + intervaloSec;
+                if (elapsedSec < fimIntervaloSec)
+                {
+                    loteAlvo = lote + 1;
+                    loteAlvoEmExecucao = false;
+                    restanteLoteAlvoSec = duracaoLoteSec;
+                    break;
+                }
+            }
+        }
+
+        if (loteAlvo < 0 || loteAlvo >= lotes)
+        {
+            continue;
+        }
+
+        if (DEBUG_SERIAL)
+        {
+            Serial.print("[Agenda] Disparo slot ");
+            Serial.print(slot + 1);
+            Serial.print(" em janela ativa (inicio ");
+            Serial.print(agenda.hora);
+            Serial.print(":");
+            Serial.print(agenda.minuto);
+            Serial.println(").");
+        }
+
+        for (int lote = loteAlvo; lote < lotes; lote++)
+        {
+            int inicioIdx = lote * MAX_SETOR_SIMULTANEOS_AGENDA;
+            int fimIdx = inicioIdx + MAX_SETOR_SIMULTANEOS_AGENDA;
+            if (fimIdx > totalSetoresAgenda)
+                fimIdx = totalSetoresAgenda;
+
+            uint16_t duracaoParaLoteMin = agenda.duracaoMin;
+            if (lote == loteAlvo && loteAlvoEmExecucao)
+            {
+                uint32_t restoMin = (restanteLoteAlvoSec + 59UL) / 60UL;
+                if (restoMin < 1UL)
+                    restoMin = 1UL;
+                if (restoMin > agenda.duracaoMin)
+                    restoMin = agenda.duracaoMin;
+                duracaoParaLoteMin = (uint16_t)restoMin;
+            }
+
+            for (int idx = inicioIdx; idx < fimIdx; idx++)
+            {
+                int setor = setoresAgenda[idx];
+                if (duracaoParaLoteMin > duracoesMinPorSetor[setor])
+                {
+                    duracoesMinPorSetor[setor] = duracaoParaLoteMin;
+                }
+            }
+        }
+
+        _ultimaExecucaoDiaPorSlot[slot] = chaveDiaAtual;
     }
 }
 
@@ -351,9 +544,38 @@ int ScheduleManager::chaveMinuto(const DateTime &agora)
     return chave;
 }
 
+int ScheduleManager::chaveDia(const DateTime &agora)
+{
+    int chave = agora.year();
+    chave = (chave * 100) + agora.month();
+    chave = (chave * 100) + agora.day();
+    return chave;
+}
+
 uint8_t ScheduleManager::bitDiaSemana(const DateTime &agora)
 {
     switch (agora.dayOfTheWeek())
+    {
+    case 0:
+        return DIA_DOM;
+    case 1:
+        return DIA_SEG;
+    case 2:
+        return DIA_TER;
+    case 3:
+        return DIA_QUA;
+    case 4:
+        return DIA_QUI;
+    case 5:
+        return DIA_SEX;
+    default:
+        return DIA_SAB;
+    }
+}
+
+uint8_t ScheduleManager::bitDiaPorIndice(int indiceDiaSemana)
+{
+    switch (indiceDiaSemana)
     {
     case 0:
         return DIA_DOM;

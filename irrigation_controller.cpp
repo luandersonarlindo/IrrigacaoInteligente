@@ -77,6 +77,18 @@ void IrrigationController::iniciarAgendamento(int indice, uint16_t duracaoMin)
     }
     else
     {
+        // Se a agenda atingiu uma valvula ja aberta manualmente,
+        // a exibicao deve passar a refletir origem automatica em tempo real.
+        bool eraManualAntes = _origemManual[indice];
+        _origemManual[indice] = false;
+
+        if (eraManualAntes && DEBUG_SERIAL)
+        {
+            Serial.print("[Irrigacao] Setor ");
+            Serial.print(indice + 1);
+            Serial.println(" assumido por agendamento.");
+        }
+
         // Em conflito de horario, conserva o maior tempo restante.
         if ((long)(novoDeadline - _deadlineFechamento[indice]) > 0)
         {
@@ -157,6 +169,14 @@ bool IrrigationController::algumAbertas() const
             return true;
     }
     return false;
+}
+
+bool IrrigationController::valvulaEmAgendamento(int indice) const
+{
+    if (!indiceValido(indice))
+        return false;
+
+    return (_estados[indice] == EstadoValvula::ABERTA) && !_origemManual[indice];
 }
 
 // --- Loop: verifica timeout de segurança ---
