@@ -54,21 +54,21 @@ Plataforma:
 
 Mapeamento de pinos (Config.h):
 
-| Recurso | Pino |
-| --- | --- |
-| Encoder CLK | 18 |
-| Encoder DT | 19 |
-| Encoder BTN | 4 |
-| OLED SDA | 21 |
-| OLED SCL | 22 |
-| Rele 1 | 23 |
-| Rele 2 | 25 |
-| Rele 3 | 26 |
-| Rele 4 | 27 |
-| Rele 5 | 32 |
-| Rele 6 | 33 |
-| Rele 7 | 13 |
-| Rele 8 | 14 |
+| Recurso     | Pino |
+| ----------- | ---- |
+| Encoder CLK | 18   |
+| Encoder DT  | 19   |
+| Encoder BTN | 4    |
+| OLED SDA    | 21   |
+| OLED SCL    | 22   |
+| Rele 1      | 23   |
+| Rele 2      | 25   |
+| Rele 3      | 26   |
+| Rele 4      | 27   |
+| Rele 5      | 32   |
+| Rele 6      | 33   |
+| Rele 7      | 13   |
+| Rele 8      | 14   |
 
 Observacao: OLED e DS3231 compartilham o barramento I2C.
 
