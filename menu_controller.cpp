@@ -8,7 +8,8 @@
 const char *MenuController::_nomesItens[] = {
     "Irrigar Agora",
     "Programar",
-    "Configuracoes"};
+    "Configuracoes",
+    "WEBSERVER"};
 
 MenuController::MenuController(ScheduleManager &schedule, RtcDriverDs3231 &rtc, RuntimeConfigManager &config)
     : _schedule(schedule),
@@ -190,6 +191,14 @@ void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bo
     case EstadoMenu::CONFIGURACOES:
         processarConfiguracoes(direcao, botaoPressionado, botaoLongoPressionado);
         break;
+
+    case EstadoMenu::WEBSERVER:
+        // Tela informativa: qualquer clique retorna ao status.
+        if (botaoPressionado || botaoLongoPressionado)
+        {
+            voltar();
+        }
+        break;
     }
 }
 
@@ -316,6 +325,9 @@ void MenuController::selecionar()
     case ItemMenu::CONFIGURACOES:
         _estado = EstadoMenu::CONFIGURACOES;
         entrarConfiguracoes();
+        break;
+    case ItemMenu::WEBSERVER:
+        _estado = EstadoMenu::WEBSERVER;
         break;
     default:
         break;

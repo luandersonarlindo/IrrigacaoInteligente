@@ -57,7 +57,7 @@ namespace
             // tecla lateral (estilo funcao)
             d.desenharRetanguloPreenchido(x + 24, y + 14, 2, 10);
         }
-        else
+        else if (tipo == 2)
         {
             // Configuracoes: sliders
             d.desenharLinha(x + 6, y + 10, x + 26, y + 10);
@@ -66,6 +66,11 @@ namespace
             d.desenharRetanguloPreenchido(x + 10, y + 8, 4, 4);
             d.desenharRetanguloPreenchido(x + 18, y + 14, 4, 4);
             d.desenharRetanguloPreenchido(x + 13, y + 20, 4, 4);
+        }
+        else
+        {
+            // WebServer: bloco preenchido (referencia enviada pelo usuario).
+            d.desenharRetanguloPreenchido(x + 4, y + 4, 24, 24);
         }
     }
 
@@ -300,11 +305,13 @@ namespace
 DisplayManager::DisplayManager(DisplayDriverOled &display,
                                MenuController &menu,
                                RtcDriverDs3231 &rtc,
-                               IrrigationController &irrigacao)
+                               IrrigationController &irrigacao,
+                               WebApManager &webAp)
     : _display(display),
       _menu(menu),
       _rtc(rtc),
       _irrigacao(irrigacao),
+      _webAp(webAp),
       _ultimaAtualizacao(0),
       _agendaExecucaoAtiva(false),
       _agendaAguardandoIntervalo(false),
@@ -369,6 +376,9 @@ void DisplayManager::atualizar()
         break;
     case EstadoMenu::CONFIGURACOES:
         desenharTelaConfig();
+        break;
+    case EstadoMenu::WEBSERVER:
+        desenharTelaWebServer();
         break;
     }
 
@@ -1408,6 +1418,43 @@ void DisplayManager::desenharTelaConfig()
         _display.desenharTextoMini(0, 56, "OK/Segure para voltar");
         return;
     }
+}
+
+void DisplayManager::desenharTelaWebServer()
+{
+    desenharCabecalho("WEBSERVER");
+
+    if (!_webAp.ativo())
+    {
+        _display.desenharTexto(0, 20, "Falha ao iniciar AP");
+        _display.desenharTextoMini(0, 32, "Tente voltar e entrar");
+        _display.desenharTextoMini(0, 56, "OK/Segure: voltar");
+        return;
+    }
+
+    char linhaSsid[30];
+    snprintf(linhaSsid, sizeof(linhaSsid), "SSID: %s", _webAp.ssid());
+
+    char linhaSenha[30];
+    snprintf(linhaSenha, sizeof(linhaSenha), "Senha: %s", _webAp.senha());
+
+    String ip = _webAp.ipTexto();
+    String url = _webAp.urlAcesso();
+
+    _display.desenharTextoMini(0, 16, "Conecte no Wi-Fi do ESP32");
+    _display.desenharTextoMini(0, 24, linhaSsid);
+    _display.desenharTextoMini(0, 32, linhaSenha);
+
+    char linhaIp[28];
+    snprintf(linhaIp, sizeof(linhaIp), "IP: %s", ip.c_str());
+    _display.desenharTextoMini(0, 40, linhaIp);
+
+    char linhaUrl[32];
+    snprintf(linhaUrl, sizeof(linhaUrl), "URL: %s", url.c_str());
+    _display.desenharTextoMini(0, 48, linhaUrl);
+
+    _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
+    _display.desenharTextoMini(0, 56, "OK/Segure: voltar");
 }
 
 // ============================================================

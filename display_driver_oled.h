@@ -14,7 +14,8 @@
 #include <Wire.h>
 #include "Config.h"
 
-class DisplayDriverOled {
+class DisplayDriverOled
+{
 public:
     DisplayDriverOled();
 
@@ -28,17 +29,17 @@ public:
     void renderizar();
 
     // --- Primitivas de desenho ---
-    void desenharTexto(int x, int y, const char* texto);
-    void desenharTextoMini(int x, int y, const char* texto);
-    void desenharTextoGrande(int x, int y, const char* texto);
-    void desenharTextoFonteTitulo(int x, int y, const char* texto);
+    void desenharTexto(int x, int y, const char *texto);
+    void desenharTextoMini(int x, int y, const char *texto);
+    void desenharTextoGrande(int x, int y, const char *texto);
+    void desenharTextoFonteTitulo(int x, int y, const char *texto);
     void desenharLinha(int x1, int y1, int x2, int y2);
     void desenharRetangulo(int x, int y, int largura, int altura);
     void desenharRetanguloPreenchido(int x, int y, int largura, int altura);
     void desenharIcone32(int x, int y, uint16_t glifo);
 
     // Utilitários para layout
-    int larguraTexto(const char* texto);
+    int larguraTexto(const char *texto);
 
     // Cor de desenho: 1 = branco (padrão), 0 = preto (para texto sobre fundo branco)
     void setCorDesenho(uint8_t cor);

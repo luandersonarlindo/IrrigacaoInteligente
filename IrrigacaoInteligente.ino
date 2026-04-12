@@ -17,6 +17,7 @@
 #include "irrigation_controller.h"
 #include "schedule_manager.h"
 #include "runtime_config_manager.h"
+#include "web_ap_manager.h"
 
 // --- Instâncias globais ---
 EncoderDriver         encoder;
@@ -26,7 +27,8 @@ RuntimeConfigManager  runtimeConfig;
 ScheduleManager       scheduleManager(runtimeConfig);
 MenuController        menu(scheduleManager, rtc, runtimeConfig);
 IrrigationController  irrigacao(runtimeConfig);
-DisplayManager        displayManager(oled, menu, rtc, irrigacao);
+WebApManager          webApManager(irrigacao, scheduleManager, runtimeConfig, rtc);
+DisplayManager        displayManager(oled, menu, rtc, irrigacao, webApManager);
 bool                  rtcDisponivel = false;
 
 struct ExecucaoAgendaSequencial {
@@ -251,6 +253,7 @@ void setup() {
     runtimeConfig.begin();
     scheduleManager.begin();
     irrigacao.begin();     // configura GPIOs e garante relés desligados
+    webApManager.begin();
     displayManager.begin();
 
     execAgenda.ativa = false;
@@ -355,6 +358,9 @@ void loop() {
         (uint8_t)contarSetoresPendentesAgenda(),
         maskSetoresNoLoteAgenda(),
         maskSetoresPendentesAgenda());
+
+    // 6.2 Mantem o servidor HTTP responsivo durante o modo AP
+    webApManager.atualizar();
 
     // 7. Renderiza display
     displayManager.atualizar();

@@ -49,6 +49,22 @@
 #define MAX_SETOR_SIMULTANEOS_AGENDA 2 // Limite de setores simultaneos em agenda
 #define INTERVALO_LOTE_AGENDA_MS 10000 // Intervalo entre lotes da agenda (ms)
 
+// --- Wi-Fi AP + WebServer ---
+#define WIFI_AP_SSID "IrrigacaoESP32"
+#define WIFI_AP_PASSWORD "12345678"
+#define WIFI_AP_CHANNEL 6
+#define WIFI_AP_MAX_CONNECTIONS 4
+#define WIFI_STA_ENABLED true
+#define WIFI_STA_SSID "ARLINDO"
+#define WIFI_STA_PASSWORD "96984949"
+#define WIFI_STA_RETRY_MS 15000
+
+// --- Web Dashboard (valores padrao enquanto sensores externos nao forem ligados) ---
+#define WEB_FORCE_DEFAULT_SECONDS 20
+#define WEB_TEMP_DEFAULT_C 28.4f
+#define WEB_HUMIDADE_AR_DEFAULT_PCT 72.0f
+#define WEB_CHUVA_1H_DEFAULT_MM 0.0f
+
 // --- Debug ---
 #define DEBUG_SERIAL true // true = habilita Serial.println para debug
 #define BAUD_RATE 115200
