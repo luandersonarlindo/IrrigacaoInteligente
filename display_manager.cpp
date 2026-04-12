@@ -6,6 +6,96 @@
 
 namespace
 {
+    constexpr int WEBSERVER_MAX_LINHAS = 24;
+    constexpr int WEBSERVER_LINHAS_POR_PAGINA = 4;
+    constexpr int WEBSERVER_Y_INICIAL = 14;
+    constexpr int WEBSERVER_ALTURA_LINHA = 10;
+    constexpr int WEBSERVER_LARGURA_MAX_PX = OLED_LARGURA - 2;
+    int adicionarTextoQuebrado(DisplayDriverOled &display,
+                               const String &textoOriginal,
+                               String linhas[WEBSERVER_MAX_LINHAS],
+                               int totalAtual)
+    {
+        if (totalAtual >= WEBSERVER_MAX_LINHAS)
+        {
+            return totalAtual;
+        }
+
+        String restante = textoOriginal;
+        restante.trim();
+        if (restante.length() == 0)
+        {
+            return totalAtual;
+        }
+
+        while (restante.length() > 0 && totalAtual < WEBSERVER_MAX_LINHAS)
+        {
+            int tamanho = (int)restante.length();
+            int corte = tamanho;
+
+            while (corte > 0)
+            {
+                String candidata = restante.substring(0, corte);
+                candidata.trim();
+
+                if (candidata.length() == 0)
+                {
+                    corte--;
+                    continue;
+                }
+
+                if (display.larguraTexto(candidata.c_str()) <= WEBSERVER_LARGURA_MAX_PX)
+                {
+                    break;
+                }
+
+                int ultimoEspaco = candidata.lastIndexOf(' ');
+                if (ultimoEspaco > 0)
+                {
+                    corte = ultimoEspaco;
+                }
+                else
+                {
+                    corte--;
+                }
+            }
+
+            if (corte <= 0)
+            {
+                corte = 1;
+                while (corte < tamanho)
+                {
+                    String candidata = restante.substring(0, corte + 1);
+                    if (display.larguraTexto(candidata.c_str()) > WEBSERVER_LARGURA_MAX_PX)
+                    {
+                        break;
+                    }
+                    corte++;
+                }
+            }
+
+            String linha = restante.substring(0, corte);
+            linha.trim();
+            if (linha.length() == 0)
+            {
+                linha = restante.substring(0, 1);
+                corte = 1;
+            }
+
+            linhas[totalAtual++] = linha;
+
+            if (corte >= tamanho)
+            {
+                break;
+            }
+
+            restante = restante.substring(corte);
+            restante.trim();
+        }
+
+        return totalAtual;
+    }
+
     // Wi-Fi icon derived from the provided icons8 image (id 9922), converted to 1-bit 24x18.
     const uint8_t WIFI_ICON_9922_24X18[] = {
         0x00, 0xFF, 0x00, 0xE0, 0xFF, 0x07, 0xF8, 0xFF, 0x1F, 0xFC, 0xFF, 0x3F,
@@ -1468,37 +1558,81 @@ void DisplayManager::desenharTelaWebServer()
 {
     desenharCabecalho("WEBSERVER");
 
+    String linhas[WEBSERVER_MAX_LINHAS];
+    int totalLinhas = 0;
+
     if (!_webAp.ativo())
     {
-        _display.desenharTexto(0, 20, "Falha ao iniciar AP");
-        _display.desenharTextoMini(0, 32, "Tente voltar e entrar");
-        _display.desenharTextoMini(0, 56, "OK/Segure: voltar");
-        return;
+        totalLinhas = adicionarTextoQuebrado(_display, "Falha ao iniciar AP", linhas, totalLinhas);
+        totalLinhas = adicionarTextoQuebrado(_display, "Tente voltar e entrar novamente", linhas, totalLinhas);
+    }
+    else
+    {
+        totalLinhas = adicionarTextoQuebrado(_display, "Conecte no Wi-Fi do ESP32", linhas, totalLinhas);
+        totalLinhas = adicionarTextoQuebrado(_display, String("SSID: ") + _webAp.ssid(), linhas, totalLinhas);
+        totalLinhas = adicionarTextoQuebrado(_display, String("Senha: ") + _webAp.senha(), linhas, totalLinhas);
+        totalLinhas = adicionarTextoQuebrado(_display, String("IP AP: ") + _webAp.ipTexto(), linhas, totalLinhas);
+
+        String urlAp = _webAp.urlAcessoAp();
+        if (urlAp.length() > 0)
+        {
+            totalLinhas = adicionarTextoQuebrado(_display, String("URL AP: ") + urlAp, linhas, totalLinhas);
+        }
+
+        if (_webAp.staConectada())
+        {
+            totalLinhas = adicionarTextoQuebrado(_display, String("IP STA: ") + _webAp.ipStaTexto(), linhas, totalLinhas);
+
+            String urlSta = _webAp.urlAcessoSta();
+            if (urlSta.length() > 0)
+            {
+                totalLinhas = adicionarTextoQuebrado(_display, String("URL STA: ") + urlSta, linhas, totalLinhas);
+            }
+        }
+        else
+        {
+            totalLinhas = adicionarTextoQuebrado(_display, "STA: sem conexao", linhas, totalLinhas);
+        }
     }
 
-    char linhaSsid[30];
-    snprintf(linhaSsid, sizeof(linhaSsid), "SSID: %s", _webAp.ssid());
+    if (totalLinhas <= 0)
+    {
+        linhas[0] = "Sem informacoes";
+        totalLinhas = 1;
+    }
 
-    char linhaSenha[30];
-    snprintf(linhaSenha, sizeof(linhaSenha), "Senha: %s", _webAp.senha());
+    int totalPaginas = (totalLinhas + WEBSERVER_LINHAS_POR_PAGINA - 1) / WEBSERVER_LINHAS_POR_PAGINA;
+    int paginaAtual = 0;
+    if (totalPaginas > 1)
+    {
+        paginaAtual = _menu.paginaWebServer() % totalPaginas;
+    }
 
-    String ip = _webAp.ipTexto();
-    String url = _webAp.urlAcesso();
+    int inicio = paginaAtual * WEBSERVER_LINHAS_POR_PAGINA;
+    for (int i = 0; i < WEBSERVER_LINHAS_POR_PAGINA; i++)
+    {
+        int indiceLinha = inicio + i;
+        if (indiceLinha >= totalLinhas)
+        {
+            break;
+        }
 
-    _display.desenharTextoMini(0, 16, "Conecte no Wi-Fi do ESP32");
-    _display.desenharTextoMini(0, 24, linhaSsid);
-    _display.desenharTextoMini(0, 32, linhaSenha);
-
-    char linhaIp[28];
-    snprintf(linhaIp, sizeof(linhaIp), "IP: %s", ip.c_str());
-    _display.desenharTextoMini(0, 40, linhaIp);
-
-    char linhaUrl[32];
-    snprintf(linhaUrl, sizeof(linhaUrl), "URL: %s", url.c_str());
-    _display.desenharTextoMini(0, 48, linhaUrl);
+        int y = WEBSERVER_Y_INICIAL + (i * WEBSERVER_ALTURA_LINHA);
+        _display.desenharTexto(0, y, linhas[indiceLinha].c_str());
+    }
 
     _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-    _display.desenharTextoMini(0, 56, "OK/Segure: voltar");
+
+    if (totalPaginas > 1)
+    {
+        char rodape[26];
+        snprintf(rodape, sizeof(rodape), "Pag %d/%d Gire OK/Seg", paginaAtual + 1, totalPaginas);
+        _display.desenharTextoMini(0, 56, rodape);
+    }
+    else
+    {
+        _display.desenharTextoMini(0, 56, "OK/Segure: voltar");
+    }
 }
 
 // ============================================================

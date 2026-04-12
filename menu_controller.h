@@ -96,6 +96,9 @@ public:
     int setorAtual() const;
     bool opcaoVoltarIrrigacaoSelecionada() const;
 
+    // Tela WebServer — paginação manual de conteúdo
+    int paginaWebServer() const;
+
     // Notificação de timeout — display_manager consulta para exibir aviso
     bool timeoutOcorreu() const;
     void limparTimeout();
@@ -156,6 +159,7 @@ private:
 
     // Irrigação manual
     int _setorAtual;      // setor em foco no encoder (0 a NUM_VALVULAS-1)
+    int _paginaWebServer; // indice da pagina na tela de WebServer
     bool _timeoutOcorreu; // flag para display exibir aviso
     int _setorTimeout;    // qual setor foi fechado por timeout
 

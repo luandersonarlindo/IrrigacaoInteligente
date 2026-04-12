@@ -20,6 +20,7 @@ MenuController::MenuController(ScheduleManager &schedule, RtcDriverDs3231 &rtc, 
       _menuAtivo(false),
       _ultimoEventoMenuMs(0),
       _setorAtual(0),
+      _paginaWebServer(0),
       _timeoutOcorreu(false),
       _setorTimeout(-1),
       _etapaProgramacao(EtapaProgramacao::SELECIONAR_AGENDA),
@@ -57,6 +58,7 @@ void MenuController::begin()
     _menuAtivo = false;
     _ultimoEventoMenuMs = millis();
     _setorAtual = 0;
+    _paginaWebServer = 0;
     _timeoutOcorreu = false;
     _setorTimeout = -1;
     _etapaProgramacao = EtapaProgramacao::SELECIONAR_AGENDA;
@@ -193,6 +195,15 @@ void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bo
         break;
 
     case EstadoMenu::WEBSERVER:
+        if (direcao == DirecaoEncoder::HORARIO)
+        {
+            _paginaWebServer = (_paginaWebServer + 1) % 100;
+        }
+        else if (direcao == DirecaoEncoder::ANTI_HORARIO)
+        {
+            _paginaWebServer = (_paginaWebServer + 99) % 100;
+        }
+
         // Tela informativa: qualquer clique retorna ao status.
         if (botaoPressionado || botaoLongoPressionado)
         {
@@ -209,6 +220,7 @@ int MenuController::itemSelecionado() const { return _itemAtual; }
 bool MenuController::menuAtivo() const { return _menuAtivo; }
 int MenuController::setorAtual() const { return _setorAtual; }
 bool MenuController::opcaoVoltarIrrigacaoSelecionada() const { return _setorAtual == NUM_VALVULAS; }
+int MenuController::paginaWebServer() const { return _paginaWebServer; }
 bool MenuController::timeoutOcorreu() const { return _timeoutOcorreu; }
 
 void MenuController::limparTimeout()
@@ -324,6 +336,7 @@ void MenuController::selecionar()
         break;
     case ItemMenu::WEBSERVER:
         _estado = EstadoMenu::WEBSERVER;
+        _paginaWebServer = 0;
         break;
     case ItemMenu::CONFIGURACOES:
         _estado = EstadoMenu::CONFIGURACOES;
@@ -340,6 +353,7 @@ void MenuController::voltar()
     _itemAtual = 0;
     _menuAtivo = false;
     _setorAtual = 0;
+    _paginaWebServer = 0;
 
     if (DEBUG_SERIAL)
     {
