@@ -20,8 +20,8 @@ enum class ItemMenu
 {
     IRRIGACAO_MANUAL = 0,
     PROGRAMAR,
-    CONFIGURACOES,
     WEBSERVER,
+    CONFIGURACOES,
     TOTAL // sentinela — mantém a contagem automática
 };
 
@@ -31,8 +31,8 @@ enum class EstadoMenu
     STATUS, // tela padrão — não é item de menu
     IRRIGACAO_MANUAL,
     PROGRAMAR,
-    CONFIGURACOES,
-    WEBSERVER
+    WEBSERVER,
+    CONFIGURACOES
 };
 
 enum class EtapaProgramacao

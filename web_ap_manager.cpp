@@ -9,29 +9,6 @@
 
 namespace
 {
-    const char *nomeStatusSta(wl_status_t status)
-    {
-        switch (status)
-        {
-        case WL_IDLE_STATUS:
-            return "IDLE";
-        case WL_NO_SSID_AVAIL:
-            return "NO_SSID_AVAIL";
-        case WL_SCAN_COMPLETED:
-            return "SCAN_COMPLETED";
-        case WL_CONNECTED:
-            return "CONNECTED";
-        case WL_CONNECT_FAILED:
-            return "CONNECT_FAILED";
-        case WL_CONNECTION_LOST:
-            return "CONNECTION_LOST";
-        case WL_DISCONNECTED:
-            return "DISCONNECTED";
-        default:
-            return "DESCONHECIDO";
-        }
-    }
-
     const char WEB_DASHBOARD_HTML[] PROGMEM = R"HTML(
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -459,8 +436,8 @@ namespace
   <div class="brand">
     <div class="brand-icon">IO</div>
     <div>
-      <h1>Sistema de Irrigacao</h1>
-      <p>ESP32 - Recife - 8 valvulas</p>
+      <h1>Sistema de Irrigação</h1>
+      <p>ESP32 - 8 Válvulas</p>
     </div>
   </div>
   <div class="topbar-right">
@@ -470,7 +447,7 @@ namespace
 </div>
 
 <div class="wrap">
-  <div class="section-label">Controle de Valvulas</div>
+  <div class="section-label">Controle de Válvulas</div>
   <div class="valve-grid" id="valveGrid"></div>
 
   <div class="section-label">Editor de Agendas</div>
@@ -515,7 +492,7 @@ function renderValvulas(valvulas) {
     return `
       <div class="valve-card ${activeCls}" onclick="alternarValvula(${v.id})">
         <div>
-          <div class="valve-num">Valvula ${pad2(v.id)} - GPIO ${v.gpio}</div>
+          <div class="valve-num">Válvula ${pad2(v.id)} - GPIO ${v.gpio}</div>
           <div class="valve-name">Setor ${v.id}</div>
           <div class="valve-status">${v.status} (${v.origem})</div>
         </div>
@@ -729,11 +706,6 @@ WebApManager::WebApManager(IrrigationController &irrigacao,
 
 void WebApManager::begin()
 {
-    if (DEBUG_SERIAL)
-    {
-        Serial.println("[WebAP] Inicializando rede e servidor...");
-    }
-
     iniciarApServidor();
 }
 
@@ -768,10 +740,6 @@ bool WebApManager::iniciarApServidor()
                             WIFI_AP_MAX_CONNECTIONS);
     if (!okAp)
     {
-        if (DEBUG_SERIAL)
-        {
-            Serial.println("[WebAP] Falha ao iniciar AP.");
-        }
         return false;
     }
 
@@ -780,13 +748,6 @@ bool WebApManager::iniciarApServidor()
         WiFi.begin(WIFI_STA_SSID, WIFI_STA_PASSWORD);
         _ultimoRetryStaMs = millis();
         _ultimoStatusSta = WiFi.status();
-
-        if (DEBUG_SERIAL)
-        {
-            Serial.print("[WebAP][STA] SSID alvo: ");
-            Serial.println(WIFI_STA_SSID);
-            Serial.println("[WebAP][STA] Aguardando conexao ao roteador...");
-        }
     }
 
     if (!_rotasConfiguradas)
@@ -797,16 +758,6 @@ bool WebApManager::iniciarApServidor()
 
     _server.begin();
     _ativo = true;
-
-    if (DEBUG_SERIAL)
-    {
-        Serial.print("[WebAP] AP ativo em: ");
-        Serial.println(urlAcessoAp());
-        if (_staConfigurada)
-        {
-            Serial.println("[WebAP][STA] Dica: para acesso pela rede do roteador, use URL STA quando conectar.");
-        }
-    }
 
     return true;
 }
@@ -826,11 +777,6 @@ void WebApManager::pararApServidor()
     }
     WiFi.mode(WIFI_OFF);
     _ativo = false;
-
-    if (DEBUG_SERIAL)
-    {
-        Serial.println("[WebAP] AP e servidor encerrados.");
-    }
 }
 
 bool WebApManager::ativo() const
@@ -1110,32 +1056,6 @@ void WebApManager::tentarConexaoSta()
     if (statusAtual != _ultimoStatusSta)
     {
         _ultimoStatusSta = statusAtual;
-
-        if (DEBUG_SERIAL)
-        {
-            Serial.print("[WebAP][STA] Status: ");
-            Serial.println(nomeStatusSta(statusAtual));
-
-            if (statusAtual == WL_CONNECTED)
-            {
-                Serial.print("[WebAP][STA] Conectado no SSID: ");
-                Serial.println(WiFi.SSID());
-                Serial.print("[WebAP][STA] IP STA: ");
-                Serial.println(ipStaTexto());
-                Serial.print("[WebAP][STA] URL STA: ");
-                Serial.println(urlAcessoSta());
-                Serial.print("[WebAP][AP ] URL AP : ");
-                Serial.println(urlAcessoAp());
-            }
-            else if (statusAtual == WL_CONNECT_FAILED)
-            {
-                Serial.println("[WebAP][STA] Falha de autenticacao. Verifique senha.");
-            }
-            else if (statusAtual == WL_NO_SSID_AVAIL)
-            {
-                Serial.println("[WebAP][STA] SSID nao encontrado. Verifique nome/rede 2.4GHz.");
-            }
-        }
     }
 
     if (statusAtual == WL_CONNECTED)
@@ -1152,12 +1072,6 @@ void WebApManager::tentarConexaoSta()
     _ultimoRetryStaMs = agora;
     WiFi.disconnect(false, false);
     WiFi.begin(WIFI_STA_SSID, WIFI_STA_PASSWORD);
-
-    if (DEBUG_SERIAL)
-    {
-        Serial.print("[WebAP][STA] Tentando conectar em ");
-        Serial.println(WIFI_STA_SSID);
-    }
 }
 
 void WebApManager::enviarPaginaPrincipal()

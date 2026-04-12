@@ -6,6 +6,50 @@
 
 namespace
 {
+    // Wi-Fi icon derived from the provided icons8 image (id 9922), converted to 1-bit 24x18.
+    const uint8_t WIFI_ICON_9922_24X18[] = {
+        0x00, 0xFF, 0x00, 0xE0, 0xFF, 0x07, 0xF8, 0xFF, 0x1F, 0xFC, 0xFF, 0x3F,
+        0xFE, 0x00, 0x7F, 0x3F, 0x00, 0xFC, 0x0E, 0x7E, 0x70, 0xC4, 0xFF, 0x23,
+        0xE0, 0xFF, 0x07, 0xF0, 0xFF, 0x0F, 0xE0, 0x81, 0x07, 0xC0, 0x00, 0x03,
+        0x00, 0x3C, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x7E, 0x00, 0x00, 0x3C, 0x00,
+        0x00, 0x18, 0x00, 0x00, 0x00, 0x00};
+
+    void desenharBitmap1Bpp(DisplayDriverOled &d,
+                            int x,
+                            int y,
+                            int largura,
+                            int altura,
+                            const uint8_t *dados)
+    {
+        int bytesPorLinha = (largura + 7) / 8;
+
+        for (int linha = 0; linha < altura; linha++)
+        {
+            int inicioSegmento = -1;
+
+            for (int coluna = 0; coluna <= largura; coluna++)
+            {
+                bool aceso = false;
+                if (coluna < largura)
+                {
+                    int indiceByte = (linha * bytesPorLinha) + (coluna / 8);
+                    uint8_t mascara = (uint8_t)(1U << (coluna % 8));
+                    aceso = (dados[indiceByte] & mascara) != 0;
+                }
+
+                if (aceso && inicioSegmento < 0)
+                {
+                    inicioSegmento = coluna;
+                }
+                else if (!aceso && inicioSegmento >= 0)
+                {
+                    d.desenharLinha(x + inicioSegmento, y + linha, x + coluna - 1, y + linha);
+                    inicioSegmento = -1;
+                }
+            }
+        }
+    }
+
     // Icones simples em linha para OLED monocromatico.
     void desenharIconeMenuPrincipal(DisplayDriverOled &d, int x, int y, int tipo)
     {
@@ -57,7 +101,12 @@ namespace
             // tecla lateral (estilo funcao)
             d.desenharRetanguloPreenchido(x + 24, y + 14, 2, 10);
         }
-        else if (tipo == 2)
+        else if (tipo == (int)ItemMenu::WEBSERVER)
+        {
+            // WebServer: Wi-Fi icon based on the image provided by the user.
+            desenharBitmap1Bpp(d, x + 4, y + 7, 24, 18, WIFI_ICON_9922_24X18);
+        }
+        else
         {
             // Configuracoes: sliders
             d.desenharLinha(x + 6, y + 10, x + 26, y + 10);
@@ -66,11 +115,6 @@ namespace
             d.desenharRetanguloPreenchido(x + 10, y + 8, 4, 4);
             d.desenharRetanguloPreenchido(x + 18, y + 14, 4, 4);
             d.desenharRetanguloPreenchido(x + 13, y + 20, 4, 4);
-        }
-        else
-        {
-            // WebServer: bloco preenchido (referencia enviada pelo usuario).
-            d.desenharRetanguloPreenchido(x + 4, y + 4, 24, 24);
         }
     }
 

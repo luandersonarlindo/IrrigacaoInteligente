@@ -66,5 +66,5 @@
 #define WEB_CHUVA_1H_DEFAULT_MM 0.0f
 
 // --- Debug ---
-#define DEBUG_SERIAL true // true = habilita Serial.println para debug
+#define DEBUG_SERIAL false // false = silencia mensagens no monitor serial
 #define BAUD_RATE 115200

@@ -8,8 +8,8 @@
 const char *MenuController::_nomesItens[] = {
     "Irrigar Agora",
     "Programar",
-    "Configuracoes",
-    "WEBSERVER"};
+    "WEBSERVER",
+    "Configuracoes"};
 
 MenuController::MenuController(ScheduleManager &schedule, RtcDriverDs3231 &rtc, RuntimeConfigManager &config)
     : _schedule(schedule),
@@ -322,12 +322,12 @@ void MenuController::selecionar()
         _estado = EstadoMenu::PROGRAMAR;
         entrarProgramacao();
         break;
+    case ItemMenu::WEBSERVER:
+        _estado = EstadoMenu::WEBSERVER;
+        break;
     case ItemMenu::CONFIGURACOES:
         _estado = EstadoMenu::CONFIGURACOES;
         entrarConfiguracoes();
-        break;
-    case ItemMenu::WEBSERVER:
-        _estado = EstadoMenu::WEBSERVER;
         break;
     default:
         break;
