@@ -1,37 +1,37 @@
-# IrrigacaoInteligente
+# 🌱 IrrigacaoInteligente
 
 Sistema de irrigacao inteligente com ESP32, display OLED, encoder rotativo, RTC DS3231 e controle de ate 8 valvulas por rele.
 
 Este README descreve o estado atual implementado no firmware.
 
-## Visao rapida
+## 👀 Visao rapida
 
-- Controle manual de setores no menu.
-- Agendamento automatico semanal com execucao sequencial por lotes.
-- Dashboard web local (AP Wi-Fi) para monitorar e controlar o sistema.
-- Persistencia de agendas e configuracoes runtime na flash (NVS), com versao e CRC.
-- Operacao mesmo sem RTC (sem hora real).
-- Timeout de seguranca no modo manual.
+- ✅ Controle manual de setores no menu.
+- 🗓️ Agendamento automatico semanal com execucao sequencial por lotes.
+- 🌐 Dashboard web local (AP Wi-Fi) para monitorar e controlar o sistema.
+- 💾 Persistencia de agendas e configuracoes runtime na flash (NVS), com versao e CRC.
+- 🕒 Operacao mesmo sem RTC (sem hora real).
+- 🛡️ Timeout de seguranca no modo manual.
 
-## Sumario
+## 🧭 Sumario
 
-1. Escopo
-2. Hardware
-3. Configuracao rapida
-4. Configuracoes principais
-5. Arquitetura
-6. Fluxo do firmware
-7. Operacao da interface
-8. Agendamento
-9. Dashboard web
-10. Persistencia
-11. Estrutura do projeto
-12. Build e gravacao
-13. Troubleshooting rapido
-14. Validacao recomendada
-15. Limites atuais e roadmap
+1. 🎯 Escopo
+2. 🧰 Hardware
+3. ⚡ Configuracao rapida
+4. ⚙️ Configuracoes principais
+5. 🧱 Arquitetura
+6. 🔄 Fluxo do firmware
+7. 🕹️ Operacao da interface
+8. 📅 Agendamento
+9. 🌐 Dashboard web
+10. 💾 Persistencia
+11. 🗂️ Estrutura do projeto
+12. 🛠️ Build e gravacao
+13. 🩺 Troubleshooting rapido
+14. ✅ Validacao recomendada
+15. 🛣️ Limites atuais e roadmap
 
-## 1. Escopo
+## 1. 🎯 Escopo
 
 O firmware entrega:
 
@@ -47,7 +47,7 @@ Documentos complementares:
 - GUIA_DIDATICO_PROJETO.md
 - FASE5_CONTRATO_TECNICO.md
 
-## 2. Hardware
+## 2. 🧰 Hardware
 
 Plataforma:
 
@@ -77,7 +77,7 @@ Mapeamento de pinos (Config.h):
 
 Observacao: OLED e DS3231 compartilham o barramento I2C.
 
-## 3. Configuracao rapida
+## 3. ⚡ Configuracao rapida
 
 Passo a passo curto para colocar o sistema para rodar:
 
@@ -92,7 +92,7 @@ Passo a passo curto para colocar o sistema para rodar:
 6. Gire o encoder para abrir o menu e testar irrigacao manual.
 7. Se quiser usar dashboard web, conecte no AP e abra a URL exibida na tela WEBSERVER.
 
-## 4. Configuracoes principais
+## 4. ⚙️ Configuracoes principais
 
 Constantes relevantes em Config.h:
 
@@ -112,7 +112,7 @@ Rede/AP:
 - WIFI_STA_ENABLED, WIFI_STA_SSID, WIFI_STA_PASSWORD
 - WIFI_STA_RETRY_MS
 
-## 5. Arquitetura
+## 5. 🧱 Arquitetura
 
 Separacao adotada:
 
@@ -133,9 +133,9 @@ Modulos:
 - web_ap_manager.*: AP Wi-Fi, servidor HTTP e API do dashboard.
 - IrrigacaoInteligente.ino: setup e loop.
 
-## 6. Fluxo do firmware
+## 6. 🔄 Fluxo do firmware
 
-### 6.1 Setup
+### 6.1 🚀 Setup
 
 1. Inicializa Serial (se debug ativo).
 2. Inicializa I2C (Wire.begin).
@@ -144,7 +144,7 @@ Modulos:
 5. Inicializa runtime config e schedule manager.
 6. Inicializa irrigacao, web AP manager e display manager.
 
-### 6.2 Loop
+### 6.2 🔁 Loop
 
 1. Atualiza encoder.
 2. Le direcao e botoes.
@@ -159,7 +159,7 @@ Modulos:
 11. Mantem servidor HTTP responsivo.
 12. Atualiza display.
 
-## 7. Operacao da interface
+## 7. 🕹️ Operacao da interface
 
 Menu principal:
 
@@ -191,7 +191,7 @@ Configuracoes:
 - Submenu Relogio: hora, minuto, dia, mes, ano e timeout manual.
 - Submenu Sistema: duracao padrao, teste de valvulas, limpar agendas, restaurar padrao e info sistema.
 
-## 8. Agendamento
+## 8. 📅 Agendamento
 
 Modelo implementado atualmente:
 
@@ -216,7 +216,7 @@ Motor de execucao:
 - Em conflito no mesmo setor/minuto, aplica maior duracao.
 - Exclusao de agenda cancela execucao automatica em andamento.
 
-## 9. Dashboard web
+## 9. 🌐 Dashboard web
 
 Comportamento:
 
@@ -233,7 +233,7 @@ Rotas principais:
 - POST /api/config/runtime
 - POST /api/rtc/set
 
-## 10. Persistencia
+## 10. 💾 Persistencia
 
 Persistencia com Preferences (NVS):
 
@@ -250,7 +250,7 @@ No boot:
 
 - Se versao/CRC/leitura estiver invalida, reinicializa banco padrao seguro.
 
-## 11. Estrutura do projeto
+## 11. 🗂️ Estrutura do projeto
 
 - IrrigacaoInteligente.ino - entrada do firmware
 - Config.h - configuracoes globais
@@ -266,7 +266,7 @@ No boot:
 - GUIA_DIDATICO_PROJETO.md - guia pedagogico
 - FASE5_CONTRATO_TECNICO.md - contrato tecnico
 
-## 12. Build e gravacao
+## 12. 🛠️ Build e gravacao
 
 1. Abra o projeto na IDE Arduino.
 2. Selecione a placa ESP32 correta.
@@ -275,7 +275,7 @@ No boot:
 5. Grave no ESP32.
 6. Abra o monitor serial em 115200.
 
-## 13. Troubleshooting rapido
+## 13. 🩺 Troubleshooting rapido
 
 Problemas comuns e verificacoes:
 
@@ -296,7 +296,7 @@ Problemas comuns e verificacoes:
   - confira SSID/senha do AP em Config.h
   - confirme IP mostrado na tela WEBSERVER
 
-## 14. Validacao recomendada
+## 14. ✅ Validacao recomendada
 
 Teste funcional minimo:
 
@@ -317,7 +317,7 @@ Checklist de aceite rapido:
 - Disparo ocorre apenas no minuto esperado.
 - Dashboard responde sem erro nas rotas principais.
 
-## 15. Limites atuais e roadmap
+## 15. 🛣️ Limites atuais e roadmap
 
 Estado atual:
 

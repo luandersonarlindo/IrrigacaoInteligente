@@ -1,10 +1,10 @@
-# Fase 5 - Contrato Tecnico de Agendamento
+# 📜 Fase 5 - Contrato Tecnico de Agendamento
 
-Data original: 2026-04-10
-Revisao de alinhamento: 2026-04-12
-Status: implementado (modelo global de agendas)
+📅 Data original: 2026-04-10
+🔄 Revisao de alinhamento: 2026-04-12
+✅ Status: implementado (modelo global de agendas)
 
-## 1. Decisoes de produto fechadas (revisao atual)
+## 1. ✅ Decisoes de produto fechadas (revisao atual)
 
 1. D1: agendas globais com selecao de setores por mascara de bits.
 2. D2: agendamento semanal por dias da semana (nao apenas diario).
@@ -13,7 +13,7 @@ Status: implementado (modelo global de agendas)
 5. D5: edicao por encoder com campos hora, minuto, duracao, dias e setores.
 6. D6: execucao automatica sequencial por lotes, com limite de simultaneos e intervalo entre lotes.
 
-## 2. Escopo da Fase 5 (implementado)
+## 2. 🎯 Escopo da Fase 5 (implementado)
 
 Implementar agendamento automatico semanal para ate 8 setores fisicos, com ate 4 agendas globais.
 
@@ -23,9 +23,9 @@ Capacidade atual:
 - 4 agendas totais (slots)
 - cada agenda pode atuar em 1..8 setores via setoresMask
 
-## 3. Modelo de dados (contrato atual)
+## 3. 🧾 Modelo de dados (contrato atual)
 
-### 3.1 Estrutura de uma agenda
+### 3.1 📌 Estrutura de uma agenda
 
 ```cpp
 enum DiaSemanaBit {
@@ -48,7 +48,7 @@ struct AgendaSetor {
 };
 ```
 
-### 3.2 Estrutura global de agenda
+### 3.2 🗃️ Estrutura global de agenda
 
 ```cpp
 constexpr uint8_t MAX_AGENDAS_TOTAIS = 4;
@@ -60,7 +60,7 @@ struct BancoAgendas {
 };
 ```
 
-### 3.3 Configuracao runtime persistida
+### 3.3 ⚙️ Configuracao runtime persistida
 
 ```cpp
 struct BancoConfigRuntime {
@@ -71,7 +71,7 @@ struct BancoConfigRuntime {
 };
 ```
 
-## 4. Regras funcionais obrigatorias
+## 4. 📏 Regras funcionais obrigatorias
 
 1. Agenda valida: pelo menos 1 dia marcado.
 2. Agenda valida: pelo menos 1 setor marcado.
@@ -83,7 +83,7 @@ struct BancoConfigRuntime {
 7. Em reboot, recarregar dados persistidos automaticamente.
 8. Se versao/CRC estiverem invalidos, resetar banco para padrao seguro.
 
-## 5. Politica de persistencia
+## 5. 💾 Politica de persistencia
 
 Meio: ESP32 NVS (Preferences).
 
@@ -97,7 +97,7 @@ Diretrizes:
 4. DS3231 nao guarda agenda; DS3231 apenas fornece horario confiavel.
 5. Runtime config (timeout e duracao padrao) segue politica equivalente em banco proprio.
 
-## 6. Motor de execucao de agendas
+## 6. ⚙️ Motor de execucao de agendas
 
 Avaliacao no loop com gatilho por minuto + execucao sequencial por lotes.
 
@@ -114,9 +114,9 @@ Regras:
 6. Exclusao de agenda durante execucao cancela rotina automatica em andamento.
 7. Se setor manual estiver aberto e chegar comando automatico, manter coerencia por maior deadline.
 
-## 7. Contrato entre modulos
+## 7. 🔌 Contrato entre modulos
 
-## 7.1 Modulos envolvidos
+## 7.1 🧩 Modulos envolvidos
 
 - schedule_manager.h/.cpp
 - runtime_config_manager.h/.cpp
@@ -133,7 +133,7 @@ Responsabilidades principais:
 4. menu_controller/display_manager: UX local no OLED com encoder.
 5. web_ap_manager: dashboard web e API para status/comandos.
 
-## 7.2 Integracao com o loop atual
+## 7.2 🔄 Integracao com o loop atual
 
 No loop principal:
 
@@ -144,7 +144,7 @@ No loop principal:
 5. Atualizar estado visual no display.
 6. Processar servidor web.
 
-## 8. UX da programacao no OLED (implementado)
+## 8. 🖥️ UX da programacao no OLED (implementado)
 
 Fluxo de programacao:
 
@@ -169,7 +169,7 @@ Interacoes:
    - executa acao no submenu
 3. Clique longo: voltar/cancelar para etapa anterior conforme contexto.
 
-## 9. Maquina de estados da programacao (resumo)
+## 9. 🧠 Maquina de estados da programacao (resumo)
 
 ```text
 SELECIONAR_AGENDA
@@ -186,7 +186,7 @@ SUBMENU_AGENDA
   -> VOLTAR
 ```
 
-## 10. Criterios de aceite da Fase 5 (revisados)
+## 10. ✅ Criterios de aceite da Fase 5 (revisados)
 
 1. Usuario consegue criar/editar/excluir ate 4 agendas via encoder.
 2. Usuario consegue marcar/desmarcar dias e setores por agenda.
@@ -197,14 +197,14 @@ SUBMENU_AGENDA
 7. Nao ha regressao da irrigacao manual existente.
 8. Dashboard web apresenta status e aplica comandos sem erro.
 
-## 11. Limites atuais
+## 11. 🚧 Limites atuais
 
 1. Modelo atual e global por slot (nao por setor).
 2. Limite de 4 agendas totais.
 3. Sem excecoes por data especifica (calendario).
 4. Sem orquestracao avancada multi-zona alem da regra de lotes.
 
-## 12. Plano de evolucao sugerido
+## 12. 🛣️ Plano de evolucao sugerido
 
 1. Definir formalmente modelo final (global vs por setor) para proxima fase.
 2. Se necessario, migrar estrutura para 16 agendas (4x4) com estrategia de compatibilidade.

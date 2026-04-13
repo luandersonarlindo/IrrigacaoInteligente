@@ -1,32 +1,32 @@
-# Guia Didatico do Projeto Irrigacao Inteligente
+# 📘 Guia Didatico do Projeto Irrigacao Inteligente
 
 Este documento explica o projeto de forma simples, para ensino de alunos de 15 a 16 anos.
 
-## Visao rapida
+## 👀 Visao rapida
 
-- Projeto com ESP32 para irrigacao manual e automatica.
-- Interface local com OLED e encoder.
-- Menu com acesso a Irrigar Agora, Programar, WEBSERVER e Configuracoes.
-- Controle fisico de 8 valvulas por rele.
-- Agendas salvas na memoria flash (NVS).
-- Dashboard web no celular/computador via Wi-Fi AP.
+- ✅ Projeto com ESP32 para irrigacao manual e automatica.
+- 🖥️ Interface local com OLED e encoder.
+- 🧭 Menu com acesso a Irrigar Agora, Programar, WEBSERVER e Configuracoes.
+- 💧 Controle fisico de 8 valvulas por rele.
+- 💾 Agendas salvas na memoria flash (NVS).
+- 🌐 Dashboard web no celular/computador via Wi-Fi AP.
 
-## Sumario
+## 🧭 Sumario
 
-1. Escopo
-2. Hardware
-3. Configuracoes principais
-4. Arquitetura
-5. Fluxo do firmware
-6. Operacao da interface
-7. Agendamento
-8. Dashboard web
-9. Persistencia
-10. Estrutura do projeto
-11. Resumo pedagogico
-12. Proximos passos didaticos
+1. 🎯 Escopo
+2. 🧰 Hardware
+3. ⚙️ Configuracoes principais
+4. 🧱 Arquitetura
+5. 🔄 Fluxo do firmware
+6. 🕹️ Operacao da interface
+7. 📅 Agendamento
+8. 🌐 Dashboard web
+9. 💾 Persistencia
+10. 🗂️ Estrutura do projeto
+11. 🎓 Resumo pedagogico
+12. 🚀 Proximos passos didaticos
 
-## 1. Escopo
+## 1. 🎯 Escopo
 
 Este projeto entrega:
 
@@ -35,7 +35,7 @@ Este projeto entrega:
 - Persistencia de dados apos reiniciar o ESP32.
 - Estrutura modular para facilitar manutencao e ensino.
 
-## 2. Hardware
+## 2. 🧰 Hardware
 
 Componentes principais:
 
@@ -56,7 +56,7 @@ Observacao importante:
 
 - OLED e RTC compartilham o barramento I2C.
 
-## 3. Configuracoes principais
+## 3. ⚙️ Configuracoes principais
 
 As configuracoes ficam em Config.h.
 
@@ -72,7 +72,7 @@ Ideia para aula:
 
 - Se for trocar pino ou limite, altere primeiro no Config.h.
 
-## 4. Arquitetura
+## 4. 🧱 Arquitetura
 
 Regra de organizacao:
 
@@ -93,7 +93,7 @@ Regra de organizacao:
 - web_ap_manager.*: cria AP Wi-Fi e dashboard web.
 - IrrigacaoInteligente.ino: setup e loop.
 
-## 5. Fluxo do firmware
+## 5. 🔄 Fluxo do firmware
 
 No loop principal:
 
@@ -110,7 +110,7 @@ Resumo:
 
 - entrada do usuario -> decisao da logica -> acao nos reles -> atualizacao da tela e da web
 
-## 6. Operacao da interface
+## 6. 🕹️ Operacao da interface
 
 Menu principal:
 
@@ -138,7 +138,7 @@ Nas configuracoes:
 - Faz teste de valvulas.
 - Limpa agendas e restaura padrao.
 
-## 7. Agendamento
+## 7. 📅 Agendamento
 
 O modulo schedule_manager faz:
 
@@ -153,7 +153,7 @@ Modelo atual:
 - Cada agenda pode controlar varios setores por mascara de bits.
 - A execucao e sequencial por lotes quando ha muitos setores.
 
-## 8. Dashboard web
+## 8. 🌐 Dashboard web
 
 O modulo web_ap_manager faz:
 
@@ -166,14 +166,14 @@ Uso didatico:
 
 - Alunos podem comparar controle local (encoder) com controle remoto (web).
 
-## 9. Persistencia
+## 9. 💾 Persistencia
 
 As agendas e configuracoes runtime sao salvas na NVS (flash do ESP32).
 
 - Usa versao + CRC para garantir integridade.
 - Se os dados estiverem invalidos no boot, o sistema reinicia banco seguro.
 
-## 10. Estrutura do projeto
+## 10. 🗂️ Estrutura do projeto
 
 - IrrigacaoInteligente.ino
 - Config.h
@@ -190,7 +190,7 @@ As agendas e configuracoes runtime sao salvas na NVS (flash do ESP32).
 - GUIA_DIDATICO_PROJETO.md
 - FASE5_CONTRATO_TECNICO.md
 
-## 11. Resumo pedagogico
+## 11. 🎓 Resumo pedagogico
 
 - O projeto e modularizado.
 - Cada modulo resolve um problema especifico.
@@ -203,7 +203,7 @@ Correcoes importantes deste guia (alinhadas ao codigo atual):
 - Ja existe dashboard web com AP dedicado (web_ap_manager).
 - O loop principal inclui disparo automatico por minuto e execucao por lotes.
 
-## 12. Proximos passos didaticos
+## 12. 🚀 Proximos passos didaticos
 
 - Atividade 1: desenhar diagrama de blocos do fluxo completo.
 - Atividade 2: criar nova opcao de menu (ex.: Manutencao).
