@@ -1,24 +1,29 @@
 # Fase 5 - Contrato Tecnico de Agendamento
 
-Data: 2026-04-10
-Status: aprovado para implementacao
+Data original: 2026-04-10
+Revisao de alinhamento: 2026-04-12
+Status: implementado (modelo global de agendas)
 
-## 1. Decisoes de produto fechadas
+## 1. Decisoes de produto fechadas (revisao atual)
 
-1. D1: multiplos agendamentos por setor.
+1. D1: agendas globais com selecao de setores por mascara de bits.
 2. D2: agendamento semanal por dias da semana (nao apenas diario).
-3. D3: persistencia no ESP32 (flash/NVS). RTC DS3231 apenas para data/hora.
-4. D4: limite de 4 agendamentos por setor.
-5. D5: edicao via encoder com campos sequenciais: hora, minuto, duracao e dias.
+3. D3: persistencia no ESP32 via NVS para agenda e configuracoes runtime.
+4. D4: limite de 4 slots de agenda no sistema.
+5. D5: edicao por encoder com campos hora, minuto, duracao, dias e setores.
+6. D6: execucao automatica sequencial por lotes, com limite de simultaneos e intervalo entre lotes.
 
-## 2. Escopo da Fase 5
+## 2. Escopo da Fase 5 (implementado)
 
-Implementar agendamento automatico semanal para ate 4 setores, com ate 4 agendas por setor.
+Implementar agendamento automatico semanal para ate 8 setores fisicos, com ate 4 agendas globais.
 
-Total maximo de agendas no sistema:
-- 4 setores x 4 agendas = 16 agendas.
+Capacidade atual:
 
-## 3. Modelo de dados (contrato)
+- 8 setores (reles)
+- 4 agendas totais (slots)
+- cada agenda pode atuar em 1..8 setores via setoresMask
+
+## 3. Modelo de dados (contrato atual)
 
 ### 3.1 Estrutura de uma agenda
 
@@ -34,166 +39,178 @@ enum DiaSemanaBit {
 };
 
 struct AgendaSetor {
-    bool ativa;             // slot em uso
-    uint8_t hora;           // 0..23
-    uint8_t minuto;         // 0..59
-    uint16_t duracaoMin;    // 1..999 (pode limitar em UI)
-    uint8_t diasMask;       // bits DOM..SAB
+    bool ativa;
+    uint8_t hora;         // 0..23
+    uint8_t minuto;       // 0..59
+    uint16_t duracaoMin;  // >= 1 (UI limita em 240)
+    uint8_t diasMask;     // bits DOM..SAB
+    uint8_t setoresMask;  // bits setores 1..8
 };
 ```
 
 ### 3.2 Estrutura global de agenda
 
 ```cpp
-constexpr uint8_t MAX_SETORES = 4;
-constexpr uint8_t MAX_AGENDAS_POR_SETOR = 4;
+constexpr uint8_t MAX_AGENDAS_TOTAIS = 4;
 
 struct BancoAgendas {
-    uint16_t versao;   // controle de compatibilidade
-    uint16_t crc;      // integridade
-    AgendaSetor agendas[MAX_SETORES][MAX_AGENDAS_POR_SETOR];
+    uint16_t versao;
+    uint16_t crc;
+    AgendaSetor agendas[MAX_AGENDAS_TOTAIS];
+};
+```
+
+### 3.3 Configuracao runtime persistida
+
+```cpp
+struct BancoConfigRuntime {
+    uint16_t versao;
+    uint16_t crc;
+    uint32_t timeoutManualMs;
+    uint16_t duracaoPadraoMin;
 };
 ```
 
 ## 4. Regras funcionais obrigatorias
 
-1. Uma agenda e valida somente se tiver pelo menos 1 dia marcado.
-2. Duracao minima: 1 minuto.
-3. Horario valido: 00:00 ate 23:59.
-4. Nao permitir duplicidade exata dentro do mesmo setor:
-   hora igual + minuto igual + diasMask igual.
-5. Ao atingir 4 agendas no setor, bloquear criacao de nova agenda.
-6. Em reboot, recarregar agendas persistidas automaticamente.
-7. Se dados persistidos estiverem invalidos (CRC/versao), resetar para padrao seguro (tudo inativo).
+1. Agenda valida: pelo menos 1 dia marcado.
+2. Agenda valida: pelo menos 1 setor marcado.
+3. Horario valido: hora 0..23 e minuto 0..59.
+4. Duracao minima: 1 minuto (UI aplica limite superior de 240).
+5. Nao permitir duplicidade exata entre slots:
+   hora igual + minuto igual + diasMask igual + setoresMask igual.
+6. Limite de 4 slots de agenda no sistema.
+7. Em reboot, recarregar dados persistidos automaticamente.
+8. Se versao/CRC estiverem invalidos, resetar banco para padrao seguro.
 
 ## 5. Politica de persistencia
 
-Meio escolhido: ESP32 (NVS/Preferences ou EEPROM emulada em flash).
+Meio: ESP32 NVS (Preferences).
 
 Diretrizes:
-1. Persistir apenas quando houver alteracao (salvar/editar/excluir), nao a cada loop.
-2. Escrever bloco completo do BancoAgendas com versao e crc.
+
+1. Persistir apenas quando houver alteracao (salvar/editar/excluir/restaurar).
+2. Escrever bloco completo com versao e CRC.
 3. Leitura no boot:
-   - se versao e crc ok: carregar banco;
-   - se invalido: inicializar banco vazio e salvar.
+   - se versao e CRC ok: carregar banco;
+   - se invalido: inicializar padrao e salvar.
 4. DS3231 nao guarda agenda; DS3231 apenas fornece horario confiavel.
+5. Runtime config (timeout e duracao padrao) segue politica equivalente em banco proprio.
 
 ## 6. Motor de execucao de agendas
 
-Checagem no loop principal com gatilho por minuto.
+Avaliacao no loop com gatilho por minuto + execucao sequencial por lotes.
 
 Regras:
-1. Rodar verificacao quando o minuto mudar (evitar disparos repetidos no mesmo minuto).
-2. Para cada setor e cada agenda ativa:
-   - validar se dia atual esta marcado em diasMask;
-   - validar se hora/minuto atuais batem;
-   - se bater, solicitar abertura do setor por duracaoMin.
-3. Em conflito de multiplas agendas do mesmo setor no mesmo minuto:
-   - aplicar maior duracao resultante (comportamento monotono e seguro).
-4. Se setor estiver ligado manualmente e entrar agenda automatica:
-   - manter ligado e atualizar termino para o maior tempo restante.
+
+1. Verificar disparo quando o minuto mudar.
+2. Para cada agenda ativa e valida no dia atual:
+   - avaliar janela temporal da agenda;
+   - identificar lote atual e lotes pendentes;
+   - gerar duracoes por setor para enfileiramento.
+3. Respeitar limite de simultaneos por lote (MAX_SETOR_SIMULTANEOS_AGENDA).
+4. Respeitar intervalo entre lotes (INTERVALO_LOTE_AGENDA_MS).
+5. Em conflito no mesmo setor, manter maior duracao.
+6. Exclusao de agenda durante execucao cancela rotina automatica em andamento.
+7. Se setor manual estiver aberto e chegar comando automatico, manter coerencia por maior deadline.
 
 ## 7. Contrato entre modulos
 
-## 7.1 Novo modulo recomendado
+## 7.1 Modulos envolvidos
 
-Criar modulo dedicado de agenda, por exemplo:
-- schedule_manager.h
-- schedule_manager.cpp
+- schedule_manager.h/.cpp
+- runtime_config_manager.h/.cpp
+- irrigation_controller.h/.cpp
+- menu_controller.h/.cpp
+- display_manager.h/.cpp
+- web_ap_manager.h/.cpp
 
-Responsabilidades:
-1. CRUD de agendas por setor/slot.
-2. Validacoes.
-3. Persistencia.
-4. Avaliacao de disparo por horario atual.
+Responsabilidades principais:
+
+1. schedule_manager: CRUD, validacao, persistencia e avaliacao de disparo.
+2. runtime_config_manager: persistencia de timeout e duracao padrao.
+3. irrigation_controller: acionamento de reles e deadlines.
+4. menu_controller/display_manager: UX local no OLED com encoder.
+5. web_ap_manager: dashboard web e API para status/comandos.
 
 ## 7.2 Integracao com o loop atual
 
 No loop principal:
-1. Ler horario atual do RTC.
-2. Chamar scheduleManager.atualizar(agora).
-3. Se houver eventos de abertura, delegar ao IrrigationController.
-4. Manter funcionamento da irrigacao manual sem regressao.
 
-## 7.3 Integracao com menu/display
+1. Ler encoder e processar menu.
+2. Atualizar irrigacao (timeouts/deadlines).
+3. Avaliar disparos por minuto (RTC).
+4. Enfileirar e executar lotes sequenciais.
+5. Atualizar estado visual no display.
+6. Processar servidor web.
 
-Na tela PROGRAMAR:
-1. Escolher setor (S1..S4).
-2. Listar agendas do setor (1..4).
-3. Acoes por agenda: criar/editar/excluir/ativar.
-4. Entrar em tela de edicao descrita no item 8.
+## 8. UX da programacao no OLED (implementado)
 
-## 8. UX da tela de edicao no OLED (contrato de navegacao)
+Fluxo de programacao:
 
-Cabecalho:
-- "PROGRAMAR Sx"
+1. Selecionar slot de agenda (1..4).
+2. Abrir submenu da agenda.
+3. Opcoes do submenu:
+   - editar hora
+   - editar minuto
+   - editar duracao
+   - editar dias
+   - editar setores
+   - salvar
+   - excluir
+   - voltar
 
-Corpo:
-- "Agenda N de 4"
-- Campo HORA (ativo = barra)
-- Campo MINUTO
-- Campo DURACAO
-- Linha de dias:
-  DOM SEG TER QUA QUI SEX SAB
-  [ ] [X] [ ] [X] [ ] [X] [ ]
+Interacoes:
 
-Interacao com encoder:
-1. Giro em HORA/MINUTO/DURACAO: ajusta valor do campo ativo.
-2. Clique curto: avanca para proximo campo.
-3. Em DIAS:
-   - giro: move cursor entre DOM..SAB;
-   - clique curto: marca/desmarca dia no cursor.
-4. Confirmacao final:
-   - clique longo em DIAS: valida, salva e sai.
+1. Giro: altera valor do campo ou cursor.
+2. Clique curto:
+   - alterna dia (em EDIT_DIAS)
+   - alterna setor (em EDIT_SETORES)
+   - executa acao no submenu
+3. Clique longo: voltar/cancelar para etapa anterior conforme contexto.
 
-Comportamento visual:
-1. Campo ativo em destaque forte (barra grande).
-2. Campos inativos em texto simples.
-3. No modo DIAS, destacar o dia sob cursor.
-
-## 9. Maquina de estados da programacao
+## 9. Maquina de estados da programacao (resumo)
 
 ```text
-PROGRAMAR_HOME
-  -> selecionar setor
-  -> selecionar agenda
+SELECIONAR_AGENDA
+  -> SUBMENU_AGENDA
+
+SUBMENU_AGENDA
   -> EDIT_HORA
-
-EDIT_HORA -> (click) EDIT_MINUTO
-EDIT_MINUTO -> (click) EDIT_DURACAO
-EDIT_DURACAO -> (click) EDIT_DIAS
-EDIT_DIAS -> (long click confirmar) VALIDAR_E_SALVAR -> PROGRAMAR_HOME
-
-(cancelar por long click fora de DIAS, opcional na primeira entrega)
+  -> EDIT_MINUTO
+  -> EDIT_DURACAO
+  -> EDIT_DIAS
+  -> EDIT_SETORES
+  -> SALVAR
+  -> CONFIRMAR_EXCLUSAO
+  -> VOLTAR
 ```
 
-## 10. Criterios de aceite da Fase 5
+## 10. Criterios de aceite da Fase 5 (revisados)
 
-1. Usuario consegue criar ate 4 agendas por setor via encoder.
-2. Usuario consegue marcar/desmarcar dias individuais DOM..SAB.
+1. Usuario consegue criar/editar/excluir ate 4 agendas via encoder.
+2. Usuario consegue marcar/desmarcar dias e setores por agenda.
 3. Agendas persistem apos desligar e ligar novamente.
 4. Agendas disparam no horario correto com base no RTC.
-5. Sistema evita duplicidade exata por setor.
-6. Nao ha regressao da irrigacao manual ja existente.
-7. Navegacao no OLED permanece fluida e legivel.
+5. Sistema evita duplicidade exata de agenda.
+6. Execucao por lotes respeita simultaneidade e intervalo.
+7. Nao ha regressao da irrigacao manual existente.
+8. Dashboard web apresenta status e aplica comandos sem erro.
 
-## 11. Limites da primeira entrega
+## 11. Limites atuais
 
-Para reduzir risco na Fase 5 inicial:
-1. Sem copia de agenda entre setores.
-2. Sem excecoes por data especifica.
-3. Sem sobreposicao avancada entre setores (cada setor independente).
-4. Sem interface de calendario mensal.
+1. Modelo atual e global por slot (nao por setor).
+2. Limite de 4 agendas totais.
+3. Sem excecoes por data especifica (calendario).
+4. Sem orquestracao avancada multi-zona alem da regra de lotes.
 
-## 12. Plano de implementacao sugerido
+## 12. Plano de evolucao sugerido
 
-1. Criar ScheduleManager (dados + validacao + persistencia).
-2. Integrar motor de disparo no loop.
-3. Implementar menu PROGRAMAR: selecionar setor/agenda.
-4. Implementar tela EDIT_HORA/MINUTO/DURACAO/DIAS.
-5. Testar cenarios:
-   - reboot com dados validos;
-   - reboot com dados invalidos;
-   - disparo em dia marcado;
-   - nao disparo em dia nao marcado;
-   - limite de 4 agendas.
+1. Definir formalmente modelo final (global vs por setor) para proxima fase.
+2. Se necessario, migrar estrutura para 16 agendas (4x4) com estrategia de compatibilidade.
+3. Adicionar testes automatizados para motor de lotes e APIs web.
+4. Consolidar criterios de UX para reduzir profundidade de navegacao no OLED.
+
+---
+
+Este contrato foi revisado para refletir o comportamento real do firmware no estado atual do projeto.
