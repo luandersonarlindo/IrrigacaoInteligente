@@ -12,6 +12,21 @@
 #define PIN_BTN_SELECT 4
 #define PIN_BTN_BACK 16
 
+// --- Compatibilidade legada: Encoder rotativo ---
+// Mantem o projeto compilando caso exista arquivo antigo encoder_driver.*
+// mapeando para os mesmos pinos de navegação local.
+#ifndef PIN_ENCODER_CLK
+#define PIN_ENCODER_CLK PIN_BTN_DOWN
+#endif
+
+#ifndef PIN_ENCODER_DT
+#define PIN_ENCODER_DT PIN_BTN_UP
+#endif
+
+#ifndef PIN_ENCODER_BTN
+#define PIN_ENCODER_BTN PIN_BTN_SELECT
+#endif
+
 // --- Pinos: Display OLED (I2C) ---
 #define PIN_OLED_SDA 21
 #define PIN_OLED_SCL 22
