@@ -5,7 +5,7 @@
 //
 //  Responsabilidade: decidir O QUE mostrar no display.
 //  Consulta o MenuController para saber o estado atual.
-//  Usa o DisplayDriverOled para saber COMO mostrar.
+//  Usa o DisplayDriverLcd16x2 para saber COMO mostrar.
 //
 //  Separação clara:
 //    Driver  = como desenhar (hardware)
@@ -14,7 +14,7 @@
 
 #include <Arduino.h>
 #include "Config.h"
-#include "display_driver_oled.h"
+#include "display_driver_lcd16x2.h"
 #include "menu_controller.h"
 #include "rtc_driver_ds3231.h"
 #include "irrigation_controller.h"
@@ -23,7 +23,7 @@
 class DisplayManager
 {
 public:
-    DisplayManager(DisplayDriverOled &display,
+    DisplayManager(DisplayDriverLcd16x2 &display,
                    MenuController &menu,
                    RtcDriverDs3231 &rtc,
                    IrrigationController &irrigacao,
@@ -43,7 +43,7 @@ public:
     void atualizar();
 
 private:
-    DisplayDriverOled &_display;
+    DisplayDriverLcd16x2 &_display;
     MenuController &_menu;
     RtcDriverDs3231 &_rtc;
     IrrigationController &_irrigacao;
@@ -57,14 +57,20 @@ private:
     void desenharTelaConfig();
     void desenharTelaWebServer();
 
-    // Componentes reutilizáveis
-    void desenharCabecalho(const char *titulo);
-    void desenharRodapeHora();
-    void desenharCursor(int y);
+    // Helpers de texto para LCD 16x2
+    void escreverTela(const String &linha1, const String &linha2);
+    String ajustar16(const String &texto) const;
+    String cortar(const String &texto, uint8_t limite) const;
+    String nomeItemPrincipalCurto(int indice) const;
+    String nomeSubmenuProgramacaoCurto(int indice) const;
+    String nomeOpcaoConfigCurto(EtapaConfiguracao etapa, int indice) const;
+    String mensagemFeedbackProgramacao(FeedbackProgramacao feedback) const;
+    String diaSigla(uint8_t dia) const;
+    int contarBits16(uint16_t mask) const;
 
     // Controle de atualização (evita redesenho desnecessário)
     unsigned long _ultimaAtualizacao;
-    static const unsigned long INTERVALO_ATUALIZACAO_MS = 200;
+    static const unsigned long INTERVALO_ATUALIZACAO_MS = 250;
 
     // Estado operacional da agenda automatica sequencial
     bool _agendaExecucaoAtiva;

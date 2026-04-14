@@ -130,7 +130,7 @@ Responsabilidades principais:
 1. schedule_manager: CRUD, validacao, persistencia e avaliacao de disparo.
 2. runtime_config_manager: persistencia de timeout e duracao padrao.
 3. irrigation_controller: acionamento de reles e deadlines.
-4. menu_controller/display_manager: UX local no OLED com 4 botoes.
+4. menu_controller/display_manager: UX local no LCD 16x2 com 4 botoes.
 5. web_ap_manager: dashboard web e API para status/comandos.
 
 ## 7.2 🔄 Integracao com o loop atual
@@ -144,7 +144,7 @@ No loop principal:
 5. Atualizar estado visual no display.
 6. Processar servidor web.
 
-## 8. 🖥️ UX da programacao no OLED (implementado)
+## 8. 🖥️ UX da programacao no LCD 16x2 (implementado)
 
 Fluxo de programacao:
 
@@ -209,7 +209,7 @@ SUBMENU_AGENDA
 1. Definir formalmente modelo final (global vs por setor) para proxima fase.
 2. Se necessario, migrar estrutura para 16 agendas (4x4) com estrategia de compatibilidade.
 3. Adicionar testes automatizados para motor de lotes e APIs web.
-4. Consolidar criterios de UX para reduzir profundidade de navegacao no OLED.
+4. Consolidar criterios de UX para reduzir profundidade de navegacao no LCD 16x2.
 
 ---
 

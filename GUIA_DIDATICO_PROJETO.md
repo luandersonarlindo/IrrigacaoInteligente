@@ -5,7 +5,7 @@ Este documento explica o projeto de forma simples, para ensino de alunos de 15 a
 ## 👀 Visao rapida
 
 - ✅ Projeto com ESP32 para irrigacao manual e automatica.
-- 🖥️ Interface local com OLED e 4 botoes.
+- 🖥️ Interface local com LCD 16x2 I2C e 4 botoes.
 - 🧭 Menu com acesso a Irrigar Agora, Programar, WEBSERVER e Configuracoes.
 - 💧 Controle fisico de 8 valvulas por rele.
 - 💾 Agendas salvas na memoria flash (NVS).
@@ -41,7 +41,7 @@ Componentes principais:
 
 - ESP32
 - 4 botoes (Cima, Baixo, Selecionar, Voltar)
-- OLED SSD1306 (I2C)
+- LCD 16x2 com modulo I2C (PCF8574)
 - RTC DS3231 (I2C)
 - 2 modulos de rele 4 canais (8 canais no total)
 
@@ -51,11 +51,11 @@ Pinos importantes (Config.h):
 - Botao Baixo: 18
 - Botao Selecionar: 4
 - Botao Voltar: 16
-- OLED SDA/SCL: 21/22
+- I2C SDA/SCL (LCD + RTC): 21/22
 
 Observacao importante:
 
-- OLED e RTC compartilham o barramento I2C.
+- LCD e RTC compartilham o barramento I2C.
 
 ## 3. ⚙️ Configuracoes principais
 
@@ -84,7 +84,7 @@ Regra de organizacao:
 ### Modulos e papeis
 
 - input_driver.*: leitura dos 4 botoes de navegacao.
-- display_driver_oled.*: desenho no display.
+- display_driver_lcd16x2.*: escrita de linhas no display.
 - rtc_driver_ds3231.*: hora e data.
 - runtime_config_manager.*: salva timeout e duracao padrao em NVS.
 - menu_controller.*: estados do menu.
@@ -181,7 +181,7 @@ As agendas e configuracoes runtime sao salvas na NVS (flash do ESP32).
 - IrrigacaoInteligente.ino
 - Config.h
 - input_driver.h/.cpp
-- display_driver_oled.h/.cpp
+- display_driver_lcd16x2.h/.cpp
 - display_manager.h/.cpp
 - rtc_driver_ds3231.h/.cpp
 - runtime_config_manager.h/.cpp

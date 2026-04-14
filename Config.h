@@ -12,14 +12,14 @@
 #define PIN_BTN_SELECT 4
 #define PIN_BTN_BACK 16
 
-// --- Pinos: Display OLED (I2C) ---
-#define PIN_OLED_SDA 21
-#define PIN_OLED_SCL 22
+// --- Pinos: Barramento I2C compartilhado (LCD + RTC) ---
+#define PIN_I2C_SDA 21
+#define PIN_I2C_SCL 22
 
-// --- Pinos: RTC DS3231 (I2C — mesmo barramento do OLED) ---
-// DS3231 compartilha SDA/SCL com o OLED
-// Endereço I2C do OLED:  0x3C
-// Endereço I2C do RTC:   0x68
+// --- Pinos: RTC DS3231 (I2C — mesmo barramento do LCD) ---
+// DS3231 compartilha SDA/SCL com o LCD
+// Endereco I2C padrao do LCD: 0x27 (pode variar para 0x3F)
+// Endereco I2C do RTC:        0x68
 
 // --- Pinos: Relés (2 módulos de 4 canais 12V, trigger HIGH) ---
 #define PIN_RELAY_1 23
@@ -31,9 +31,10 @@
 #define PIN_RELAY_7 13
 #define PIN_RELAY_8 14
 
-// --- Display OLED ---
-#define OLED_LARGURA 128
-#define OLED_ALTURA 64
+// --- Display LCD 16x2 I2C ---
+#define LCD_I2C_ENDERECO 0x27
+#define LCD_COLUNAS 16
+#define LCD_LINHAS 2
 
 // --- Menu ---
 #define MENU_ITENS_MAX 5      // Número máximo de itens no menu principal

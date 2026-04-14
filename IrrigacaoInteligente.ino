@@ -10,7 +10,7 @@
 
 #include "Config.h"
 #include "input_driver.h"
-#include "display_driver_oled.h"
+#include "display_driver_lcd16x2.h"
 #include "rtc_driver_ds3231.h"
 #include "menu_controller.h"
 #include "display_manager.h"
@@ -21,14 +21,14 @@
 
 // --- Instâncias globais ---
 InputDriver           inputDriver;
-DisplayDriverOled     oled;
+DisplayDriverLcd16x2  lcd;
 RtcDriverDs3231       rtc;
 RuntimeConfigManager  runtimeConfig;
 ScheduleManager       scheduleManager(runtimeConfig);
 MenuController        menu(scheduleManager, rtc, runtimeConfig);
 IrrigationController  irrigacao(runtimeConfig);
 WebApManager          webApManager(irrigacao, scheduleManager, runtimeConfig, rtc);
-DisplayManager        displayManager(oled, menu, rtc, irrigacao, webApManager);
+DisplayManager        displayManager(lcd, menu, rtc, irrigacao, webApManager);
 bool                  rtcDisponivel = false;
 
 struct ExecucaoAgendaSequencial {
@@ -232,10 +232,10 @@ void setup() {
         Serial.println("Inicializando modulos...");
     }
 
-    Wire.begin(PIN_OLED_SDA, PIN_OLED_SCL);   // I2C compartilhado: OLED + RTC
+    Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);   // I2C compartilhado: LCD + RTC
 
     inputDriver.begin();
-    oled.begin();
+    lcd.begin();
 
     rtcDisponivel = rtc.begin();
     if (!rtcDisponivel) {

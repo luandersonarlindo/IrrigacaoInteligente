@@ -1,442 +1,15 @@
 // ============================================================
-//  display_manager.cpp — Implementação do DisplayManager
+//  display_manager.cpp — Implementacao do DisplayManager para LCD 16x2
 // ============================================================
 
 #include "display_manager.h"
 
 namespace
 {
-    constexpr int WEBSERVER_MAX_LINHAS = 24;
-    constexpr int WEBSERVER_LINHAS_POR_PAGINA = 4;
-    constexpr int WEBSERVER_Y_INICIAL = 14;
-    constexpr int WEBSERVER_ALTURA_LINHA = 10;
-    constexpr int WEBSERVER_LARGURA_MAX_PX = OLED_LARGURA - 2;
-    int adicionarTextoQuebrado(DisplayDriverOled &display,
-                               const String &textoOriginal,
-                               String linhas[WEBSERVER_MAX_LINHAS],
-                               int totalAtual)
-    {
-        if (totalAtual >= WEBSERVER_MAX_LINHAS)
-        {
-            return totalAtual;
-        }
-
-        String restante = textoOriginal;
-        restante.trim();
-        if (restante.length() == 0)
-        {
-            return totalAtual;
-        }
-
-        while (restante.length() > 0 && totalAtual < WEBSERVER_MAX_LINHAS)
-        {
-            int tamanho = (int)restante.length();
-            int corte = tamanho;
-
-            while (corte > 0)
-            {
-                String candidata = restante.substring(0, corte);
-                candidata.trim();
-
-                if (candidata.length() == 0)
-                {
-                    corte--;
-                    continue;
-                }
-
-                if (display.larguraTexto(candidata.c_str()) <= WEBSERVER_LARGURA_MAX_PX)
-                {
-                    break;
-                }
-
-                int ultimoEspaco = candidata.lastIndexOf(' ');
-                if (ultimoEspaco > 0)
-                {
-                    corte = ultimoEspaco;
-                }
-                else
-                {
-                    corte--;
-                }
-            }
-
-            if (corte <= 0)
-            {
-                corte = 1;
-                while (corte < tamanho)
-                {
-                    String candidata = restante.substring(0, corte + 1);
-                    if (display.larguraTexto(candidata.c_str()) > WEBSERVER_LARGURA_MAX_PX)
-                    {
-                        break;
-                    }
-                    corte++;
-                }
-            }
-
-            String linha = restante.substring(0, corte);
-            linha.trim();
-            if (linha.length() == 0)
-            {
-                linha = restante.substring(0, 1);
-                corte = 1;
-            }
-
-            linhas[totalAtual++] = linha;
-
-            if (corte >= tamanho)
-            {
-                break;
-            }
-
-            restante = restante.substring(corte);
-            restante.trim();
-        }
-
-        return totalAtual;
-    }
-
-    // Wi-Fi icon derived from the provided icons8 image (id 9922), converted to 1-bit 24x18.
-    const uint8_t WIFI_ICON_9922_24X18[] = {
-        0x00, 0xFF, 0x00, 0xE0, 0xFF, 0x07, 0xF8, 0xFF, 0x1F, 0xFC, 0xFF, 0x3F,
-        0xFE, 0x00, 0x7F, 0x3F, 0x00, 0xFC, 0x0E, 0x7E, 0x70, 0xC4, 0xFF, 0x23,
-        0xE0, 0xFF, 0x07, 0xF0, 0xFF, 0x0F, 0xE0, 0x81, 0x07, 0xC0, 0x00, 0x03,
-        0x00, 0x3C, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x7E, 0x00, 0x00, 0x3C, 0x00,
-        0x00, 0x18, 0x00, 0x00, 0x00, 0x00};
-
-    void desenharBitmap1Bpp(DisplayDriverOled &d,
-                            int x,
-                            int y,
-                            int largura,
-                            int altura,
-                            const uint8_t *dados)
-    {
-        int bytesPorLinha = (largura + 7) / 8;
-
-        for (int linha = 0; linha < altura; linha++)
-        {
-            int inicioSegmento = -1;
-
-            for (int coluna = 0; coluna <= largura; coluna++)
-            {
-                bool aceso = false;
-                if (coluna < largura)
-                {
-                    int indiceByte = (linha * bytesPorLinha) + (coluna / 8);
-                    uint8_t mascara = (uint8_t)(1U << (coluna % 8));
-                    aceso = (dados[indiceByte] & mascara) != 0;
-                }
-
-                if (aceso && inicioSegmento < 0)
-                {
-                    inicioSegmento = coluna;
-                }
-                else if (!aceso && inicioSegmento >= 0)
-                {
-                    d.desenharLinha(x + inicioSegmento, y + linha, x + coluna - 1, y + linha);
-                    inicioSegmento = -1;
-                }
-            }
-        }
-    }
-
-    // Icones simples em linha para OLED monocromatico.
-    void desenharIconeMenuPrincipal(DisplayDriverOled &d, int x, int y, int tipo)
-    {
-        // Moldura base 32x32
-        d.desenharRetangulo(x, y, 32, 32);
-
-        if (tipo == 0)
-        {
-            // Irrigar agora: aspersor com gotas e jatos (estilo tecnico mono)
-            d.desenharRetanguloPreenchido(x + 11, y + 4, 10, 4); // topo do bico
-            d.desenharRetanguloPreenchido(x + 13, y + 9, 6, 11); // corpo central
-
-            // gotas superiores
-            d.desenharRetanguloPreenchido(x + 3, y + 8, 2, 2);
-            d.desenharRetanguloPreenchido(x + 8, y + 11, 2, 2);
-            d.desenharRetanguloPreenchido(x + 24, y + 11, 2, 2);
-            d.desenharRetanguloPreenchido(x + 29, y + 8, 2, 2);
-
-            // jatos inferiores em triangulo
-            d.desenharLinha(x + 6, y + 28, x + 9, y + 22);
-            d.desenharLinha(x + 9, y + 22, x + 12, y + 28);
-
-            d.desenharLinha(x + 12, y + 28, x + 15, y + 22);
-            d.desenharLinha(x + 15, y + 22, x + 18, y + 28);
-
-            d.desenharLinha(x + 18, y + 28, x + 21, y + 22);
-            d.desenharLinha(x + 21, y + 22, x + 24, y + 28);
-
-            d.desenharLinha(x + 24, y + 28, x + 27, y + 22);
-            d.desenharLinha(x + 27, y + 22, x + 30, y + 28);
-        }
-        else if (tipo == 1)
-        {
-            // Programar: calculadora/teclado numerico
-            d.desenharRetangulo(x + 5, y + 4, 22, 24);
-            d.desenharRetangulo(x + 8, y + 7, 16, 4); // display superior
-
-            // grade de teclas 3x3
-            int kx = x + 9;
-            int ky = y + 14;
-            for (int r = 0; r < 3; r++)
-            {
-                for (int c = 0; c < 3; c++)
-                {
-                    d.desenharRetanguloPreenchido(kx + (c * 5), ky + (r * 4), 2, 2);
-                }
-            }
-
-            // tecla lateral (estilo funcao)
-            d.desenharRetanguloPreenchido(x + 24, y + 14, 2, 10);
-        }
-        else if (tipo == (int)ItemMenu::WEBSERVER)
-        {
-            // WebServer: Wi-Fi icon based on the image provided by the user.
-            desenharBitmap1Bpp(d, x + 4, y + 7, 24, 18, WIFI_ICON_9922_24X18);
-        }
-        else
-        {
-            // Configuracoes: sliders
-            d.desenharLinha(x + 6, y + 10, x + 26, y + 10);
-            d.desenharLinha(x + 6, y + 16, x + 26, y + 16);
-            d.desenharLinha(x + 6, y + 22, x + 26, y + 22);
-            d.desenharRetanguloPreenchido(x + 10, y + 8, 4, 4);
-            d.desenharRetanguloPreenchido(x + 18, y + 14, 4, 4);
-            d.desenharRetanguloPreenchido(x + 13, y + 20, 4, 4);
-        }
-    }
-
-    void desenharIconeSubmenu(DisplayDriverOled &d, int x, int y, int opcao)
-    {
-        // area util: 8x8
-        if (opcao == 0)
-        {
-            // Hora: relogio
-            d.desenharRetangulo(x, y, 8, 8);
-            d.desenharLinha(x + 4, y + 4, x + 4, y + 2);
-            d.desenharLinha(x + 4, y + 4, x + 6, y + 5);
-        }
-        else if (opcao == 1)
-        {
-            // Minuto: cronometro
-            d.desenharRetangulo(x + 1, y + 1, 6, 6);
-            d.desenharRetanguloPreenchido(x + 3, y, 2, 1);
-            d.desenharLinha(x + 4, y + 4, x + 5, y + 3);
-        }
-        else if (opcao == 2)
-        {
-            // Duracao: barra
-            d.desenharRetangulo(x, y + 2, 8, 4);
-            d.desenharRetanguloPreenchido(x + 1, y + 3, 5, 2);
-        }
-        else if (opcao == 3)
-        {
-            // Dias: calendario mini
-            d.desenharRetangulo(x, y + 1, 8, 7);
-            d.desenharLinha(x, y + 3, x + 7, y + 3);
-            d.desenharRetanguloPreenchido(x + 2, y, 1, 2);
-            d.desenharRetanguloPreenchido(x + 5, y, 1, 2);
-        }
-        else if (opcao == 4)
-        {
-            // Setores: grade 2x2
-            d.desenharRetangulo(x, y, 3, 3);
-            d.desenharRetangulo(x + 5, y, 3, 3);
-            d.desenharRetangulo(x, y + 5, 3, 3);
-            d.desenharRetangulo(x + 5, y + 5, 3, 3);
-        }
-        else if (opcao == 5)
-        {
-            // Salvar: disquete simplificado
-            d.desenharRetangulo(x, y, 8, 8);
-            d.desenharRetanguloPreenchido(x + 1, y + 1, 5, 2);
-            d.desenharRetangulo(x + 2, y + 5, 4, 2);
-        }
-        else
-        {
-            // Excluir: lixeira simplificada
-            d.desenharRetangulo(x + 1, y + 2, 6, 6);
-            d.desenharRetanguloPreenchido(x, y + 1, 8, 1);
-            d.desenharRetanguloPreenchido(x + 3, y, 2, 1);
-        }
-    }
-
-    void desenharIconeAgendaSlot(DisplayDriverOled &d, int x, int y, bool ativa)
-    {
-        // Moldura do slot
-        d.desenharRetangulo(x, y, 16, 16);
-        d.desenharRetangulo(x + 2, y + 2, 12, 4);
-
-        if (ativa)
-        {
-            // Relogio pequeno (agenda ativa)
-            d.desenharRetangulo(x + 4, y + 8, 8, 6);
-            d.desenharLinha(x + 8, y + 11, x + 8, y + 9);
-            d.desenharLinha(x + 8, y + 11, x + 10, y + 12);
-        }
-        else
-        {
-            // Sinal de mais (slot vazio)
-            d.desenharLinha(x + 8, y + 8, x + 8, y + 13);
-            d.desenharLinha(x + 6, y + 11, x + 10, y + 11);
-        }
-    }
-
-    void desenharIconeStatusIrrigacao(DisplayDriverOled &d, int x, int y, bool ativa)
-    {
-        d.desenharRetangulo(x, y, 10, 10);
-        d.desenharRetanguloPreenchido(x + 4, y + 2, 2, 4);
-        d.desenharLinha(x + 2, y + 7, x + 7, y + 7);
-
-        if (ativa)
-        {
-            d.desenharRetanguloPreenchido(x + 1, y + 8, 1, 1);
-            d.desenharRetanguloPreenchido(x + 4, y + 8, 1, 1);
-            d.desenharRetanguloPreenchido(x + 7, y + 8, 1, 1);
-        }
-    }
-
-    void desenharIconeStatusValvula(DisplayDriverOled &d, int x, int y)
-    {
-        d.desenharRetangulo(x, y, 10, 10);
-        d.desenharRetanguloPreenchido(x + 2, y + 4, 6, 2);
-        d.desenharLinha(x + 2, y + 2, x + 4, y + 4);
-        d.desenharLinha(x + 8, y + 2, x + 6, y + 4);
-        d.desenharLinha(x + 2, y + 8, x + 4, y + 6);
-        d.desenharLinha(x + 8, y + 8, x + 6, y + 6);
-    }
-
-    void desenharIconeStatusAgenda(DisplayDriverOled &d, int x, int y)
-    {
-        d.desenharRetangulo(x, y + 1, 10, 9);
-        d.desenharLinha(x, y + 3, x + 9, y + 3);
-        d.desenharRetanguloPreenchido(x + 2, y, 1, 2);
-        d.desenharRetanguloPreenchido(x + 7, y, 1, 2);
-        d.desenharRetanguloPreenchido(x + 2, y + 5, 1, 1);
-        d.desenharRetanguloPreenchido(x + 4, y + 5, 1, 1);
-        d.desenharRetanguloPreenchido(x + 6, y + 5, 1, 1);
-    }
-
-    void desenharIconeStatusRelogio(DisplayDriverOled &d, int x, int y)
-    {
-        d.desenharRetangulo(x, y, 10, 10);
-        d.desenharLinha(x + 5, y + 5, x + 5, y + 2);
-        d.desenharLinha(x + 5, y + 5, x + 7, y + 6);
-    }
-
-    void desenharAnimacaoCheck(DisplayDriverOled &d, int x, int y)
-    {
-        // Animacao simples baseada no tempo (4 quadros em loop)
-        const unsigned long quadroMs = 90;
-        int quadro = (millis() / quadroMs) % 4;
-
-        // Caixa do check
-        d.desenharRetangulo(x, y, 10, 10);
-
-        // Quadro 1: primeiro segmento curto
-        if (quadro >= 1)
-        {
-            d.desenharLinha(x + 2, y + 5, x + 4, y + 7);
-        }
-
-        // Quadro 2: alonga primeiro segmento
-        if (quadro >= 2)
-        {
-            d.desenharLinha(x + 3, y + 6, x + 5, y + 8);
-        }
-
-        // Quadro 3+: completa check
-        if (quadro >= 3)
-        {
-            d.desenharLinha(x + 4, y + 7, x + 8, y + 3);
-            d.desenharLinha(x + 5, y + 8, x + 9, y + 4);
-        }
-    }
-
-    void desenharSegmentoParcial(DisplayDriverOled &d, int x1, int y1, int x2, int y2, int passo, int totalPassos)
-    {
-        if (passo <= 0)
-            return;
-        if (passo > totalPassos)
-            passo = totalPassos;
-
-        int dx = x2 - x1;
-        int dy = y2 - y1;
-        int xp = x1 + (dx * passo) / totalPassos;
-        int yp = y1 + (dy * passo) / totalPassos;
-        d.desenharLinha(x1, y1, xp, yp);
-    }
-
-    void desenharAnimacaoCheck48(DisplayDriverOled &d, int frame)
-    {
-        const int x = 40;
-        const int y = 8;
-        const int w = 48;
-        const int h = 48;
-        d.desenharRetangulo(x, y, w, h);
-
-        // Coordenadas do check dentro da caixa 48x48
-        const int ax = x + 12;
-        const int ay = y + 26;
-        const int bx = x + 21;
-        const int by = y + 35;
-        const int cx = x + 37;
-        const int cy = y + 18;
-
-        // 16 quadros totais por loop
-        // quadros 0..7: primeira perna, 8..15: segunda perna
-        if (frame >= 2)
-        {
-            int p1 = frame - 1;
-            desenharSegmentoParcial(d, ax, ay, bx, by, p1, 7);
-            desenharSegmentoParcial(d, ax, ay + 1, bx, by + 1, p1, 7);
-        }
-
-        if (frame >= 8)
-        {
-            int p2 = frame - 7;
-            desenharSegmentoParcial(d, bx, by, cx, cy, p2, 8);
-            desenharSegmentoParcial(d, bx, by + 1, cx, cy + 1, p2, 8);
-        }
-    }
-
-    void desenharAnimacaoLixeira48(DisplayDriverOled &d, int frame)
-    {
-        const int x = 40;
-        const int y = 8;
-
-        // Corpo da lixeira
-        d.desenharRetangulo(x + 12, y + 10, 24, 30);
-
-        // Tampa animada (abre e fecha)
-        int fase = frame % 16;
-        int off = 0;
-        if (fase >= 3 && fase <= 7)
-            off = (fase - 2);
-        else if (fase >= 8 && fase <= 12)
-            off = (13 - fase);
-
-        d.desenharLinha(x + 10, y + 9 - off, x + 38, y + 9 - off);
-        d.desenharRetanguloPreenchido(x + 22, y + 7 - off, 4, 2);
-
-        // Linhas internas
-        d.desenharLinha(x + 18, y + 14, x + 18, y + 36);
-        d.desenharLinha(x + 24, y + 14, x + 24, y + 36);
-        d.desenharLinha(x + 30, y + 14, x + 30, y + 36);
-
-        // "Papel" caindo durante a abertura
-        if (fase >= 4 && fase <= 11)
-        {
-            int py = y + 10 + (fase - 4) * 3;
-            if (py < y + 38)
-                d.desenharRetanguloPreenchido(x + 24, py, 3, 3);
-        }
-    }
+    constexpr unsigned long INTERVALO_PAGINA_INFO_MS = 2000;
 }
 
-DisplayManager::DisplayManager(DisplayDriverOled &display,
+DisplayManager::DisplayManager(DisplayDriverLcd16x2 &display,
                                MenuController &menu,
                                RtcDriverDs3231 &rtc,
                                IrrigationController &irrigacao,
@@ -475,19 +48,19 @@ void DisplayManager::begin()
 {
     if (DEBUG_SERIAL)
     {
-        Serial.println("[DisplayManager] Inicializado.");
+        Serial.println("[DisplayManager] LCD 16x2 inicializado.");
     }
 }
 
 void DisplayManager::atualizar()
 {
     unsigned long agora = millis();
-    unsigned long intervalo = INTERVALO_ATUALIZACAO_MS;
-    if (_menu.menuAtivo())
-        intervalo = 80;
+    unsigned long intervalo = _menu.menuAtivo() ? 130 : INTERVALO_ATUALIZACAO_MS;
 
-    if (agora - _ultimaAtualizacao < intervalo)
+    if ((agora - _ultimaAtualizacao) < intervalo)
+    {
         return;
+    }
     _ultimaAtualizacao = agora;
 
     _display.limpar();
@@ -495,22 +68,24 @@ void DisplayManager::atualizar()
     switch (_menu.estadoAtual())
     {
     case EstadoMenu::STATUS:
-        // Status puro = tela de relógio
-        // Menu ativo = usuário começou a navegar
         if (_menu.menuAtivo())
             desenharMenuPrincipal();
         else
             desenharTelaStatus();
         break;
+
     case EstadoMenu::IRRIGACAO_MANUAL:
         desenharTelaIrrigacao();
         break;
+
     case EstadoMenu::PROGRAMAR:
         desenharTelaProgramar();
         break;
+
     case EstadoMenu::CONFIGURACOES:
         desenharTelaConfig();
         break;
+
     case EstadoMenu::WEBSERVER:
         desenharTelaWebServer();
         break;
@@ -519,1141 +94,782 @@ void DisplayManager::atualizar()
     _display.renderizar();
 }
 
+void DisplayManager::escreverTela(const String &linha1, const String &linha2)
+{
+    _display.escreverLinha(0, ajustar16(linha1));
+    _display.escreverLinha(1, ajustar16(linha2));
+}
+
+String DisplayManager::ajustar16(const String &texto) const
+{
+    String s = texto;
+    if ((int)s.length() > LCD_COLUNAS)
+    {
+        s = s.substring(0, LCD_COLUNAS);
+    }
+
+    while ((int)s.length() < LCD_COLUNAS)
+    {
+        s += ' ';
+    }
+
+    return s;
+}
+
+String DisplayManager::cortar(const String &texto, uint8_t limite) const
+{
+    if ((int)texto.length() <= limite)
+    {
+        return texto;
+    }
+    return texto.substring(0, limite);
+}
+
+String DisplayManager::nomeItemPrincipalCurto(int indice) const
+{
+    switch (indice)
+    {
+    case 0:
+        return "Irrigar";
+    case 1:
+        return "Programar";
+    case 2:
+        return "WebServer";
+    case 3:
+        return "Config";
+    default:
+        return "Menu";
+    }
+}
+
+String DisplayManager::nomeSubmenuProgramacaoCurto(int indice) const
+{
+    switch (indice)
+    {
+    case 0:
+        return "Hora";
+    case 1:
+        return "Minuto";
+    case 2:
+        return "Duracao";
+    case 3:
+        return "Dias";
+    case 4:
+        return "Setores";
+    case 5:
+        return "Salvar";
+    case 6:
+        return "Excluir";
+    case 7:
+        return "Voltar";
+    default:
+        return "Opcao";
+    }
+}
+
+String DisplayManager::nomeOpcaoConfigCurto(EtapaConfiguracao etapa, int indice) const
+{
+    if (etapa == EtapaConfiguracao::MENU)
+    {
+        switch (indice)
+        {
+        case 0:
+            return "Relogio";
+        case 1:
+            return "Sistema";
+        case 2:
+            return "Voltar";
+        default:
+            return "Config";
+        }
+    }
+
+    if (etapa == EtapaConfiguracao::SUBMENU_RELOGIO)
+    {
+        switch (indice)
+        {
+        case 0:
+            return "Hora";
+        case 1:
+            return "Minuto";
+        case 2:
+            return "Dia";
+        case 3:
+            return "Mes";
+        case 4:
+            return "Ano";
+        case 5:
+            return "Timeout";
+        case 6:
+            return "Salvar";
+        case 7:
+            return "Voltar";
+        default:
+            return "Relogio";
+        }
+    }
+
+    if (etapa == EtapaConfiguracao::SUBMENU_SISTEMA)
+    {
+        switch (indice)
+        {
+        case 0:
+            return "Duracao";
+        case 1:
+            return "Teste";
+        case 2:
+            return "Limpar";
+        case 3:
+            return "Padrao";
+        case 4:
+            return "Info";
+        case 5:
+            return "Voltar";
+        default:
+            return "Sistema";
+        }
+    }
+
+    return "Config";
+}
+
+String DisplayManager::mensagemFeedbackProgramacao(FeedbackProgramacao feedback) const
+{
+    switch (feedback)
+    {
+    case FeedbackProgramacao::SALVO:
+        return "Agenda salva";
+    case FeedbackProgramacao::EXCLUIDO:
+        return "Agenda excluida";
+    case FeedbackProgramacao::ERRO_SEM_DIA:
+        return "Marque 1 dia";
+    case FeedbackProgramacao::ERRO_SEM_SETOR:
+        return "Marque 1 setor";
+    case FeedbackProgramacao::ERRO_DUPLICADA:
+        return "Agenda duplicada";
+    case FeedbackProgramacao::ERRO_PERSISTENCIA:
+        return "Erro ao salvar";
+    case FeedbackProgramacao::ERRO_EXCLUSAO:
+        return "Erro ao excluir";
+    case FeedbackProgramacao::NENHUM:
+    default:
+        return "";
+    }
+}
+
+String DisplayManager::diaSigla(uint8_t dia) const
+{
+    switch (dia)
+    {
+    case 0:
+        return "DOM";
+    case 1:
+        return "SEG";
+    case 2:
+        return "TER";
+    case 3:
+        return "QUA";
+    case 4:
+        return "QUI";
+    case 5:
+        return "SEX";
+    case 6:
+        return "SAB";
+    default:
+        return "---";
+    }
+}
+
+int DisplayManager::contarBits16(uint16_t mask) const
+{
+    int total = 0;
+    for (int i = 0; i < 16; i++)
+    {
+        if ((mask & (1U << i)) != 0)
+            total++;
+    }
+    return total;
+}
+
 // ============================================================
-//  Telas
+//  Telas (adaptadas para LCD 16x2)
 // ============================================================
 
 void DisplayManager::desenharMenuPrincipal()
 {
-    const int iconW = 32;
-    const int iconGap = 6;
-    const int iconY = 8;
-    const int centerX = (OLED_LARGURA - iconW) / 2;
-
-    int totalItens = _menu.totalItens();
-    int itemAtual = _menu.itemSelecionado();
-
-    int x = centerX - (itemAtual * (iconW + iconGap));
-    for (int i = 0; i < totalItens; i++)
-    {
-        if (x >= 0 && (x + iconW) <= OLED_LARGURA)
-        {
-            desenharIconeMenuPrincipal(_display, x, iconY, i);
-        }
-        x += iconW + iconGap;
-    }
-
-    // Moldura tripla no item selecionado para reforcar foco
-    _display.desenharRetangulo(centerX - 1, iconY - 1, iconW + 2, iconW + 2);
-    _display.desenharRetangulo(centerX - 2, iconY - 2, iconW + 4, iconW + 4);
-    _display.desenharRetangulo(centerX - 3, iconY - 3, iconW + 6, iconW + 6);
-
-    // Rotulo centralizado no rodape
-    const char *rotulo = _menu.nomeItem(itemAtual);
-    int larguraRotulo = _display.larguraTexto(rotulo);
-    int xRotulo = (OLED_LARGURA - larguraRotulo) / 2;
-    if (xRotulo < 0)
-        xRotulo = 0;
-
-    _display.desenharTexto(xRotulo, 54, rotulo);
+    String linha1 = "Menu>" + nomeItemPrincipalCurto(_menu.itemSelecionado());
+    escreverTela(linha1, "OK entra Seg sai");
 }
 
 void DisplayManager::desenharTelaStatus()
 {
-    // Dashboard operacional: foco em irrigacao e agenda.
     DateTime agora = _rtc.agora();
 
-    uint16_t maskAbertas = 0;
-    uint16_t maskAutoAbertaReal = 0;
     int totalAbertas = 0;
+    int totalAutoAbertas = 0;
     for (int i = 0; i < NUM_VALVULAS; i++)
     {
-        if (_irrigacao.estadoValvula(i) != EstadoValvula::ABERTA)
-            continue;
-
-        maskAbertas |= (uint16_t)(1U << i);
-        if (_irrigacao.valvulaEmAgendamento(i))
-            maskAutoAbertaReal |= (uint16_t)(1U << i);
-        totalAbertas++;
+        if (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA)
+        {
+            totalAbertas++;
+            if (_irrigacao.valvulaEmAgendamento(i))
+            {
+                totalAutoAbertas++;
+            }
+        }
     }
 
-    _display.desenharRetangulo(0, 0, OLED_LARGURA, 26);
-    desenharIconeStatusRelogio(_display, 3, 3);
+    int totalManualAbertas = totalAbertas - totalAutoAbertas;
 
-    char linhaHora[16];
-    snprintf(linhaHora, sizeof(linhaHora), "%02d:%02d:%02d", agora.hour(), agora.minute(), agora.second());
-    _display.desenharTexto(17, 2, linhaHora);
+    char topo[24];
+    snprintf(topo, sizeof(topo), "%02d:%02d:%02d V%d/%d",
+             agora.hour(),
+             agora.minute(),
+             agora.second(),
+             totalAbertas,
+             NUM_VALVULAS);
 
-    bool agendaAtivaNoCiclo = _agendaExecucaoAtiva &&
-                              (_agendaAguardandoIntervalo || _agendaSetoresEmLote > 0 || _agendaSetoresPendentes > 0);
-    desenharIconeStatusIrrigacao(_display, 82, 3, (totalAbertas > 0) || agendaAtivaNoCiclo);
-    char linhaOn[16];
-    snprintf(linhaOn, sizeof(linhaOn), "ON %d/%d", totalAbertas, NUM_VALVULAS);
-    _display.desenharTextoMini(95, 4, linhaOn);
-
-    char linhaIrrigacao[32];
-    auto contarBits = [](uint16_t mask)
-    {
-        int total = 0;
-        for (int i = 0; i < NUM_VALVULAS; i++)
-        {
-            if (mask & (1U << i))
-                total++;
-        }
-        return total;
-    };
-
+    String linha2;
     if (totalAbertas > 0)
     {
-        uint16_t maskAutoAgora = maskAutoAbertaReal;
-        uint16_t maskManualAgora = (uint16_t)(maskAbertas & (~maskAutoAgora));
-        uint16_t maskAutoLigada = (uint16_t)(maskAbertas & maskAutoAgora);
-
-        int qtdMan = contarBits(maskManualAgora);
-        int qtdAuto = contarBits(maskAutoLigada);
-
-        if (qtdMan > 0 && qtdAuto > 0)
-            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "MAN S%d/%d AUTO S%d/%d", qtdMan, NUM_VALVULAS, qtdAuto, NUM_VALVULAS);
-        else if (qtdMan > 0)
-            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "MANUAL S%d/%d", qtdMan, NUM_VALVULAS);
-        else if (qtdAuto > 0)
-            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "AUTO S%d/%d", qtdAuto, NUM_VALVULAS);
+        char tmp[24];
+        if (totalManualAbertas > 0 && totalAutoAbertas > 0)
+        {
+            snprintf(tmp, sizeof(tmp), "MAN %d AUTO %d", totalManualAbertas, totalAutoAbertas);
+        }
+        else if (totalManualAbertas > 0)
+        {
+            snprintf(tmp, sizeof(tmp), "Manual ativo %d", totalManualAbertas);
+        }
         else
-            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "ATIVO S%d/%d", totalAbertas, NUM_VALVULAS);
+        {
+            snprintf(tmp, sizeof(tmp), "Auto ativo %d", totalAutoAbertas);
+        }
+        linha2 = tmp;
     }
-    else if (agendaAtivaNoCiclo)
+    else if (_agendaExecucaoAtiva)
     {
-        uint16_t mask = (uint16_t)(_agendaSetoresLoteMask | _agendaSetoresPendentesMask);
-        int qtdAutoCiclo = contarBits(mask);
-
-        if (qtdAutoCiclo > 0)
-            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "AUTO S%d/%d", qtdAutoCiclo, NUM_VALVULAS);
-        else if (_agendaAguardandoIntervalo)
-            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "Agenda ativa: intervalo");
-        else if (_agendaSetoresPendentes > 0)
-            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "Agenda ativa: prox lote");
+        if (_agendaAguardandoIntervalo)
+        {
+            linha2 = "Agenda: intervalo";
+        }
         else
-            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "Agenda ativa em execucao");
+        {
+            char tmp[24];
+            snprintf(tmp, sizeof(tmp), "Lote %d Pend %d", _agendaSetoresEmLote, _agendaSetoresPendentes);
+            linha2 = tmp;
+        }
     }
     else
     {
-        snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "Nenhum setor ativo");
-    }
-    _display.desenharTexto(3, 13, linhaIrrigacao);
-
-    _display.desenharRetangulo(0, 29, OLED_LARGURA, 20);
-    _display.desenharTextoMini(3, 31, "PROXIMA AGENDA");
-
-    DateTime proximaDataHora;
-    AgendaSetor proximaAgenda;
-    int slotProximo = -1;
-    bool temProxima = _menu.proximaAgenda(agora, proximaDataHora, proximaAgenda, slotProximo);
-
-    if (temProxima)
-    {
-        const char *dias[7] = {"DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"};
-        int dow = proximaDataHora.dayOfTheWeek();
-        if (dow < 0 || dow > 6)
-            dow = 0;
-
-        desenharIconeStatusAgenda(_display, 4, 38);
-        char linhaProxima[24];
-        snprintf(linhaProxima, sizeof(linhaProxima), "%s %02d:%02d",
-                 dias[dow], proximaDataHora.hour(), proximaDataHora.minute());
-        _display.desenharTextoMini(17, 38, linhaProxima);
-
-        int qtdSetoresProxima = contarBits(proximaAgenda.setoresMask);
-
-        char linhaSetores[32];
-        if (qtdSetoresProxima == 0)
-            snprintf(linhaSetores, sizeof(linhaSetores), "Setores: S0/%d", NUM_VALVULAS);
+        DateTime proximaDataHora;
+        AgendaSetor proximaAgenda;
+        int slot = -1;
+        if (_menu.proximaAgenda(agora, proximaDataHora, proximaAgenda, slot))
+        {
+            String sigla = diaSigla((uint8_t)proximaDataHora.dayOfTheWeek());
+            char tmp[24];
+            snprintf(tmp, sizeof(tmp), "Prox %s %02d:%02d",
+                     sigla.c_str(),
+                     proximaDataHora.hour(),
+                     proximaDataHora.minute());
+            linha2 = tmp;
+        }
         else
-            snprintf(linhaSetores, sizeof(linhaSetores), "Setores: S%d/%d", qtdSetoresProxima, NUM_VALVULAS);
-        _display.desenharTextoMini(64, 38, linhaSetores);
-    }
-    else
-    {
-        _display.desenharTexto(3, 38, "Nenhuma agenda ativa");
+        {
+            linha2 = "Sem agenda ativa";
+        }
     }
 
-    _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-    _display.desenharTextoMini(0, 56, "Gire para abrir menu");
+    escreverTela(topo, linha2);
 }
 
 void DisplayManager::desenharTelaIrrigacao()
 {
-    desenharCabecalho("IRRIGAR AGORA");
-
     int setorAtual = _menu.setorAtual();
-    int totalItens = NUM_VALVULAS + 1; // setores + item Voltar
 
-    const int linhasVisiveis = 3;
-    int inicio = (setorAtual / linhasVisiveis) * linhasVisiveis;
-    int fim = inicio + linhasVisiveis;
-    if (fim > totalItens)
-        fim = totalItens;
-
-    // Exibe uma janela paginada com setores e item Voltar
-    for (int i = inicio; i < fim; i++)
+    if (_menu.opcaoVoltarIrrigacaoSelecionada())
     {
-        int linhaIdx = i - inicio;
-        int y = 16 + (linhaIdx * 11);
-
-        bool itemVoltar = (i == NUM_VALVULAS);
-        bool aberta = false;
-        if (!itemVoltar)
-        {
-            aberta = (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA);
-        }
-        bool selecionado = (i == setorAtual);
-
-        if (selecionado)
-        {
-            _display.setCorDesenho(1);
-            _display.desenharRetanguloPreenchido(0, y - 1, OLED_LARGURA, 11);
-            _display.setCorDesenho(0);
-        }
-
-        char linha[22];
-        if (itemVoltar)
-        {
-            snprintf(linha, sizeof(linha), "< Voltar");
-        }
-        else
-        {
-            snprintf(linha, sizeof(linha), "Setor %d  %s",
-                     i + 1,
-                     aberta ? "[LIGADO ]" : "[------]");
-        }
-
-        _display.desenharTexto(2, y, linha);
-
-        if (selecionado)
-            _display.setCorDesenho(1);
+        escreverTela("Irrigar >Voltar", "OK volta Seg sai");
+        return;
     }
 
-    // Aviso de timeout se ocorreu
+    bool aberta = (_irrigacao.estadoValvula(setorAtual) == EstadoValvula::ABERTA);
+    char linha1[24];
+    snprintf(linha1, sizeof(linha1), "Setor %d [%s]", setorAtual + 1, aberta ? "ON" : "OFF");
+
     if (_menu.timeoutOcorreu())
     {
-        _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        _display.desenharTexto(0, 56, "! Timeout: setor fechado");
+        escreverTela(linha1, "Timeout seguranca");
     }
     else
     {
-        _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        char rodape[28];
-        snprintf(rodape, sizeof(rodape), "OK=toggle Pg %d/%d", (inicio / linhasVisiveis) + 1,
-                 (totalItens + linhasVisiveis - 1) / linhasVisiveis);
-        if (_menu.opcaoVoltarIrrigacaoSelecionada())
-        {
-            snprintf(rodape, sizeof(rodape), "OK=voltar Pg %d/%d", (inicio / linhasVisiveis) + 1,
-                     (totalItens + linhasVisiveis - 1) / linhasVisiveis);
-        }
-        _display.desenharTextoMini(0, 56, rodape);
+        escreverTela(linha1, "OK toggle Seg sai");
     }
 }
 
 void DisplayManager::desenharTelaProgramar()
 {
     EtapaProgramacao etapa = _menu.etapaProgramacao();
-    int agenda = _menu.agendaProgramacao() + 1;
+    FeedbackProgramacao feedback = _menu.feedbackProgramacao();
 
-    auto desenharBarra = [&](int x, int y, int largura, int altura, int valor, int maximo)
+    static FeedbackProgramacao ultimoFeedback = FeedbackProgramacao::NENHUM;
+    static unsigned long inicioFeedbackMs = 0;
+
+    if (feedback != FeedbackProgramacao::NENHUM && feedback != ultimoFeedback)
     {
-        if (maximo <= 0)
-            return;
-        _display.desenharRetangulo(x, y, largura, altura);
-        int interno = largura - 2;
-        int preenchido = (interno * valor) / maximo;
-        if (preenchido < 0)
-            preenchido = 0;
-        if (preenchido > interno)
-            preenchido = interno;
-        _display.desenharRetanguloPreenchido(x + 1, y + 1, preenchido, altura - 2);
-    };
+        ultimoFeedback = feedback;
+        inicioFeedbackMs = millis();
+    }
+
+    if ((feedback == FeedbackProgramacao::SALVO || feedback == FeedbackProgramacao::EXCLUIDO) &&
+        (millis() - inicioFeedbackMs) > 1400)
+    {
+        _menu.limparFeedbackProgramacao();
+        feedback = FeedbackProgramacao::NENHUM;
+        ultimoFeedback = FeedbackProgramacao::NENHUM;
+    }
 
     if (etapa == EtapaProgramacao::SELECIONAR_AGENDA)
     {
-        static bool animFeedbackAtivo = false;
-        static unsigned long animFeedbackInicioMs = 0;
-        static FeedbackProgramacao animTipo = FeedbackProgramacao::NENHUM;
+        AgendaSetor agenda = _menu.agendaSelecionada();
+        int slot = _menu.agendaProgramacao() + 1;
 
-        FeedbackProgramacao fb = _menu.feedbackProgramacao();
-        if (fb == FeedbackProgramacao::SALVO || fb == FeedbackProgramacao::EXCLUIDO)
+        char linha1[24];
+        snprintf(linha1, sizeof(linha1), "Agenda %d/%d %s", slot, MAX_AGENDAS_TOTAIS, agenda.ativa ? "ATV" : "VAZ");
+
+        String linha2;
+        if (feedback != FeedbackProgramacao::NENHUM)
         {
-            const unsigned long FRAME_DELAY_MS = 42;
-            const int FRAME_COUNT = 16;
-            const int LOOP_COUNT = 3;
-
-            if (!animFeedbackAtivo || animTipo != fb)
-            {
-                animFeedbackAtivo = true;
-                animFeedbackInicioMs = millis();
-                animTipo = fb;
-            }
-
-            unsigned long elapsed = millis() - animFeedbackInicioMs;
-            unsigned long frameGlobal = elapsed / FRAME_DELAY_MS;
-            unsigned long totalFrames = (unsigned long)FRAME_COUNT * LOOP_COUNT;
-
-            if (frameGlobal >= totalFrames)
-            {
-                animFeedbackAtivo = false;
-                animTipo = FeedbackProgramacao::NENHUM;
-                _menu.limparFeedbackProgramacao();
-            }
-            else
-            {
-                int frameLocal = (int)(frameGlobal % FRAME_COUNT);
-                if (fb == FeedbackProgramacao::SALVO)
-                    desenharAnimacaoCheck48(_display, frameLocal);
-                else
-                    desenharAnimacaoLixeira48(_display, frameLocal);
-                return;
-            }
+            linha2 = mensagemFeedbackProgramacao(feedback);
+        }
+        else if (agenda.ativa)
+        {
+            char tmp[24];
+            int setores = contarBits16(agenda.setoresMask);
+            snprintf(tmp, sizeof(tmp), "%02d:%02d %umin S%d", agenda.hora, agenda.minuto, agenda.duracaoMin, setores);
+            linha2 = tmp;
         }
         else
         {
-            animFeedbackAtivo = false;
-            animTipo = FeedbackProgramacao::NENHUM;
+            linha2 = "OK cria/edita";
         }
 
-        desenharCabecalho("PROGRAMAR");
-
-        char linhaAgenda[24];
-        snprintf(linhaAgenda, sizeof(linhaAgenda), "Agenda %d de %d", agenda, MAX_AGENDAS_TOTAIS);
-        _display.desenharTexto(0, 16, linhaAgenda);
-
-        AgendaSetor ag = _menu.agendaSelecionada();
-        desenharIconeAgendaSlot(_display, 0, 27, ag.ativa);
-
-        if (ag.ativa)
-        {
-            char linhaHorario[24];
-            snprintf(linhaHorario, sizeof(linhaHorario), "%02dh:%02d  %umin", ag.hora, ag.minuto, ag.duracaoMin);
-
-            int totalDias = 0;
-            int totalSetores = 0;
-            for (int i = 0; i < 7; i++)
-                if (ag.diasMask & (1 << i))
-                    totalDias++;
-            for (int i = 0; i < NUM_VALVULAS; i++)
-                if (ag.setoresMask & (1 << i))
-                    totalSetores++;
-
-            _display.desenharTexto(19, 28, linhaHorario);
-
-            char linhaResumo[24];
-            snprintf(linhaResumo, sizeof(linhaResumo), "Dias:%d  Set:%d", totalDias, totalSetores);
-            _display.desenharTexto(19, 38, linhaResumo);
-            // Sem texto de acao: o proprio icone indica que a agenda e editavel.
-        }
-        else
-        {
-            _display.desenharTexto(19, 30, "Slot vazio");
-            _display.desenharTextoMini(19, 48, "OK para criar agenda");
-        }
-
-        if (fb == FeedbackProgramacao::ERRO_SEM_DIA)
-            _display.desenharTexto(0, 48, "Marque ao menos 1 dia");
-        else if (fb == FeedbackProgramacao::ERRO_SEM_SETOR)
-            _display.desenharTexto(0, 48, "Marque ao menos 1 setor");
-        else if (fb == FeedbackProgramacao::ERRO_DUPLICADA)
-            _display.desenharTexto(0, 48, "Agenda duplicada");
-        else if (fb == FeedbackProgramacao::ERRO_PERSISTENCIA)
-            _display.desenharTexto(0, 48, "Erro ao salvar");
-
-        _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        _display.desenharTextoMini(0, 56, "Segure: sair");
+        escreverTela(linha1, linha2);
         return;
     }
 
-    AgendaSetor ag = _menu.agendaEdicao();
+    AgendaSetor agenda = _menu.agendaEdicao();
+
     if (etapa == EtapaProgramacao::SUBMENU_AGENDA)
     {
-        desenharCabecalho("EDITAR AGENDA");
+        int opcao = _menu.opcaoSubmenuProgramacao();
+        String linha1 = "A" + String(_menu.agendaProgramacao() + 1) + ":" + nomeSubmenuProgramacaoCurto(opcao);
 
-        const char *opcoes[8] = {
-            "Hora",
-            "Minuto",
-            "Duracao",
-            "Dias",
-            "Setores",
-            "Salvar",
-            "Excluir",
-            "Voltar"};
-
-        int selecionada = _menu.opcaoSubmenuProgramacao();
-        int inicio = 0;
-        if (selecionada > 2)
-            inicio = selecionada - 2;
-        if (inicio > 4)
-            inicio = 4;
-
-        for (int i = 0; i < 4; i++)
+        String linha2 = "OK abre Seg sair";
+        switch (opcao)
         {
-            int idx = inicio + i;
-            int y = 16 + (i * 10);
-            if (idx >= 8)
-                break;
-
-            if (idx == selecionada)
-            {
-                _display.desenharRetanguloPreenchido(0, y - 1, OLED_LARGURA, 9);
-                _display.setCorDesenho(0);
-            }
-
-            char linha[28];
-            if (idx == 0)
-                snprintf(linha, sizeof(linha), "Hora: %02dh", ag.hora);
-            else if (idx == 1)
-                snprintf(linha, sizeof(linha), "Minuto: %02dmin", ag.minuto);
-            else if (idx == 2)
-                snprintf(linha, sizeof(linha), "Duracao: %umin", ag.duracaoMin);
-            else
-                snprintf(linha, sizeof(linha), "%s", opcoes[idx]);
-
-            if (idx <= 6)
-            {
-                desenharIconeSubmenu(_display, 2, y, idx);
-            }
-            else
-            {
-                _display.desenharLinha(3, y + 4, 10, y + 4);
-                _display.desenharLinha(3, y + 4, 6, y + 1);
-                _display.desenharLinha(3, y + 4, 6, y + 7);
-            }
-            _display.desenharTexto(14, y, linha);
-
-            if (idx == selecionada)
-                _display.setCorDesenho(1);
+        case 0:
+        {
+            char tmp[24];
+            snprintf(tmp, sizeof(tmp), "Hora: %02dh", agenda.hora);
+            linha2 = tmp;
+            break;
+        }
+        case 1:
+        {
+            char tmp[24];
+            snprintf(tmp, sizeof(tmp), "Minuto: %02d", agenda.minuto);
+            linha2 = tmp;
+            break;
+        }
+        case 2:
+        {
+            char tmp[24];
+            snprintf(tmp, sizeof(tmp), "Duracao: %umin", agenda.duracaoMin);
+            linha2 = tmp;
+            break;
+        }
+        case 3:
+        {
+            char tmp[24];
+            snprintf(tmp, sizeof(tmp), "Dias marcados: %d", contarBits16(agenda.diasMask));
+            linha2 = tmp;
+            break;
+        }
+        case 4:
+        {
+            char tmp[24];
+            snprintf(tmp, sizeof(tmp), "Setores: %d", contarBits16(agenda.setoresMask));
+            linha2 = tmp;
+            break;
+        }
+        case 5:
+            linha2 = "OK para salvar";
+            break;
+        case 6:
+            linha2 = "OK para excluir";
+            break;
+        case 7:
+            linha2 = "OK voltar";
+            break;
         }
 
-        _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        _display.desenharTextoMini(0, 56, "OK: entrar  Segure: voltar");
+        if (feedback != FeedbackProgramacao::NENHUM && feedback != FeedbackProgramacao::SALVO && feedback != FeedbackProgramacao::EXCLUIDO)
+        {
+            linha2 = mensagemFeedbackProgramacao(feedback);
+        }
+
+        escreverTela(linha1, linha2);
         return;
     }
 
     if (etapa == EtapaProgramacao::CONFIRMAR_EXCLUSAO)
     {
-        desenharCabecalho("EXCLUIR AGENDA?");
-        _display.desenharTexto(0, 20, "Confirma exclusao?");
-        _display.desenharTextoMini(0, 30, "Gire: SIM/NAO | OK confirma");
-
-        int opc = _menu.opcaoConfirmarExclusao(); // 0=SIM, 1=NAO
-
-        if (opc == 0)
-        {
-            _display.desenharRetanguloPreenchido(8, 40, 48, 12);
-            _display.setCorDesenho(0);
-            _display.desenharTexto(22, 42, "SIM");
-            _display.setCorDesenho(1);
-
-            _display.desenharRetangulo(72, 40, 48, 12);
-            _display.desenharTexto(88, 42, "NAO");
-        }
-        else
-        {
-            _display.desenharRetangulo(8, 40, 48, 12);
-            _display.desenharTexto(22, 42, "SIM");
-
-            _display.desenharRetanguloPreenchido(72, 40, 48, 12);
-            _display.setCorDesenho(0);
-            _display.desenharTexto(88, 42, "NAO");
-            _display.setCorDesenho(1);
-        }
-
-        _display.desenharTextoMini(0, 56, "Segure: cancelar");
+        String linha2 = (_menu.opcaoConfirmarExclusao() == 0) ? ">SIM   NAO" : " SIM  >NAO";
+        escreverTela("Excluir agenda?", linha2);
         return;
     }
 
     if (etapa == EtapaProgramacao::EDIT_HORA)
     {
-        desenharCabecalho("EDITAR HORA");
-        char valor[16];
-        snprintf(valor, sizeof(valor), "%02dh", ag.hora);
-        _display.desenharTextoGrande(44, 16, valor);
-        desenharBarra(8, 38, 112, 10, ag.hora, 23);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta | Segure");
+        char linha2[24];
+        snprintf(linha2, sizeof(linha2), "Valor: %02dh", agenda.hora);
+        escreverTela("Editar hora", linha2);
         return;
     }
 
     if (etapa == EtapaProgramacao::EDIT_MINUTO)
     {
-        desenharCabecalho("EDITAR MINUTO");
-        char valor[16];
-        snprintf(valor, sizeof(valor), "%02dmin", ag.minuto);
-        _display.desenharTextoGrande(32, 16, valor);
-        desenharBarra(8, 38, 112, 10, ag.minuto, 59);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta | Segure");
+        char linha2[24];
+        snprintf(linha2, sizeof(linha2), "Valor: %02d", agenda.minuto);
+        escreverTela("Editar minuto", linha2);
         return;
     }
 
     if (etapa == EtapaProgramacao::EDIT_DURACAO)
     {
-        desenharCabecalho("EDITAR DURACAO");
-        char valor[18];
-        snprintf(valor, sizeof(valor), "%umin", ag.duracaoMin);
-        _display.desenharTextoGrande(30, 16, valor);
-        desenharBarra(8, 38, 112, 10, ag.duracaoMin, 240);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta | Segure");
+        char linha2[24];
+        snprintf(linha2, sizeof(linha2), "Duracao: %umin", agenda.duracaoMin);
+        escreverTela("Editar duracao", linha2);
         return;
     }
 
     if (etapa == EtapaProgramacao::EDIT_DIAS)
     {
-        desenharCabecalho("EDITAR DIAS");
-        const char *diasSigla[7] = {"DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"};
-        int xBase = 2;
-        int passo = 18;
+        int cursor = _menu.cursorDiaProgramacao();
+        bool marcado = (agenda.diasMask & (1 << cursor)) != 0;
 
-        for (int i = 0; i < 7; i++)
-        {
-            int x = xBase + (i * passo);
-            _display.desenharTextoMini(x, 22, diasSigla[i]);
-
-            bool marcado = (ag.diasMask & (1 << i)) != 0;
-            if (marcado)
-                _display.desenharRetanguloPreenchido(x + 4, 34, 6, 6);
-            else
-                _display.desenharRetangulo(x + 4, 34, 6, 6);
-
-            if (i == _menu.cursorDiaProgramacao())
-            {
-                _display.desenharRetangulo(x + 2, 32, 10, 10);
-            }
-        }
-        _display.desenharTextoMini(0, 50, "Gire: cursor | OK: marca");
-        _display.desenharTextoMini(0, 56, "Segure: voltar submenu");
+        String linha1 = "Dia " + diaSigla((uint8_t)cursor) + (marcado ? " [X]" : " [ ]");
+        escreverTela(linha1, "Gire OK marca");
         return;
     }
 
     if (etapa == EtapaProgramacao::EDIT_SETORES)
     {
-        desenharCabecalho("EDITAR SETORES");
-
-        const int linhasVisiveis = 3;
         int cursor = _menu.cursorSetorProgramacao();
-        int totalItens = NUM_VALVULAS + 1; // setores + voltar
-        int inicio = (cursor / linhasVisiveis) * linhasVisiveis;
-        int fim = inicio + linhasVisiveis;
-        if (fim > totalItens)
-            fim = totalItens;
-
-        for (int i = inicio; i < fim; i++)
+        if (cursor == NUM_VALVULAS)
         {
-            int linhaIdx = i - inicio;
-            int y = 16 + (linhaIdx * 11);
-            bool itemVoltar = (i == NUM_VALVULAS);
-            bool marcado = false;
-            if (!itemVoltar)
-            {
-                marcado = (ag.setoresMask & (1 << i)) != 0;
-            }
-            if (i == _menu.cursorSetorProgramacao())
-            {
-                _display.desenharRetanguloPreenchido(0, y - 1, OLED_LARGURA, 10);
-                _display.setCorDesenho(0);
-            }
-
-            char linha[24];
-            if (itemVoltar)
-                snprintf(linha, sizeof(linha), "< Voltar");
-            else
-                snprintf(linha, sizeof(linha), "Setor %d   [%c]", i + 1, marcado ? 'X' : ' ');
-            _display.desenharTexto(2, y, linha);
-
-            if (i == _menu.cursorSetorProgramacao())
-            {
-                _display.setCorDesenho(1);
-            }
+            escreverTela("Setores >Voltar", "OK volta submenu");
+            return;
         }
-        char rodape[26];
-        if (_menu.cursorSetorProgramacao() == NUM_VALVULAS)
-            snprintf(rodape, sizeof(rodape), "OK voltar Pg %d/%d",
-                     (inicio / linhasVisiveis) + 1,
-                     (totalItens + linhasVisiveis - 1) / linhasVisiveis);
-        else
-            snprintf(rodape, sizeof(rodape), "Gire/OK marca Pg %d/%d",
-                     (inicio / linhasVisiveis) + 1,
-                     (totalItens + linhasVisiveis - 1) / linhasVisiveis);
-        _display.desenharTextoMini(0, 56, rodape);
+
+        bool marcado = (agenda.setoresMask & (1 << cursor)) != 0;
+        char linha1[24];
+        snprintf(linha1, sizeof(linha1), "Setor %d [%c]", cursor + 1, marcado ? 'X' : ' ');
+        escreverTela(linha1, "Gire OK marca");
+        return;
     }
 
-    FeedbackProgramacao fb = _menu.feedbackProgramacao();
-    if (fb == FeedbackProgramacao::ERRO_SEM_DIA)
-        _display.desenharTexto(0, 50, "Marque ao menos 1 dia");
-    else if (fb == FeedbackProgramacao::ERRO_SEM_SETOR)
-        _display.desenharTexto(0, 50, "Marque ao menos 1 setor");
-    else if (fb == FeedbackProgramacao::ERRO_DUPLICADA)
-        _display.desenharTexto(0, 50, "Agenda duplicada");
-    else if (fb == FeedbackProgramacao::ERRO_PERSISTENCIA)
-        _display.desenharTexto(0, 50, "Erro ao salvar");
-    else if (fb == FeedbackProgramacao::ERRO_EXCLUSAO)
-        _display.desenharTexto(0, 50, "Erro ao excluir");
+    escreverTela("Programacao", "Estado invalido");
 }
 
 void DisplayManager::desenharTelaConfig()
 {
     EtapaConfiguracao etapa = _menu.etapaConfiguracao();
-    static bool animSalvoAtiva = false;
-    static bool animLimpoAtiva = false;
-    static bool animRestauradoAtiva = false;
-    static unsigned long animSalvoInicioMs = 0;
-    static unsigned long animLimpoInicioMs = 0;
-    static unsigned long animRestauradoInicioMs = 0;
 
-    const unsigned long FRAME_DELAY_MS = 42;
-    const int FRAME_COUNT = 16;
-    const int LOOP_COUNT = 3;
+    static unsigned long expiraMsgMs = 0;
+    static String msgCurta;
 
     if (_menu.feedbackConfiguracaoSalvo())
     {
-        animSalvoAtiva = true;
-        animSalvoInicioMs = millis();
+        msgCurta = "Configuracao salva";
+        expiraMsgMs = millis() + 1500;
         _menu.limparFeedbackConfiguracaoSalvo();
     }
 
     if (_menu.feedbackConfiguracaoLimpo())
     {
-        animLimpoAtiva = true;
-        animLimpoInicioMs = millis();
+        msgCurta = "Agendas apagadas";
+        expiraMsgMs = millis() + 1500;
         _menu.limparFeedbackConfiguracaoLimpo();
     }
 
     if (_menu.feedbackConfiguracaoRestaurado())
     {
-        animRestauradoAtiva = true;
-        animRestauradoInicioMs = millis();
+        msgCurta = "Padrao restaurado";
+        expiraMsgMs = millis() + 1500;
         _menu.limparFeedbackConfiguracaoRestaurado();
     }
 
-    if (animSalvoAtiva)
+    if ((long)(expiraMsgMs - millis()) > 0)
     {
-        desenharCabecalho("CONFIGURACOES");
-        unsigned long elapsed = millis() - animSalvoInicioMs;
-        unsigned long frameGlobal = elapsed / FRAME_DELAY_MS;
-        unsigned long totalFrames = (unsigned long)FRAME_COUNT * LOOP_COUNT;
-        if (frameGlobal >= totalFrames)
-        {
-            animSalvoAtiva = false;
-            return;
-        }
-
-        int frameLocal = (int)(frameGlobal % FRAME_COUNT);
-        desenharAnimacaoCheck48(_display, frameLocal);
-        _display.desenharTextoMini(34, 56, "Relogio salvo!");
-        return;
-    }
-
-    if (animLimpoAtiva)
-    {
-        desenharCabecalho("CONFIGURACOES");
-        unsigned long elapsed = millis() - animLimpoInicioMs;
-        unsigned long frameGlobal = elapsed / FRAME_DELAY_MS;
-        unsigned long totalFrames = (unsigned long)FRAME_COUNT * LOOP_COUNT;
-        if (frameGlobal >= totalFrames)
-        {
-            animLimpoAtiva = false;
-            return;
-        }
-
-        int frameLocal = (int)(frameGlobal % FRAME_COUNT);
-        desenharAnimacaoLixeira48(_display, frameLocal);
-        _display.desenharTextoMini(20, 56, "Agendas apagadas!");
-        return;
-    }
-
-    if (animRestauradoAtiva)
-    {
-        desenharCabecalho("CONFIGURACOES");
-        unsigned long elapsed = millis() - animRestauradoInicioMs;
-        unsigned long frameGlobal = elapsed / FRAME_DELAY_MS;
-        unsigned long totalFrames = (unsigned long)FRAME_COUNT * LOOP_COUNT;
-        if (frameGlobal >= totalFrames)
-        {
-            animRestauradoAtiva = false;
-            return;
-        }
-
-        int frameLocal = (int)(frameGlobal % FRAME_COUNT);
-        desenharAnimacaoCheck48(_display, frameLocal);
-        _display.desenharTextoMini(16, 56, "Padrao restaurado!");
+        escreverTela("Configuracoes", msgCurta);
         return;
     }
 
     if (etapa == EtapaConfiguracao::MENU)
     {
-        desenharCabecalho("CONFIGURACOES");
-
-        const char *opcoes[3] = {
-            "Relogio",
-            "Sistema",
-            "Voltar"};
-
-        int selecionada = _menu.opcaoConfiguracao();
-        for (int idx = 0; idx < 3; idx++)
-        {
-            int y = 18 + (idx * 12);
-            if (idx == selecionada)
-            {
-                _display.desenharRetanguloPreenchido(0, y - 1, OLED_LARGURA, 10);
-                _display.setCorDesenho(0);
-            }
-
-            if (idx == 0)
-                desenharIconeSubmenu(_display, 2, y, 0);
-            else if (idx == 1)
-                desenharIconeSubmenu(_display, 2, y, 2);
-            else
-            {
-                _display.desenharLinha(3, y + 4, 10, y + 4);
-                _display.desenharLinha(3, y + 4, 6, y + 1);
-                _display.desenharLinha(3, y + 4, 6, y + 7);
-            }
-
-            _display.desenharTexto(14, y, opcoes[idx]);
-            if (idx == selecionada)
-                _display.setCorDesenho(1);
-        }
-
-        _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        _display.desenharTextoMini(0, 56, "OK entra | Segure sair");
+        String linha1 = "Cfg:" + nomeOpcaoConfigCurto(etapa, _menu.opcaoConfiguracao());
+        escreverTela(linha1, "OK entra Seg sai");
         return;
     }
 
     if (etapa == EtapaConfiguracao::SUBMENU_RELOGIO)
     {
-        desenharCabecalho("CONFIG > RELOGIO");
+        int opcao = _menu.opcaoConfiguracao();
+        String linha1 = "Rel:" + nomeOpcaoConfigCurto(etapa, opcao);
 
-        const char *opcoes[8] = {
-            "Hora",
-            "Minuto",
-            "Dia",
-            "Mes",
-            "Ano",
-            "Timeout",
-            "Salvar relogio",
-            "Voltar"};
-
-        int selecionada = _menu.opcaoConfiguracao();
-        int inicio = 0;
-        if (selecionada > 2)
-            inicio = selecionada - 2;
-        if (inicio > 4)
-            inicio = 4;
-
-        for (int i = 0; i < 4; i++)
+        String linha2 = "OK abre Seg menu";
+        char tmp[24];
+        if (opcao == 0)
         {
-            int idx = inicio + i;
-            int y = 16 + (i * 10);
-            if (idx >= 8)
-                break;
-
-            if (idx == selecionada)
-            {
-                _display.desenharRetanguloPreenchido(0, y - 1, OLED_LARGURA, 9);
-                _display.setCorDesenho(0);
-            }
-
-            char linha[32];
-            if (idx == 0)
-                snprintf(linha, sizeof(linha), "Hora: %02d", _menu.configHora());
-            else if (idx == 1)
-                snprintf(linha, sizeof(linha), "Minuto: %02d", _menu.configMinuto());
-            else if (idx == 2)
-                snprintf(linha, sizeof(linha), "Dia: %02d", _menu.configDia());
-            else if (idx == 3)
-                snprintf(linha, sizeof(linha), "Mes: %02d", _menu.configMes());
-            else if (idx == 4)
-                snprintf(linha, sizeof(linha), "Ano: %04d", _menu.configAno());
-            else if (idx == 5)
-                snprintf(linha, sizeof(linha), "Timeout: %d min", _menu.configTimeoutManualMin());
-            else
-                snprintf(linha, sizeof(linha), "%s", opcoes[idx]);
-
-            if (idx <= 6)
-                desenharIconeSubmenu(_display, 2, y, idx <= 5 ? idx : 5);
-            else
-            {
-                _display.desenharLinha(3, y + 4, 10, y + 4);
-                _display.desenharLinha(3, y + 4, 6, y + 1);
-                _display.desenharLinha(3, y + 4, 6, y + 7);
-            }
-
-            _display.desenharTexto(14, y, linha);
-            if (idx == selecionada)
-                _display.setCorDesenho(1);
+            snprintf(tmp, sizeof(tmp), "Hora: %02d", _menu.configHora());
+            linha2 = tmp;
+        }
+        else if (opcao == 1)
+        {
+            snprintf(tmp, sizeof(tmp), "Minuto: %02d", _menu.configMinuto());
+            linha2 = tmp;
+        }
+        else if (opcao == 2)
+        {
+            snprintf(tmp, sizeof(tmp), "Dia: %02d", _menu.configDia());
+            linha2 = tmp;
+        }
+        else if (opcao == 3)
+        {
+            snprintf(tmp, sizeof(tmp), "Mes: %02d", _menu.configMes());
+            linha2 = tmp;
+        }
+        else if (opcao == 4)
+        {
+            snprintf(tmp, sizeof(tmp), "Ano: %04d", _menu.configAno());
+            linha2 = tmp;
+        }
+        else if (opcao == 5)
+        {
+            snprintf(tmp, sizeof(tmp), "Timeout: %dmin", _menu.configTimeoutManualMin());
+            linha2 = tmp;
+        }
+        else if (opcao == 6)
+        {
+            linha2 = "OK salva relogio";
+        }
+        else if (opcao == 7)
+        {
+            linha2 = "OK voltar";
         }
 
-        _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        _display.desenharTextoMini(0, 56, "OK entra | Segure menu");
+        escreverTela(linha1, linha2);
         return;
     }
 
     if (etapa == EtapaConfiguracao::SUBMENU_SISTEMA)
     {
-        desenharCabecalho("CONFIG > SISTEMA");
+        int opcao = _menu.opcaoConfiguracao();
+        String linha1 = "Sis:" + nomeOpcaoConfigCurto(etapa, opcao);
 
-        const char *opcoes[6] = {
-            "Duracao padrao",
-            "Teste valvulas",
-            "Limpar agendas",
-            "Restaurar padrao",
-            "Info do sistema",
-            "Voltar"};
-
-        int selecionada = _menu.opcaoConfiguracao();
-        int inicio = 0;
-        if (selecionada > 2)
-            inicio = selecionada - 2;
-        if (inicio > 2)
-            inicio = 2;
-
-        for (int i = 0; i < 4; i++)
+        String linha2 = "OK abre Seg menu";
+        char tmp[24];
+        if (opcao == 0)
         {
-            int idx = inicio + i;
-            int y = 16 + (i * 10);
-            if (idx >= 6)
-                break;
-
-            if (idx == selecionada)
-            {
-                _display.desenharRetanguloPreenchido(0, y - 1, OLED_LARGURA, 9);
-                _display.setCorDesenho(0);
-            }
-
-            char linha[32];
-            if (idx == 0)
-                snprintf(linha, sizeof(linha), "Duracao: %d min", _menu.configDuracaoPadraoMin());
-            else
-                snprintf(linha, sizeof(linha), "%s", opcoes[idx]);
-
-            if (idx == 0)
-                desenharIconeSubmenu(_display, 2, y, 2);
-            else if (idx == 1)
-                desenharIconeSubmenu(_display, 2, y, 4);
-            else if (idx == 2)
-                desenharIconeSubmenu(_display, 2, y, 6);
-            else if (idx == 3)
-                desenharIconeSubmenu(_display, 2, y, 5);
-            else if (idx == 4)
-                desenharIconeSubmenu(_display, 2, y, 1);
-            else
-            {
-                _display.desenharLinha(3, y + 4, 10, y + 4);
-                _display.desenharLinha(3, y + 4, 6, y + 1);
-                _display.desenharLinha(3, y + 4, 6, y + 7);
-            }
-
-            _display.desenharTexto(14, y, linha);
-            if (idx == selecionada)
-                _display.setCorDesenho(1);
+            snprintf(tmp, sizeof(tmp), "Duracao: %dmin", _menu.configDuracaoPadraoMin());
+            linha2 = tmp;
+        }
+        else if (opcao == 1)
+        {
+            linha2 = "OK teste valv.";
+        }
+        else if (opcao == 2)
+        {
+            linha2 = "OK limpar agendas";
+        }
+        else if (opcao == 3)
+        {
+            linha2 = "OK restaurar";
+        }
+        else if (opcao == 4)
+        {
+            linha2 = "OK info sistema";
+        }
+        else if (opcao == 5)
+        {
+            linha2 = "OK voltar";
         }
 
-        _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        _display.desenharTextoMini(0, 56, "OK entra | Segure menu");
+        escreverTela(linha1, linha2);
         return;
     }
 
     if (etapa == EtapaConfiguracao::TESTE_VALVULAS)
     {
-        desenharCabecalho("TESTE VALVULAS");
+        int setor = _menu.configSetorTeste();
+        bool aberta = (_irrigacao.estadoValvula(setor) == EstadoValvula::ABERTA);
 
-        int setorAtual = _menu.configSetorTeste();
-        const int linhasVisiveis = 3;
-        int inicio = (setorAtual / linhasVisiveis) * linhasVisiveis;
-        int fim = inicio + linhasVisiveis;
-        if (fim > NUM_VALVULAS)
-            fim = NUM_VALVULAS;
-
-        for (int i = inicio; i < fim; i++)
-        {
-            int linhaIdx = i - inicio;
-            int y = 16 + (linhaIdx * 11);
-            bool aberta = (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA);
-
-            if (i == setorAtual)
-            {
-                _display.desenharRetanguloPreenchido(0, y - 1, OLED_LARGURA, 10);
-                _display.setCorDesenho(0);
-            }
-
-            char linha[24];
-            snprintf(linha, sizeof(linha), "Setor %d   [%c]", i + 1, aberta ? 'X' : ' ');
-            _display.desenharTexto(2, y, linha);
-
-            if (i == setorAtual)
-            {
-                _display.setCorDesenho(1);
-            }
-        }
-
-        char rodape[28];
-        snprintf(rodape, sizeof(rodape), "OK toggle | Pg %d/%d", (inicio / linhasVisiveis) + 1,
-                 (NUM_VALVULAS + linhasVisiveis - 1) / linhasVisiveis);
-        _display.desenharLinha(0, 50, OLED_LARGURA - 1, 50);
-        _display.desenharTextoMini(0, 52, "MODO MANUTENCAO");
-        _display.desenharTextoMini(0, 56, rodape);
+        char linha1[24];
+        snprintf(linha1, sizeof(linha1), "Teste S%d [%s]", setor + 1, aberta ? "ON" : "OFF");
+        escreverTela(linha1, "OK toggle Seg sai");
         return;
     }
 
     if (etapa == EtapaConfiguracao::EDIT_HORA)
     {
-        desenharCabecalho("AJUSTAR HORA");
-        char valor[16];
-        snprintf(valor, sizeof(valor), "%02d", _menu.configHora());
-        _display.desenharTextoGrande(52, 22, valor);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
+        char linha2[24];
+        snprintf(linha2, sizeof(linha2), "Valor: %02d", _menu.configHora());
+        escreverTela("Ajustar hora", linha2);
         return;
     }
 
     if (etapa == EtapaConfiguracao::EDIT_MINUTO)
     {
-        desenharCabecalho("AJUSTAR MINUTO");
-        char valor[16];
-        snprintf(valor, sizeof(valor), "%02d", _menu.configMinuto());
-        _display.desenharTextoGrande(52, 22, valor);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
+        char linha2[24];
+        snprintf(linha2, sizeof(linha2), "Valor: %02d", _menu.configMinuto());
+        escreverTela("Ajustar minuto", linha2);
         return;
     }
 
     if (etapa == EtapaConfiguracao::EDIT_DIA)
     {
-        desenharCabecalho("AJUSTAR DIA");
-        char valor[16];
-        snprintf(valor, sizeof(valor), "%02d", _menu.configDia());
-        _display.desenharTextoGrande(52, 22, valor);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
+        char linha2[24];
+        snprintf(linha2, sizeof(linha2), "Valor: %02d", _menu.configDia());
+        escreverTela("Ajustar dia", linha2);
         return;
     }
 
     if (etapa == EtapaConfiguracao::EDIT_MES)
     {
-        desenharCabecalho("AJUSTAR MES");
-        char valor[16];
-        snprintf(valor, sizeof(valor), "%02d", _menu.configMes());
-        _display.desenharTextoGrande(52, 22, valor);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
+        char linha2[24];
+        snprintf(linha2, sizeof(linha2), "Valor: %02d", _menu.configMes());
+        escreverTela("Ajustar mes", linha2);
         return;
     }
 
     if (etapa == EtapaConfiguracao::EDIT_ANO)
     {
-        desenharCabecalho("AJUSTAR ANO");
-        char valor[16];
-        snprintf(valor, sizeof(valor), "%04d", _menu.configAno());
-        _display.desenharTextoGrande(40, 22, valor);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
+        char linha2[24];
+        snprintf(linha2, sizeof(linha2), "Valor: %04d", _menu.configAno());
+        escreverTela("Ajustar ano", linha2);
         return;
     }
 
     if (etapa == EtapaConfiguracao::EDIT_TIMEOUT_MANUAL)
     {
-        desenharCabecalho("TIMEOUT MANUAL");
-        char valor[16];
-        snprintf(valor, sizeof(valor), "%dmin", _menu.configTimeoutManualMin());
-        _display.desenharTextoGrande(36, 22, valor);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK salva");
+        char linha2[24];
+        snprintf(linha2, sizeof(linha2), "Timeout: %dmin", _menu.configTimeoutManualMin());
+        escreverTela("Timeout manual", linha2);
         return;
     }
 
     if (etapa == EtapaConfiguracao::EDIT_DURACAO_PADRAO)
     {
-        desenharCabecalho("DURACAO PADRAO");
-        char valor[16];
-        snprintf(valor, sizeof(valor), "%dmin", _menu.configDuracaoPadraoMin());
-        _display.desenharTextoGrande(36, 22, valor);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK salva");
+        char linha2[24];
+        snprintf(linha2, sizeof(linha2), "Duracao: %dmin", _menu.configDuracaoPadraoMin());
+        escreverTela("Duracao padrao", linha2);
         return;
     }
 
     if (etapa == EtapaConfiguracao::CONFIRMAR_LIMPAR_AGENDAS)
     {
-        desenharCabecalho("LIMPAR AGENDAS?");
-        _display.desenharTextoMini(0, 20, "Apagar todas as agendas?");
-        _display.desenharTextoMini(0, 30, "Gire: SIM/NAO | OK confirma");
-
-        int opc = _menu.opcaoConfirmarLimparAgendas();
-        if (opc == 0)
-        {
-            _display.desenharRetanguloPreenchido(8, 40, 48, 12);
-            _display.setCorDesenho(0);
-            _display.desenharTexto(22, 42, "SIM");
-            _display.setCorDesenho(1);
-
-            _display.desenharRetangulo(72, 40, 48, 12);
-            _display.desenharTexto(88, 42, "NAO");
-        }
-        else
-        {
-            _display.desenharRetangulo(8, 40, 48, 12);
-            _display.desenharTexto(22, 42, "SIM");
-
-            _display.desenharRetanguloPreenchido(72, 40, 48, 12);
-            _display.setCorDesenho(0);
-            _display.desenharTexto(88, 42, "NAO");
-            _display.setCorDesenho(1);
-        }
+        String linha2 = (_menu.opcaoConfirmarLimparAgendas() == 0) ? ">SIM   NAO" : " SIM  >NAO";
+        escreverTela("Limpar agendas?", linha2);
         return;
     }
 
     if (etapa == EtapaConfiguracao::CONFIRMAR_RESTAURAR_PADRAO)
     {
-        desenharCabecalho("RESTAURAR PADRAO?");
-        _display.desenharTextoMini(0, 20, "Resetar timeout/duracao?");
-        _display.desenharTextoMini(0, 30, "Gire: SIM/NAO | OK confirma");
-
-        int opc = _menu.opcaoConfirmarRestaurarPadrao();
-        if (opc == 0)
-        {
-            _display.desenharRetanguloPreenchido(8, 40, 48, 12);
-            _display.setCorDesenho(0);
-            _display.desenharTexto(22, 42, "SIM");
-            _display.setCorDesenho(1);
-
-            _display.desenharRetangulo(72, 40, 48, 12);
-            _display.desenharTexto(88, 42, "NAO");
-        }
-        else
-        {
-            _display.desenharRetangulo(8, 40, 48, 12);
-            _display.desenharTexto(22, 42, "SIM");
-
-            _display.desenharRetanguloPreenchido(72, 40, 48, 12);
-            _display.setCorDesenho(0);
-            _display.desenharTexto(88, 42, "NAO");
-            _display.setCorDesenho(1);
-        }
+        String linha2 = (_menu.opcaoConfirmarRestaurarPadrao() == 0) ? ">SIM   NAO" : " SIM  >NAO";
+        escreverTela("Restaurar padrao", linha2);
         return;
     }
 
     if (etapa == EtapaConfiguracao::INFO_SISTEMA)
     {
-        desenharCabecalho("INFO SISTEMA");
-        DateTime agora = _rtc.agora();
-
-        char linha1[24];
-        snprintf(linha1, sizeof(linha1), "Agendas: %d", _menu.totalAgendasAtivas());
-        _display.desenharTexto(0, 16, linha1);
-
-        char linha2[24];
-        snprintf(linha2, sizeof(linha2), "RTC: %02d/%02d %02d:%02d", agora.day(), agora.month(), agora.hour(), agora.minute());
-        _display.desenharTextoMini(0, 30, linha2);
-
-        char linha3[24];
-        snprintf(linha3, sizeof(linha3), "T.Man: %dmin", _menu.configTimeoutManualMin());
-        _display.desenharTextoMini(0, 40, linha3);
-
-        char linha4[24];
-        snprintf(linha4, sizeof(linha4), "Dur.Pad: %dmin", _menu.configDuracaoPadraoMin());
-        _display.desenharTextoMini(0, 48, linha4);
-
-        _display.desenharTextoMini(0, 56, "OK/Segure para voltar");
+        unsigned long pagina = (millis() / INTERVALO_PAGINA_INFO_MS) % 3;
+        if (pagina == 0)
+        {
+            char linha1[24];
+            char linha2[24];
+            snprintf(linha1, sizeof(linha1), "Agendas: %d", _menu.totalAgendasAtivas());
+            snprintf(linha2, sizeof(linha2), "Timeout: %dmin", _menu.configTimeoutManualMin());
+            escreverTela(linha1, linha2);
+        }
+        else if (pagina == 1)
+        {
+            DateTime agora = _rtc.agora();
+            char linha1[24];
+            char linha2[24];
+            snprintf(linha1, sizeof(linha1), "DurPad: %dmin", _menu.configDuracaoPadraoMin());
+            snprintf(linha2, sizeof(linha2), "%02d/%02d %02d:%02d", agora.day(), agora.month(), agora.hour(), agora.minute());
+            escreverTela(linha1, linha2);
+        }
+        else
+        {
+            escreverTela("Info sistema", "OK/Seg para sair");
+        }
         return;
     }
+
+    escreverTela("Configuracoes", "Estado invalido");
 }
 
 void DisplayManager::desenharTelaWebServer()
 {
-    desenharCabecalho("WEBSERVER");
-
-    String linhas[WEBSERVER_MAX_LINHAS];
+    String linhas[8];
     int totalLinhas = 0;
 
     if (!_webAp.ativo())
     {
-        totalLinhas = adicionarTextoQuebrado(_display, "Falha ao iniciar AP", linhas, totalLinhas);
-        totalLinhas = adicionarTextoQuebrado(_display, "Tente voltar e entrar novamente", linhas, totalLinhas);
+        linhas[totalLinhas++] = "AP nao iniciou";
+        linhas[totalLinhas++] = "Verifique Config";
     }
     else
     {
-        totalLinhas = adicionarTextoQuebrado(_display, "Conecte no Wi-Fi do ESP32", linhas, totalLinhas);
-        totalLinhas = adicionarTextoQuebrado(_display, String("SSID: ") + _webAp.ssid(), linhas, totalLinhas);
-        totalLinhas = adicionarTextoQuebrado(_display, String("Senha: ") + _webAp.senha(), linhas, totalLinhas);
-        totalLinhas = adicionarTextoQuebrado(_display, String("IP AP: ") + _webAp.ipTexto(), linhas, totalLinhas);
-
-        String urlAp = _webAp.urlAcessoAp();
-        if (urlAp.length() > 0)
-        {
-            totalLinhas = adicionarTextoQuebrado(_display, String("URL AP: ") + urlAp, linhas, totalLinhas);
-        }
+        linhas[totalLinhas++] = "AP:" + cortar(String(_webAp.ssid()), 13);
+        linhas[totalLinhas++] = "IP AP:" + _webAp.ipTexto();
 
         if (_webAp.staConectada())
-        {
-            totalLinhas = adicionarTextoQuebrado(_display, String("IP STA: ") + _webAp.ipStaTexto(), linhas, totalLinhas);
-
-            String urlSta = _webAp.urlAcessoSta();
-            if (urlSta.length() > 0)
-            {
-                totalLinhas = adicionarTextoQuebrado(_display, String("URL STA: ") + urlSta, linhas, totalLinhas);
-            }
-        }
+            linhas[totalLinhas++] = "IP STA:" + _webAp.ipStaTexto();
         else
+            linhas[totalLinhas++] = "STA: desconectado";
+
+        String url = _webAp.urlAcesso();
+        if (url.length() > 0)
         {
-            totalLinhas = adicionarTextoQuebrado(_display, "STA: sem conexao", linhas, totalLinhas);
+            linhas[totalLinhas++] = "URL:" + url;
         }
     }
 
     if (totalLinhas <= 0)
     {
-        linhas[0] = "Sem informacoes";
-        totalLinhas = 1;
+        linhas[totalLinhas++] = "Sem informacao";
     }
 
-    int totalPaginas = (totalLinhas + WEBSERVER_LINHAS_POR_PAGINA - 1) / WEBSERVER_LINHAS_POR_PAGINA;
-    int paginaAtual = 0;
-    if (totalPaginas > 1)
+    int paginaAtual = _menu.paginaWebServer() % totalLinhas;
+
+    String linha1 = linhas[paginaAtual];
+    String linha2;
+
+    if (totalLinhas > 1)
     {
-        paginaAtual = _menu.paginaWebServer() % totalPaginas;
-    }
-
-    int inicio = paginaAtual * WEBSERVER_LINHAS_POR_PAGINA;
-    for (int i = 0; i < WEBSERVER_LINHAS_POR_PAGINA; i++)
-    {
-        int indiceLinha = inicio + i;
-        if (indiceLinha >= totalLinhas)
-        {
-            break;
-        }
-
-        int y = WEBSERVER_Y_INICIAL + (i * WEBSERVER_ALTURA_LINHA);
-        _display.desenharTexto(0, y, linhas[indiceLinha].c_str());
-    }
-
-    _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-
-    if (totalPaginas > 1)
-    {
-        char rodape[26];
-        snprintf(rodape, sizeof(rodape), "Pag %d/%d Gire OK/Seg", paginaAtual + 1, totalPaginas);
-        _display.desenharTextoMini(0, 56, rodape);
+        char rodape[24];
+        snprintf(rodape, sizeof(rodape), "Pag %d/%d OK sair", paginaAtual + 1, totalLinhas);
+        linha2 = rodape;
     }
     else
     {
-        _display.desenharTextoMini(0, 56, "OK/Segure: voltar");
+        linha2 = "OK/Seg para sair";
     }
-}
 
-// ============================================================
-//  Componentes reutilizáveis
-// ============================================================
-
-void DisplayManager::desenharCabecalho(const char *titulo)
-{
-    _display.desenharTexto(0, 0, titulo);
-    _display.desenharLinha(0, 12, OLED_LARGURA - 1, 12);
-}
-
-void DisplayManager::desenharRodapeHora()
-{
-    DateTime agora = _rtc.agora();
-
-    char hora[9]; // "HH:MM:SS\0"
-    snprintf(hora, sizeof(hora), "%02d:%02d:%02d",
-             agora.hour(), agora.minute(), agora.second());
-
-    // Rodapé: linha separadora + hora alinhada à direita
-    _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-    _display.desenharTexto(80, 56, hora);
+    escreverTela(linha1, linha2);
 }

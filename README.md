@@ -1,6 +1,6 @@
 # 🌱 IrrigacaoInteligente
 
-Sistema de irrigacao inteligente com ESP32, display OLED, 4 botoes de navegacao, RTC DS3231 e controle de ate 8 valvulas por rele.
+Sistema de irrigacao inteligente com ESP32, display LCD 16x2 I2C, 4 botoes de navegacao, RTC DS3231 e controle de ate 8 valvulas por rele.
 
 Este README descreve o estado atual implementado no firmware.
 
@@ -35,7 +35,7 @@ Este README descreve o estado atual implementado no firmware.
 
 O firmware entrega:
 
-- Irrigacao manual por setor com feedback no OLED.
+- Irrigacao manual por setor com feedback no LCD 16x2.
 - Irrigacao automatica por agenda semanal.
 - Controle fisico de reles (trigger HIGH).
 - Dashboard web com AP dedicado e tentativas de conexao STA.
@@ -53,30 +53,30 @@ Plataforma:
 
 - ESP32
 - 4 botoes de navegacao (Cima, Baixo, Selecionar, Voltar)
-- OLED SSD1306 128x64 I2C
+- LCD 16x2 com modulo I2C (PCF8574)
 - RTC DS3231 I2C
 - 2 modulos de rele 4 canais (8 canais no total)
 
 Mapeamento de pinos (Config.h):
 
-| Recurso          | Pino |
-| ---------------- | ---- |
-| Botao Cima       | 19   |
-| Botao Baixo      | 18   |
-| Botao Selecionar | 4    |
-| Botao Voltar     | 16   |
-| OLED SDA         | 21   |
-| OLED SCL         | 22   |
-| Rele 1           | 23   |
-| Rele 2           | 25   |
-| Rele 3           | 26   |
-| Rele 4           | 27   |
-| Rele 5           | 32   |
-| Rele 6           | 33   |
-| Rele 7           | 13   |
-| Rele 8           | 14   |
+| Recurso           | Pino |
+| ----------------- | ---- |
+| Botao Cima        | 19   |
+| Botao Baixo       | 18   |
+| Botao Selecionar  | 4    |
+| Botao Voltar      | 16   |
+| I2C SDA (LCD/RTC) | 21   |
+| I2C SCL (LCD/RTC) | 22   |
+| Rele 1            | 23   |
+| Rele 2            | 25   |
+| Rele 3            | 26   |
+| Rele 4            | 27   |
+| Rele 5            | 32   |
+| Rele 6            | 33   |
+| Rele 7            | 13   |
+| Rele 8            | 14   |
 
-Observacao: OLED e DS3231 compartilham o barramento I2C.
+Observacao: LCD e DS3231 compartilham o barramento I2C.
 
 ## 3. ⚡ Configuracao rapida
 
@@ -84,7 +84,7 @@ Passo a passo curto para colocar o sistema para rodar:
 
 1. Monte os componentes conforme os pinos definidos em Config.h.
 2. Instale as bibliotecas na IDE Arduino:
-  - U8g2
+  - LiquidCrystal_I2C
   - RTClib
 3. Selecione a placa ESP32 e a porta serial.
 4. Compile e grave o firmware.
@@ -125,7 +125,7 @@ Separacao adotada:
 Modulos:
 
 - input_driver.*: leitura dos 4 botoes, debounce, clique curto e evento de voltar.
-- display_driver_oled.*: primitivas de desenho no OLED.
+- display_driver_lcd16x2.*: escrita de linhas no LCD 16x2.
 - rtc_driver_ds3231.*: leitura/ajuste de data e hora.
 - runtime_config_manager.*: configuracoes runtime (timeout manual e duracao padrao) persistidas em NVS.
 - menu_controller.*: maquina de estados do menu, programacao e configuracoes.
@@ -259,7 +259,7 @@ No boot:
 - IrrigacaoInteligente.ino - entrada do firmware
 - Config.h - configuracoes globais
 - input_driver.h/.cpp - leitura dos 4 botoes de navegacao
-- display_driver_oled.h/.cpp - driver OLED
+- display_driver_lcd16x2.h/.cpp - driver LCD 16x2 I2C
 - display_manager.h/.cpp - renderizacao de telas
 - rtc_driver_ds3231.h/.cpp - RTC DS3231
 - menu_controller.h/.cpp - navegacao, programacao e configuracoes
@@ -283,7 +283,7 @@ No boot:
 
 Problemas comuns e verificacoes:
 
-- OLED nao liga:
+- LCD nao liga:
   - confira SDA/SCL (21/22)
   - confira alimentacao e GND
 - Botoes nao respondem:
