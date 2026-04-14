@@ -9,7 +9,7 @@
 // ============================================================
 
 #include "Config.h"
-#include "encoder_driver.h"
+#include "input_driver.h"
 #include "display_driver_oled.h"
 #include "rtc_driver_ds3231.h"
 #include "menu_controller.h"
@@ -20,7 +20,7 @@
 #include "web_ap_manager.h"
 
 // --- Instâncias globais ---
-EncoderDriver         encoder;
+InputDriver           inputDriver;
 DisplayDriverOled     oled;
 RtcDriverDs3231       rtc;
 RuntimeConfigManager  runtimeConfig;
@@ -234,7 +234,7 @@ void setup() {
 
     Wire.begin(PIN_OLED_SDA, PIN_OLED_SCL);   // I2C compartilhado: OLED + RTC
 
-    encoder.begin();
+    inputDriver.begin();
     oled.begin();
 
     rtcDisponivel = rtc.begin();
@@ -274,12 +274,12 @@ void setup() {
 // ============================================================
 void loop() {
     // 1. Atualiza estado da entrada local (4 botoes)
-    encoder.atualizar();
+    inputDriver.atualizar();
 
     // 2. Lê eventos de direção/seleção/voltar
-    DirecaoEncoder direcao = encoder.lerDirecao();
-    bool           botaoCurto = encoder.botaoPressionado();
-    bool           botaoLongo = encoder.botaoLongoPressionado();
+    DirecaoNavegacao direcao = inputDriver.lerDirecao();
+    bool             botaoCurto = inputDriver.botaoPressionado();
+    bool             botaoLongo = inputDriver.botaoLongoPressionado();
 
     bool emTesteValvulasAntes =
         (menu.estadoAtual() == EstadoMenu::CONFIGURACOES &&

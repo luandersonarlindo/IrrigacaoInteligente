@@ -84,8 +84,8 @@ Passo a passo curto para colocar o sistema para rodar:
 
 1. Monte os componentes conforme os pinos definidos em Config.h.
 2. Instale as bibliotecas na IDE Arduino:
-   - U8g2
-   - RTClib
+  - U8g2
+  - RTClib
 3. Selecione a placa ESP32 e a porta serial.
 4. Compile e grave o firmware.
 5. Abra o monitor serial em 115200 para acompanhar logs.
@@ -124,7 +124,7 @@ Separacao adotada:
 
 Modulos:
 
-- encoder_driver.*: leitura dos 4 botoes, debounce, clique curto e evento de voltar.
+- input_driver.*: leitura dos 4 botoes, debounce, clique curto e evento de voltar.
 - display_driver_oled.*: primitivas de desenho no OLED.
 - rtc_driver_ds3231.*: leitura/ajuste de data e hora.
 - runtime_config_manager.*: configuracoes runtime (timeout manual e duracao padrao) persistidas em NVS.
@@ -258,7 +258,7 @@ No boot:
 
 - IrrigacaoInteligente.ino - entrada do firmware
 - Config.h - configuracoes globais
-- encoder_driver.h/.cpp - leitura dos 4 botoes de navegacao
+- input_driver.h/.cpp - leitura dos 4 botoes de navegacao
 - display_driver_oled.h/.cpp - driver OLED
 - display_manager.h/.cpp - renderizacao de telas
 - rtc_driver_ds3231.h/.cpp - RTC DS3231

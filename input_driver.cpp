@@ -1,11 +1,11 @@
 // ============================================================
-//  encoder_driver.cpp — Implementação do driver de 4 botões
+//  input_driver.cpp — Implementação do driver de 4 botões
 // ============================================================
 
-#include "encoder_driver.h"
+#include "input_driver.h"
 
-EncoderDriver::EncoderDriver()
-    : _direcaoEvento(DirecaoEncoder::NENHUMA),
+InputDriver::InputDriver()
+    : _direcaoEvento(DirecaoNavegacao::NENHUMA),
       _botaoEvento(false),
       _botaoLongoEvento(false),
       _btnUp{HIGH, 0, 0},
@@ -15,7 +15,7 @@ EncoderDriver::EncoderDriver()
 {
 }
 
-void EncoderDriver::begin()
+void InputDriver::begin()
 {
     pinMode(PIN_BTN_UP, INPUT_PULLUP);
     pinMode(PIN_BTN_DOWN, INPUT_PULLUP);
@@ -33,22 +33,22 @@ void EncoderDriver::begin()
     }
 }
 
-void EncoderDriver::atualizar()
+void InputDriver::atualizar()
 {
-    atualizarBotaoDirecao(PIN_BTN_UP, _btnUp, DirecaoEncoder::ANTI_HORARIO);
-    atualizarBotaoDirecao(PIN_BTN_DOWN, _btnDown, DirecaoEncoder::HORARIO);
+    atualizarBotaoDirecao(PIN_BTN_UP, _btnUp, DirecaoNavegacao::ANTI_HORARIO);
+    atualizarBotaoDirecao(PIN_BTN_DOWN, _btnDown, DirecaoNavegacao::HORARIO);
     atualizarBotaoAcao(PIN_BTN_SELECT, _btnSelect, false);
     atualizarBotaoAcao(PIN_BTN_BACK, _btnBack, true);
 }
 
-DirecaoEncoder EncoderDriver::lerDirecao()
+DirecaoNavegacao InputDriver::lerDirecao()
 {
-    DirecaoEncoder direcao = _direcaoEvento;
-    _direcaoEvento = DirecaoEncoder::NENHUMA;
+    DirecaoNavegacao direcao = _direcaoEvento;
+    _direcaoEvento = DirecaoNavegacao::NENHUMA;
     return direcao;
 }
 
-bool EncoderDriver::botaoPressionado()
+bool InputDriver::botaoPressionado()
 {
     if (_botaoEvento)
     {
@@ -58,7 +58,7 @@ bool EncoderDriver::botaoPressionado()
     return false;
 }
 
-bool EncoderDriver::botaoLongoPressionado()
+bool InputDriver::botaoLongoPressionado()
 {
     if (_botaoLongoEvento)
     {
@@ -68,7 +68,7 @@ bool EncoderDriver::botaoLongoPressionado()
     return false;
 }
 
-void EncoderDriver::atualizarBotaoDirecao(uint8_t pin, EstadoBotao &estado, DirecaoEncoder direcaoEvento)
+void InputDriver::atualizarBotaoDirecao(uint8_t pin, EstadoBotao &estado, DirecaoNavegacao direcaoEvento)
 {
     bool estadoAtual = digitalRead(pin);
     unsigned long agora = millis();
@@ -88,7 +88,7 @@ void EncoderDriver::atualizarBotaoDirecao(uint8_t pin, EstadoBotao &estado, Dire
     }
 }
 
-void EncoderDriver::atualizarBotaoAcao(uint8_t pin, EstadoBotao &estado, bool emitirComoVoltar)
+void InputDriver::atualizarBotaoAcao(uint8_t pin, EstadoBotao &estado, bool emitirComoVoltar)
 {
     bool estadoAtual = digitalRead(pin);
     unsigned long agora = millis();

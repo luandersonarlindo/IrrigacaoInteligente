@@ -10,7 +10,7 @@
 
 #include <Arduino.h>
 #include "Config.h"
-#include "encoder_driver.h"
+#include "input_driver.h"
 #include "schedule_manager.h"
 #include "rtc_driver_ds3231.h"
 #include "runtime_config_manager.h"
@@ -85,7 +85,7 @@ public:
     void begin();
 
     // Processa entrada de navegação e atualiza estado interno
-    void processar(DirecaoEncoder direcao, bool botaoPressionado, bool botaoLongoPressionado = false);
+    void processar(DirecaoNavegacao direcao, bool botaoPressionado, bool botaoLongoPressionado = false);
 
     // Getters para o display_manager consultar
     EstadoMenu estadoAtual() const;
@@ -197,17 +197,17 @@ private:
     void selecionar();
     void voltar();
     void entrarProgramacao();
-    void processarProgramacao(DirecaoEncoder direcao, bool botaoPressionado, bool botaoLongoPressionado);
+    void processarProgramacao(DirecaoNavegacao direcao, bool botaoPressionado, bool botaoLongoPressionado);
     void carregarAgendaSelecionada();
     void prepararEdicaoDaAgenda();
     bool salvarAgendaEdicao();
     bool excluirAgendaSelecionada();
-    void ajustarCampoEdicao(DirecaoEncoder direcao);
+    void ajustarCampoEdicao(DirecaoNavegacao direcao);
     void alternarDiaCursor();
     void alternarSetorCursor();
     void entrarConfiguracoes();
-    void processarConfiguracoes(DirecaoEncoder direcao, bool botaoPressionado, bool botaoLongoPressionado);
-    void ajustarCampoConfiguracao(DirecaoEncoder direcao);
+    void processarConfiguracoes(DirecaoNavegacao direcao, bool botaoPressionado, bool botaoLongoPressionado);
+    void ajustarCampoConfiguracao(DirecaoNavegacao direcao);
     bool salvarConfiguracaoRelogio();
     bool salvarConfiguracoesRuntime();
     int totalOpcoesConfiguracao() const;

@@ -83,7 +83,7 @@ Regra de organizacao:
 
 ### Modulos e papeis
 
-- encoder_driver.*: leitura dos 4 botoes de navegacao.
+- input_driver.*: leitura dos 4 botoes de navegacao.
 - display_driver_oled.*: desenho no display.
 - rtc_driver_ds3231.*: hora e data.
 - runtime_config_manager.*: salva timeout e duracao padrao em NVS.
@@ -180,7 +180,7 @@ As agendas e configuracoes runtime sao salvas na NVS (flash do ESP32).
 
 - IrrigacaoInteligente.ino
 - Config.h
-- encoder_driver.h/.cpp
+- input_driver.h/.cpp
 - display_driver_oled.h/.cpp
 - display_manager.h/.cpp
 - rtc_driver_ds3231.h/.cpp

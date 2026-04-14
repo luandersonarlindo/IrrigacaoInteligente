@@ -1,7 +1,7 @@
 #pragma once
 
 // ============================================================
-//  encoder_driver.h — Driver de navegação local (4 botões)
+//  input_driver.h — Driver de navegação local (4 botões)
 //
 //  Responsabilidade: ler direção, seleção e voltar.
 //  NÃO conhece menu, NÃO conhece display.
@@ -11,18 +11,18 @@
 #include <Arduino.h>
 #include "Config.h"
 
-// Direções possíveis de rotação
-enum class DirecaoEncoder
+// Direções possíveis de navegação
+enum class DirecaoNavegacao
 {
     NENHUMA,
     HORARIO,
     ANTI_HORARIO
 };
 
-class EncoderDriver
+class InputDriver
 {
 public:
-    EncoderDriver();
+    InputDriver();
 
     // Inicializa os pinos dos botões
     void begin();
@@ -31,7 +31,7 @@ public:
     void atualizar();
 
     // Retorna a direção do último movimento (e reseta para NENHUMA)
-    DirecaoEncoder lerDirecao();
+    DirecaoNavegacao lerDirecao();
 
     // Retorna true se o botão foi pressionado (com debounce)
     bool botaoPressionado();
@@ -47,7 +47,7 @@ private:
         unsigned long tempoPressionadoMs;
     };
 
-    DirecaoEncoder _direcaoEvento;
+    DirecaoNavegacao _direcaoEvento;
     bool _botaoEvento;
     bool _botaoLongoEvento;
 
@@ -59,6 +59,6 @@ private:
     static const unsigned long DEBOUNCE_MS = BUTTON_DEBOUNCE_MS;
     static const unsigned long LONG_PRESS_MS = BUTTON_LONG_PRESS_MS;
 
-    void atualizarBotaoDirecao(uint8_t pin, EstadoBotao &estado, DirecaoEncoder direcaoEvento);
+    void atualizarBotaoDirecao(uint8_t pin, EstadoBotao &estado, DirecaoNavegacao direcaoEvento);
     void atualizarBotaoAcao(uint8_t pin, EstadoBotao &estado, bool emitirComoVoltar);
 };

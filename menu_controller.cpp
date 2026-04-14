@@ -93,9 +93,9 @@ void MenuController::begin()
     }
 }
 
-void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bool botaoLongoPressionado)
+void MenuController::processar(DirecaoNavegacao direcao, bool botaoPressionado, bool botaoLongoPressionado)
 {
-    bool houveInteracao = (direcao != DirecaoEncoder::NENHUMA) || botaoPressionado || botaoLongoPressionado;
+    bool houveInteracao = (direcao != DirecaoNavegacao::NENHUMA) || botaoPressionado || botaoLongoPressionado;
     if (houveInteracao)
     {
         _ultimoEventoMenuMs = millis();
@@ -119,12 +119,12 @@ void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bo
 
     case EstadoMenu::STATUS:
         // Qualquer interação abre o menu
-        if (direcao != DirecaoEncoder::NENHUMA || botaoPressionado || botaoLongoPressionado)
+        if (direcao != DirecaoNavegacao::NENHUMA || botaoPressionado || botaoLongoPressionado)
         {
             _menuAtivo = true;
-            if (direcao == DirecaoEncoder::HORARIO)
+            if (direcao == DirecaoNavegacao::HORARIO)
                 navegarProximo();
-            if (direcao == DirecaoEncoder::ANTI_HORARIO)
+            if (direcao == DirecaoNavegacao::ANTI_HORARIO)
                 navegarAnterior();
             if (botaoPressionado || botaoLongoPressionado)
                 selecionar();
@@ -140,7 +140,7 @@ void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bo
         }
 
         // Direção navega entre setores
-        if (direcao == DirecaoEncoder::HORARIO)
+        if (direcao == DirecaoNavegacao::HORARIO)
         {
             _setorAtual = (_setorAtual + 1) % (NUM_VALVULAS + 1);
             if (DEBUG_SERIAL)
@@ -152,7 +152,7 @@ void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bo
                     Serial.println(_setorAtual + 1);
             }
         }
-        if (direcao == DirecaoEncoder::ANTI_HORARIO)
+        if (direcao == DirecaoNavegacao::ANTI_HORARIO)
         {
             _setorAtual = (_setorAtual - 1 + (NUM_VALVULAS + 1)) % (NUM_VALVULAS + 1);
             if (DEBUG_SERIAL)
@@ -194,11 +194,11 @@ void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bo
         break;
 
     case EstadoMenu::WEBSERVER:
-        if (direcao == DirecaoEncoder::HORARIO)
+        if (direcao == DirecaoNavegacao::HORARIO)
         {
             _paginaWebServer = (_paginaWebServer + 1) % 100;
         }
-        else if (direcao == DirecaoEncoder::ANTI_HORARIO)
+        else if (direcao == DirecaoNavegacao::ANTI_HORARIO)
         {
             _paginaWebServer = (_paginaWebServer + 99) % 100;
         }
@@ -372,7 +372,7 @@ void MenuController::entrarProgramacao()
     carregarAgendaSelecionada();
 }
 
-void MenuController::processarProgramacao(DirecaoEncoder direcao, bool botaoPressionado, bool botaoLongoPressionado)
+void MenuController::processarProgramacao(DirecaoNavegacao direcao, bool botaoPressionado, bool botaoLongoPressionado)
 {
     if (botaoLongoPressionado)
     {
@@ -422,13 +422,13 @@ void MenuController::processarProgramacao(DirecaoEncoder direcao, bool botaoPres
     switch (_etapaProgramacao)
     {
     case EtapaProgramacao::SELECIONAR_AGENDA:
-        if (direcao == DirecaoEncoder::HORARIO)
+        if (direcao == DirecaoNavegacao::HORARIO)
         {
             _agendaProgramacao = (_agendaProgramacao + 1) % MAX_AGENDAS_TOTAIS;
             _feedbackProgramacao = FeedbackProgramacao::NENHUM;
             carregarAgendaSelecionada();
         }
-        if (direcao == DirecaoEncoder::ANTI_HORARIO)
+        if (direcao == DirecaoNavegacao::ANTI_HORARIO)
         {
             _agendaProgramacao = (_agendaProgramacao - 1 + MAX_AGENDAS_TOTAIS) % MAX_AGENDAS_TOTAIS;
             _feedbackProgramacao = FeedbackProgramacao::NENHUM;
@@ -444,11 +444,11 @@ void MenuController::processarProgramacao(DirecaoEncoder direcao, bool botaoPres
         break;
 
     case EtapaProgramacao::SUBMENU_AGENDA:
-        if (direcao == DirecaoEncoder::HORARIO)
+        if (direcao == DirecaoNavegacao::HORARIO)
         {
             _opcaoSubmenuProgramacao = (_opcaoSubmenuProgramacao + 1) % 8;
         }
-        if (direcao == DirecaoEncoder::ANTI_HORARIO)
+        if (direcao == DirecaoNavegacao::ANTI_HORARIO)
         {
             _opcaoSubmenuProgramacao = (_opcaoSubmenuProgramacao - 1 + 8) % 8;
         }
@@ -491,7 +491,7 @@ void MenuController::processarProgramacao(DirecaoEncoder direcao, bool botaoPres
         break;
 
     case EtapaProgramacao::CONFIRMAR_EXCLUSAO:
-        if (direcao == DirecaoEncoder::HORARIO || direcao == DirecaoEncoder::ANTI_HORARIO)
+        if (direcao == DirecaoNavegacao::HORARIO || direcao == DirecaoNavegacao::ANTI_HORARIO)
         {
             _opcaoConfirmarExclusao = (_opcaoConfirmarExclusao == 0) ? 1 : 0;
         }
@@ -611,14 +611,14 @@ bool MenuController::excluirAgendaSelecionada()
     return true;
 }
 
-void MenuController::ajustarCampoEdicao(DirecaoEncoder direcao)
+void MenuController::ajustarCampoEdicao(DirecaoNavegacao direcao)
 {
-    if (direcao == DirecaoEncoder::NENHUMA)
+    if (direcao == DirecaoNavegacao::NENHUMA)
     {
         return;
     }
 
-    int delta = (direcao == DirecaoEncoder::HORARIO) ? 1 : -1;
+    int delta = (direcao == DirecaoNavegacao::HORARIO) ? 1 : -1;
 
     switch (_etapaProgramacao)
     {
@@ -701,7 +701,7 @@ void MenuController::entrarConfiguracoes()
     _opcaoConfirmarRestaurarPadrao = 1;
 }
 
-void MenuController::processarConfiguracoes(DirecaoEncoder direcao, bool botaoPressionado, bool botaoLongoPressionado)
+void MenuController::processarConfiguracoes(DirecaoNavegacao direcao, bool botaoPressionado, bool botaoLongoPressionado)
 {
     if (botaoLongoPressionado)
     {
@@ -748,11 +748,11 @@ void MenuController::processarConfiguracoes(DirecaoEncoder direcao, bool botaoPr
 
     if (_etapaConfiguracao == EtapaConfiguracao::MENU)
     {
-        if (direcao == DirecaoEncoder::HORARIO)
+        if (direcao == DirecaoNavegacao::HORARIO)
         {
             _opcaoConfiguracao = (_opcaoConfiguracao + 1) % totalOpcoesConfiguracao();
         }
-        else if (direcao == DirecaoEncoder::ANTI_HORARIO)
+        else if (direcao == DirecaoNavegacao::ANTI_HORARIO)
         {
             _opcaoConfiguracao = (_opcaoConfiguracao - 1 + totalOpcoesConfiguracao()) % totalOpcoesConfiguracao();
         }
@@ -780,11 +780,11 @@ void MenuController::processarConfiguracoes(DirecaoEncoder direcao, bool botaoPr
 
     if (_etapaConfiguracao == EtapaConfiguracao::SUBMENU_RELOGIO)
     {
-        if (direcao == DirecaoEncoder::HORARIO)
+        if (direcao == DirecaoNavegacao::HORARIO)
         {
             _opcaoConfiguracao = (_opcaoConfiguracao + 1) % totalOpcoesConfiguracao();
         }
-        else if (direcao == DirecaoEncoder::ANTI_HORARIO)
+        else if (direcao == DirecaoNavegacao::ANTI_HORARIO)
         {
             _opcaoConfiguracao = (_opcaoConfiguracao - 1 + totalOpcoesConfiguracao()) % totalOpcoesConfiguracao();
         }
@@ -828,11 +828,11 @@ void MenuController::processarConfiguracoes(DirecaoEncoder direcao, bool botaoPr
 
     if (_etapaConfiguracao == EtapaConfiguracao::SUBMENU_SISTEMA)
     {
-        if (direcao == DirecaoEncoder::HORARIO)
+        if (direcao == DirecaoNavegacao::HORARIO)
         {
             _opcaoConfiguracao = (_opcaoConfiguracao + 1) % totalOpcoesConfiguracao();
         }
-        else if (direcao == DirecaoEncoder::ANTI_HORARIO)
+        else if (direcao == DirecaoNavegacao::ANTI_HORARIO)
         {
             _opcaoConfiguracao = (_opcaoConfiguracao - 1 + totalOpcoesConfiguracao()) % totalOpcoesConfiguracao();
         }
@@ -869,11 +869,11 @@ void MenuController::processarConfiguracoes(DirecaoEncoder direcao, bool botaoPr
 
     if (_etapaConfiguracao == EtapaConfiguracao::TESTE_VALVULAS)
     {
-        if (direcao == DirecaoEncoder::HORARIO)
+        if (direcao == DirecaoNavegacao::HORARIO)
         {
             _configSetorTeste = (_configSetorTeste + 1) % NUM_VALVULAS;
         }
-        else if (direcao == DirecaoEncoder::ANTI_HORARIO)
+        else if (direcao == DirecaoNavegacao::ANTI_HORARIO)
         {
             _configSetorTeste = (_configSetorTeste - 1 + NUM_VALVULAS) % NUM_VALVULAS;
         }
@@ -950,14 +950,14 @@ void MenuController::processarConfiguracoes(DirecaoEncoder direcao, bool botaoPr
     }
 }
 
-void MenuController::ajustarCampoConfiguracao(DirecaoEncoder direcao)
+void MenuController::ajustarCampoConfiguracao(DirecaoNavegacao direcao)
 {
-    if (direcao == DirecaoEncoder::NENHUMA)
+    if (direcao == DirecaoNavegacao::NENHUMA)
     {
         return;
     }
 
-    int delta = (direcao == DirecaoEncoder::HORARIO) ? 1 : -1;
+    int delta = (direcao == DirecaoNavegacao::HORARIO) ? 1 : -1;
 
     switch (_etapaConfiguracao)
     {
@@ -1030,13 +1030,13 @@ void MenuController::ajustarCampoConfiguracao(DirecaoEncoder direcao)
     case EtapaConfiguracao::SUBMENU_SISTEMA:
         break;
     case EtapaConfiguracao::CONFIRMAR_LIMPAR_AGENDAS:
-        if (direcao == DirecaoEncoder::HORARIO || direcao == DirecaoEncoder::ANTI_HORARIO)
+        if (direcao == DirecaoNavegacao::HORARIO || direcao == DirecaoNavegacao::ANTI_HORARIO)
         {
             _opcaoConfirmarLimparAgendas = (_opcaoConfirmarLimparAgendas == 0) ? 1 : 0;
         }
         break;
     case EtapaConfiguracao::CONFIRMAR_RESTAURAR_PADRAO:
-        if (direcao == DirecaoEncoder::HORARIO || direcao == DirecaoEncoder::ANTI_HORARIO)
+        if (direcao == DirecaoNavegacao::HORARIO || direcao == DirecaoNavegacao::ANTI_HORARIO)
         {
             _opcaoConfirmarRestaurarPadrao = (_opcaoConfirmarRestaurarPadrao == 0) ? 1 : 0;
         }
