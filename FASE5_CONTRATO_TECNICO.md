@@ -10,7 +10,7 @@
 2. D2: agendamento semanal por dias da semana (nao apenas diario).
 3. D3: persistencia no ESP32 via NVS para agenda e configuracoes runtime.
 4. D4: limite de 4 slots de agenda no sistema.
-5. D5: edicao por encoder com campos hora, minuto, duracao, dias e setores.
+5. D5: edicao por 4 botoes com campos hora, minuto, duracao, dias e setores.
 6. D6: execucao automatica sequencial por lotes, com limite de simultaneos e intervalo entre lotes.
 
 ## 2. 🎯 Escopo da Fase 5 (implementado)
@@ -130,14 +130,14 @@ Responsabilidades principais:
 1. schedule_manager: CRUD, validacao, persistencia e avaliacao de disparo.
 2. runtime_config_manager: persistencia de timeout e duracao padrao.
 3. irrigation_controller: acionamento de reles e deadlines.
-4. menu_controller/display_manager: UX local no OLED com encoder.
+4. menu_controller/display_manager: UX local no OLED com 4 botoes.
 5. web_ap_manager: dashboard web e API para status/comandos.
 
 ## 7.2 🔄 Integracao com o loop atual
 
 No loop principal:
 
-1. Ler encoder e processar menu.
+1. Ler botoes e processar menu.
 2. Atualizar irrigacao (timeouts/deadlines).
 3. Avaliar disparos por minuto (RTC).
 4. Enfileirar e executar lotes sequenciais.
@@ -162,12 +162,12 @@ Fluxo de programacao:
 
 Interacoes:
 
-1. Giro: altera valor do campo ou cursor.
-2. Clique curto:
+1. Botao Cima/Baixo: altera valor do campo ou cursor.
+2. Botao Selecionar (clique curto):
    - alterna dia (em EDIT_DIAS)
    - alterna setor (em EDIT_SETORES)
    - executa acao no submenu
-3. Clique longo: voltar/cancelar para etapa anterior conforme contexto.
+3. Botao Voltar (ou clique longo no Selecionar): voltar/cancelar para etapa anterior conforme contexto.
 
 ## 9. 🧠 Maquina de estados da programacao (resumo)
 
@@ -188,7 +188,7 @@ SUBMENU_AGENDA
 
 ## 10. ✅ Criterios de aceite da Fase 5 (revisados)
 
-1. Usuario consegue criar/editar/excluir ate 4 agendas via encoder.
+1. Usuario consegue criar/editar/excluir ate 4 agendas via 4 botoes.
 2. Usuario consegue marcar/desmarcar dias e setores por agenda.
 3. Agendas persistem apos desligar e ligar novamente.
 4. Agendas disparam no horario correto com base no RTC.

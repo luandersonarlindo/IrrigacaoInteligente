@@ -4,7 +4,7 @@
 //  menu_controller.h — Controlador de Menu
 //
 //  Responsabilidade: gerenciar navegação e estado do menu.
-//  Recebe eventos do encoder (direção, botão).
+//  Recebe eventos de entrada (direção, selecionar, voltar).
 //  NÃO desenha nada — avisa o display_manager o que mostrar.
 // ============================================================
 
@@ -84,7 +84,7 @@ public:
 
     void begin();
 
-    // Processa entrada do encoder e atualiza estado interno
+    // Processa entrada de navegação e atualiza estado interno
     void processar(DirecaoEncoder direcao, bool botaoPressionado, bool botaoLongoPressionado = false);
 
     // Getters para o display_manager consultar
@@ -92,7 +92,7 @@ public:
     int itemSelecionado() const;
     bool menuAtivo() const;
 
-    // Irrigação manual — setor selecionado no encoder (0 a NUM_VALVULAS-1)
+    // Irrigação manual — setor selecionado na navegação (0 a NUM_VALVULAS-1)
     int setorAtual() const;
     bool opcaoVoltarIrrigacaoSelecionada() const;
 
@@ -158,7 +158,7 @@ private:
     unsigned long _ultimoEventoMenuMs;
 
     // Irrigação manual
-    int _setorAtual;      // setor em foco no encoder (0 a NUM_VALVULAS-1)
+    int _setorAtual;      // setor em foco na navegacao (0 a NUM_VALVULAS-1)
     int _paginaWebServer; // indice da pagina na tela de WebServer
     bool _timeoutOcorreu; // flag para display exibir aviso
     int _setorTimeout;    // qual setor foi fechado por timeout

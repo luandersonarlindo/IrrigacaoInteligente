@@ -1,15 +1,14 @@
 #pragma once
 
 // ============================================================
-//  encoder_driver.h — Driver do Encoder Rotativo HW-040
+//  encoder_driver.h — Driver de navegação local (4 botões)
 //
-//  Responsabilidade: ler rotação e botão do encoder.
+//  Responsabilidade: ler direção, seleção e voltar.
 //  NÃO conhece menu, NÃO conhece display.
 //  Só reporta o que o hardware fez.
 // ============================================================
 
 #include <Arduino.h>
-#include <ESP32Encoder.h>
 #include "Config.h"
 
 // Direções possíveis de rotação
@@ -25,7 +24,7 @@ class EncoderDriver
 public:
     EncoderDriver();
 
-    // Inicializa os pinos e a biblioteca
+    // Inicializa os pinos dos botões
     void begin();
 
     // Deve ser chamado no loop() — atualiza estado interno
@@ -41,16 +40,25 @@ public:
     bool botaoLongoPressionado();
 
 private:
-    ESP32Encoder _encoder;
-    long _posicaoAnterior;
+    struct EstadoBotao
+    {
+        bool estadoAnterior;
+        unsigned long ultimoEventoMs;
+        unsigned long tempoPressionadoMs;
+    };
 
-    // Botão
-    bool _estadoAnteriorBtn;
+    DirecaoEncoder _direcaoEvento;
     bool _botaoEvento;
     bool _botaoLongoEvento;
-    unsigned long _tempoPressionadoBtn;
-    unsigned long _ultimoTempoBtn;
 
-    static const unsigned long DEBOUNCE_MS = 50;
-    static const unsigned long LONG_PRESS_MS = 1200;
+    EstadoBotao _btnUp;
+    EstadoBotao _btnDown;
+    EstadoBotao _btnSelect;
+    EstadoBotao _btnBack;
+
+    static const unsigned long DEBOUNCE_MS = BUTTON_DEBOUNCE_MS;
+    static const unsigned long LONG_PRESS_MS = BUTTON_LONG_PRESS_MS;
+
+    void atualizarBotaoDirecao(uint8_t pin, EstadoBotao &estado, DirecaoEncoder direcaoEvento);
+    void atualizarBotaoAcao(uint8_t pin, EstadoBotao &estado, bool emitirComoVoltar);
 };

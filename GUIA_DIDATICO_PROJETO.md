@@ -5,7 +5,7 @@ Este documento explica o projeto de forma simples, para ensino de alunos de 15 a
 ## 👀 Visao rapida
 
 - ✅ Projeto com ESP32 para irrigacao manual e automatica.
-- 🖥️ Interface local com OLED e encoder.
+- 🖥️ Interface local com OLED e 4 botoes.
 - 🧭 Menu com acesso a Irrigar Agora, Programar, WEBSERVER e Configuracoes.
 - 💧 Controle fisico de 8 valvulas por rele.
 - 💾 Agendas salvas na memoria flash (NVS).
@@ -40,16 +40,17 @@ Este projeto entrega:
 Componentes principais:
 
 - ESP32
-- Encoder rotativo com botao
+- 4 botoes (Cima, Baixo, Selecionar, Voltar)
 - OLED SSD1306 (I2C)
 - RTC DS3231 (I2C)
 - 2 modulos de rele 4 canais (8 canais no total)
 
 Pinos importantes (Config.h):
 
-- Encoder CLK: 19
-- Encoder DT: 18
-- Encoder BTN: 4
+- Botao Cima: 19
+- Botao Baixo: 18
+- Botao Selecionar: 4
+- Botao Voltar: 16
 - OLED SDA/SCL: 21/22
 
 Observacao importante:
@@ -82,7 +83,7 @@ Regra de organizacao:
 
 ### Modulos e papeis
 
-- encoder_driver.*: leitura do giro e botoes.
+- encoder_driver.*: leitura dos 4 botoes de navegacao.
 - display_driver_oled.*: desenho no display.
 - rtc_driver_ds3231.*: hora e data.
 - runtime_config_manager.*: salva timeout e duracao padrao em NVS.
@@ -97,7 +98,7 @@ Regra de organizacao:
 
 No loop principal:
 
-1. Le encoder.
+1. Le os botoes de navegacao.
 2. Processa menu.
 3. Executa irrigacao manual (quando houver clique curto na tela manual).
 4. Atualiza irrigacao (timeout e deadlines).
@@ -119,11 +120,13 @@ Menu principal:
 - WEBSERVER
 - Configuracoes
 
-Comandos do encoder:
+Comandos dos botoes:
 
-- Giro: navega entre itens/campos.
-- Clique curto: seleciona ou altera.
-- Clique longo: volta/confirma dependendo da tela.
+- Botao Cima: navega para cima/anterior.
+- Botao Baixo: navega para baixo/proximo.
+- Botao Selecionar: seleciona ou altera.
+- Botao Voltar: retorna/cancela dependendo da tela.
+- Atalho: clique longo no Selecionar tambem aciona voltar.
 
 Na irrigacao manual:
 
@@ -164,7 +167,7 @@ O modulo web_ap_manager faz:
 
 Uso didatico:
 
-- Alunos podem comparar controle local (encoder) com controle remoto (web).
+- Alunos podem comparar controle local (botoes) com controle remoto (web).
 
 ## 9. 💾 Persistencia
 

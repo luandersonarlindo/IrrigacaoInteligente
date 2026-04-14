@@ -139,7 +139,7 @@ void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bo
             break;
         }
 
-        // Girar navega entre setores
+        // Direção navega entre setores
         if (direcao == DirecaoEncoder::HORARIO)
         {
             _setorAtual = (_setorAtual + 1) % (NUM_VALVULAS + 1);
@@ -164,9 +164,8 @@ void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bo
                     Serial.println(_setorAtual + 1);
             }
         }
-        // Botão: toggle do setor OU sair se pressão longa (futuro)
-        // Por ora: pressão simples = toggle. Voltar pelo item de menu "Voltar"
-        // será adicionado na Fase 5. Por ora pressionar no menu nav volta.
+        // Botão selecionar faz toggle do setor atual.
+        // O retorno é tratado pelo botão voltar (evento de botaoLongoPressionado).
         if (botaoPressionado)
         {
             if (_setorAtual == NUM_VALVULAS)

@@ -1,6 +1,6 @@
 # 🌱 IrrigacaoInteligente
 
-Sistema de irrigacao inteligente com ESP32, display OLED, encoder rotativo, RTC DS3231 e controle de ate 8 valvulas por rele.
+Sistema de irrigacao inteligente com ESP32, display OLED, 4 botoes de navegacao, RTC DS3231 e controle de ate 8 valvulas por rele.
 
 Este README descreve o estado atual implementado no firmware.
 
@@ -52,28 +52,29 @@ Documentos complementares:
 Plataforma:
 
 - ESP32
-- Encoder rotativo com botao (HW-040 ou equivalente)
+- 4 botoes de navegacao (Cima, Baixo, Selecionar, Voltar)
 - OLED SSD1306 128x64 I2C
 - RTC DS3231 I2C
 - 2 modulos de rele 4 canais (8 canais no total)
 
 Mapeamento de pinos (Config.h):
 
-| Recurso     | Pino |
-| ----------- | ---- |
-| Encoder CLK | 19   |
-| Encoder DT  | 18   |
-| Encoder BTN | 4    |
-| OLED SDA    | 21   |
-| OLED SCL    | 22   |
-| Rele 1      | 23   |
-| Rele 2      | 25   |
-| Rele 3      | 26   |
-| Rele 4      | 27   |
-| Rele 5      | 32   |
-| Rele 6      | 33   |
-| Rele 7      | 13   |
-| Rele 8      | 14   |
+| Recurso          | Pino |
+| ---------------- | ---- |
+| Botao Cima       | 19   |
+| Botao Baixo      | 18   |
+| Botao Selecionar | 4    |
+| Botao Voltar     | 16   |
+| OLED SDA         | 21   |
+| OLED SCL         | 22   |
+| Rele 1           | 23   |
+| Rele 2           | 25   |
+| Rele 3           | 26   |
+| Rele 4           | 27   |
+| Rele 5           | 32   |
+| Rele 6           | 33   |
+| Rele 7           | 13   |
+| Rele 8           | 14   |
 
 Observacao: OLED e DS3231 compartilham o barramento I2C.
 
@@ -85,11 +86,10 @@ Passo a passo curto para colocar o sistema para rodar:
 2. Instale as bibliotecas na IDE Arduino:
    - U8g2
    - RTClib
-   - ESP32Encoder
 3. Selecione a placa ESP32 e a porta serial.
 4. Compile e grave o firmware.
 5. Abra o monitor serial em 115200 para acompanhar logs.
-6. Gire o encoder para abrir o menu e testar irrigacao manual.
+6. Use os botoes para abrir o menu e testar irrigacao manual.
 7. Se quiser usar dashboard web, conecte no AP e abra a URL exibida na tela WEBSERVER.
 
 ## 4. ⚙️ Configuracoes principais
@@ -103,6 +103,8 @@ Constantes relevantes em Config.h:
 - TIMEOUT_MANUAL_MS = 600000 (10 minutos)
 - MAX_SETOR_SIMULTANEOS_AGENDA = 2
 - INTERVALO_LOTE_AGENDA_MS = 10000
+- BUTTON_DEBOUNCE_MS = 50
+- BUTTON_LONG_PRESS_MS = 1200
 - BAUD_RATE = 115200
 - DEBUG_SERIAL = false
 
@@ -122,7 +124,7 @@ Separacao adotada:
 
 Modulos:
 
-- encoder_driver.*: leitura do encoder, debounce, clique curto e longo.
+- encoder_driver.*: leitura dos 4 botoes, debounce, clique curto e evento de voltar.
 - display_driver_oled.*: primitivas de desenho no OLED.
 - rtc_driver_ds3231.*: leitura/ajuste de data e hora.
 - runtime_config_manager.*: configuracoes runtime (timeout manual e duracao padrao) persistidas em NVS.
@@ -139,15 +141,15 @@ Modulos:
 
 1. Inicializa Serial (se debug ativo).
 2. Inicializa I2C (Wire.begin).
-3. Inicializa encoder e display.
+3. Inicializa entrada local (4 botoes) e display.
 4. Inicializa RTC (se indisponivel, continua sem hora real).
 5. Inicializa runtime config e schedule manager.
 6. Inicializa irrigacao, web AP manager e display manager.
 
 ### 6.2 🔁 Loop
 
-1. Atualiza encoder.
-2. Le direcao e botoes.
+1. Atualiza leitura dos 4 botoes.
+2. Le direcao, selecionar e voltar.
 3. Processa menu.
 4. Em irrigacao manual, clique curto faz toggle do setor selecionado.
 5. Em teste de valvulas (Configuracoes), clique curto faz toggle do setor em teste.
@@ -168,11 +170,13 @@ Menu principal:
 - WEBSERVER
 - Configuracoes
 
-Encoder:
+Controles (4 botoes):
 
-- Giro: navega itens e campos.
-- Clique curto: seleciona/edita.
-- Clique longo: voltar/cancelar conforme a tela.
+- Botao Cima: navega para cima/anterior.
+- Botao Baixo: navega para baixo/proximo.
+- Botao Selecionar: seleciona/edita (clique curto).
+- Botao Voltar: retorna/cancela conforme a tela.
+- Atalho adicional: clique longo no botao Selecionar tambem atua como voltar.
 
 Irrigacao manual:
 
@@ -254,7 +258,7 @@ No boot:
 
 - IrrigacaoInteligente.ino - entrada do firmware
 - Config.h - configuracoes globais
-- encoder_driver.h/.cpp - leitura do encoder
+- encoder_driver.h/.cpp - leitura dos 4 botoes de navegacao
 - display_driver_oled.h/.cpp - driver OLED
 - display_manager.h/.cpp - renderizacao de telas
 - rtc_driver_ds3231.h/.cpp - RTC DS3231
@@ -282,9 +286,9 @@ Problemas comuns e verificacoes:
 - OLED nao liga:
   - confira SDA/SCL (21/22)
   - confira alimentacao e GND
-- Encoder nao responde:
-  - confira pinos 19/18/4
-  - confira pull-up do botao
+- Botoes nao respondem:
+  - confira pinos 19/18/4/16
+  - confira ligacao GND dos botoes (INPUT_PULLUP)
 - RTC nao encontrado:
   - o sistema continua, mas sem hora real
   - confira conexoes I2C e bateria do DS3231
@@ -338,4 +342,4 @@ Proximos passos sugeridos:
 
 ---
 
-Ultima revisao deste documento: 2026-04-12
+Ultima revisao deste documento: 2026-04-13

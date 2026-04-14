@@ -5,10 +5,12 @@
 //  Altere aqui sem precisar tocar nos outros arquivos
 // ============================================================
 
-// --- Pinos: Encoder ---
-#define PIN_ENCODER_CLK 19
-#define PIN_ENCODER_DT 18
-#define PIN_ENCODER_BTN 4
+// --- Pinos: Navegação local (4 botões) ---
+// Botões em INPUT_PULLUP: pressionado = LOW
+#define PIN_BTN_UP 19
+#define PIN_BTN_DOWN 18
+#define PIN_BTN_SELECT 4
+#define PIN_BTN_BACK 16
 
 // --- Pinos: Display OLED (I2C) ---
 #define PIN_OLED_SDA 21
@@ -37,8 +39,9 @@
 #define MENU_ITENS_MAX 5      // Número máximo de itens no menu principal
 #define MENU_TIMEOUT_MS 30000 // Tempo sem interação para voltar ao início (ms)
 
-// --- Encoder ---
-#define ENCODER_STEPS_POR_ITEM 2 // Pulsos necessários para mudar 1 item no menu
+// --- Navegação por botões ---
+#define BUTTON_DEBOUNCE_MS 50
+#define BUTTON_LONG_PRESS_MS 1200
 
 // --- Irrigação ---
 #define NUM_VALVULAS 8                 // Fase atual: 2 módulos de 4 canais

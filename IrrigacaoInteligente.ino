@@ -273,10 +273,10 @@ void setup() {
 
 // ============================================================
 void loop() {
-    // 1. Atualiza estado do encoder (debounce do botão)
+    // 1. Atualiza estado da entrada local (4 botoes)
     encoder.atualizar();
 
-    // 2. Lê eventos do encoder
+    // 2. Lê eventos de direção/seleção/voltar
     DirecaoEncoder direcao = encoder.lerDirecao();
     bool           botaoCurto = encoder.botaoPressionado();
     bool           botaoLongo = encoder.botaoLongoPressionado();

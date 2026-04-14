@@ -1,89 +1,51 @@
 // ============================================================
-//  encoder_driver.cpp — Implementação do EncoderDriver
+//  encoder_driver.cpp — Implementação do driver de 4 botões
 // ============================================================
 
 #include "encoder_driver.h"
 
 EncoderDriver::EncoderDriver()
-    : _posicaoAnterior(0),
-      _estadoAnteriorBtn(HIGH),
+    : _direcaoEvento(DirecaoEncoder::NENHUMA),
       _botaoEvento(false),
       _botaoLongoEvento(false),
-      _tempoPressionadoBtn(0),
-      _ultimoTempoBtn(0)
+      _btnUp{HIGH, 0, 0},
+      _btnDown{HIGH, 0, 0},
+      _btnSelect{HIGH, 0, 0},
+      _btnBack{HIGH, 0, 0}
 {
 }
 
 void EncoderDriver::begin()
 {
-    // Habilita pull-up interno nos pinos do encoder
-    ESP32Encoder::useInternalWeakPullResistors = puType::up;
+    pinMode(PIN_BTN_UP, INPUT_PULLUP);
+    pinMode(PIN_BTN_DOWN, INPUT_PULLUP);
+    pinMode(PIN_BTN_SELECT, INPUT_PULLUP);
+    pinMode(PIN_BTN_BACK, INPUT_PULLUP);
 
-    // attachHalfQuad: detecta borda de subida e descida — mais responsivo
-    _encoder.attachHalfQuad(PIN_ENCODER_CLK, PIN_ENCODER_DT);
-    _encoder.setCount(0);
-    _posicaoAnterior = 0;
-
-    // Botão com pull-up interno
-    pinMode(PIN_ENCODER_BTN, INPUT_PULLUP);
+    _btnUp.estadoAnterior = digitalRead(PIN_BTN_UP);
+    _btnDown.estadoAnterior = digitalRead(PIN_BTN_DOWN);
+    _btnSelect.estadoAnterior = digitalRead(PIN_BTN_SELECT);
+    _btnBack.estadoAnterior = digitalRead(PIN_BTN_BACK);
 
     if (DEBUG_SERIAL)
     {
-        Serial.println("[Encoder] Inicializado.");
+        Serial.println("[Input] Driver de 4 botoes inicializado.");
     }
 }
 
 void EncoderDriver::atualizar()
 {
-    // --- Leitura do botão com debounce + clique longo ---
-    bool estadoAtual = digitalRead(PIN_ENCODER_BTN);
-    unsigned long agora = millis();
-
-    // Borda de descida: início do pressionamento
-    if (estadoAtual == LOW && _estadoAnteriorBtn == HIGH)
-    {
-        if (agora - _ultimoTempoBtn > DEBOUNCE_MS)
-        {
-            _tempoPressionadoBtn = agora;
-            _ultimoTempoBtn = agora;
-        }
-    }
-
-    // Borda de subida: fim do pressionamento
-    if (estadoAtual == HIGH && _estadoAnteriorBtn == LOW)
-    {
-        if (agora - _ultimoTempoBtn > DEBOUNCE_MS)
-        {
-            unsigned long duracao = agora - _tempoPressionadoBtn;
-            if (duracao >= LONG_PRESS_MS)
-            {
-                _botaoLongoEvento = true;
-            }
-            else
-            {
-                _botaoEvento = true;
-            }
-            _ultimoTempoBtn = agora;
-        }
-    }
-
-    _estadoAnteriorBtn = estadoAtual;
+    atualizarBotaoDirecao(PIN_BTN_UP, _btnUp, DirecaoEncoder::ANTI_HORARIO);
+    atualizarBotaoDirecao(PIN_BTN_DOWN, _btnDown, DirecaoEncoder::HORARIO);
+    atualizarBotaoAcao(PIN_BTN_SELECT, _btnSelect, false);
+    atualizarBotaoAcao(PIN_BTN_BACK, _btnBack, true);
 }
 
 DirecaoEncoder EncoderDriver::lerDirecao()
 {
-    long posicaoAtual = _encoder.getCount();
-    long delta = posicaoAtual - _posicaoAnterior;
-
-    if (delta == 0)
-        return DirecaoEncoder::NENHUMA;
-
-    // Reseta para evitar acúmulo
-    _posicaoAnterior = posicaoAtual;
-
-    if (delta > 0)
-        return DirecaoEncoder::HORARIO;
-    return DirecaoEncoder::ANTI_HORARIO;
+    DirecaoEncoder direcao = _direcaoEvento;
+    _direcaoEvento = DirecaoEncoder::NENHUMA;
+    return direcao;
 }
 
 bool EncoderDriver::botaoPressionado()
@@ -104,4 +66,60 @@ bool EncoderDriver::botaoLongoPressionado()
         return true;
     }
     return false;
+}
+
+void EncoderDriver::atualizarBotaoDirecao(uint8_t pin, EstadoBotao &estado, DirecaoEncoder direcaoEvento)
+{
+    bool estadoAtual = digitalRead(pin);
+    unsigned long agora = millis();
+
+    if (estadoAtual != estado.estadoAnterior)
+    {
+        if (agora - estado.ultimoEventoMs > DEBOUNCE_MS)
+        {
+            estado.ultimoEventoMs = agora;
+            estado.estadoAnterior = estadoAtual;
+
+            if (estadoAtual == LOW)
+            {
+                _direcaoEvento = direcaoEvento;
+            }
+        }
+    }
+}
+
+void EncoderDriver::atualizarBotaoAcao(uint8_t pin, EstadoBotao &estado, bool emitirComoVoltar)
+{
+    bool estadoAtual = digitalRead(pin);
+    unsigned long agora = millis();
+
+    if (estadoAtual == LOW && estado.estadoAnterior == HIGH)
+    {
+        if (agora - estado.ultimoEventoMs > DEBOUNCE_MS)
+        {
+            estado.tempoPressionadoMs = agora;
+            estado.ultimoEventoMs = agora;
+        }
+    }
+
+    if (estadoAtual == HIGH && estado.estadoAnterior == LOW)
+    {
+        if (agora - estado.ultimoEventoMs > DEBOUNCE_MS)
+        {
+            unsigned long duracao = agora - estado.tempoPressionadoMs;
+
+            if (emitirComoVoltar || duracao >= LONG_PRESS_MS)
+            {
+                _botaoLongoEvento = true;
+            }
+            else
+            {
+                _botaoEvento = true;
+            }
+
+            estado.ultimoEventoMs = agora;
+        }
+    }
+
+    estado.estadoAnterior = estadoAtual;
 }
