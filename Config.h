@@ -12,6 +12,12 @@
 #define PIN_BTN_SELECT 4
 #define PIN_BTN_BACK 16
 
+// Compatibilidade com codigo legado que ainda referencia encoder rotativo.
+// Mapeia os sinais antigos para a navegacao atual por botoes.
+#define PIN_ENCODER_CLK PIN_BTN_UP
+#define PIN_ENCODER_DT PIN_BTN_DOWN
+#define PIN_ENCODER_BTN PIN_BTN_SELECT
+
 // --- Pinos: Barramento I2C compartilhado (LCD + RTC) ---
 #define PIN_I2C_SDA 21
 #define PIN_I2C_SCL 22
