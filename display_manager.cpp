@@ -677,7 +677,7 @@ void DisplayManager::desenharTelaStatus()
     }
 
     _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-    _display.desenharTextoMini(0, 56, "Gire para abrir menu");
+    _display.desenharTextoMini(0, 56, "Qualquer botao abre menu");
 }
 
 void DisplayManager::desenharTelaIrrigacao()
@@ -938,7 +938,7 @@ void DisplayManager::desenharTelaProgramar()
     {
         desenharCabecalho("EXCLUIR AGENDA?");
         _display.desenharTexto(0, 20, "Confirma exclusao?");
-        _display.desenharTextoMini(0, 30, "Gire: SIM/NAO | OK confirma");
+        _display.desenharTextoMini(0, 30, "Cima/Baixo: SIM/NAO | OK confirma");
 
         int opc = _menu.opcaoConfirmarExclusao(); // 0=SIM, 1=NAO
 
@@ -974,7 +974,7 @@ void DisplayManager::desenharTelaProgramar()
         snprintf(valor, sizeof(valor), "%02dh", ag.hora);
         _display.desenharTextoGrande(44, 16, valor);
         desenharBarra(8, 38, 112, 10, ag.hora, 23);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta | Segure");
+        _display.desenharTextoMini(0, 56, "Cima/Baixo ajusta | OK volta | Segure");
         return;
     }
 
@@ -985,7 +985,7 @@ void DisplayManager::desenharTelaProgramar()
         snprintf(valor, sizeof(valor), "%02dmin", ag.minuto);
         _display.desenharTextoGrande(32, 16, valor);
         desenharBarra(8, 38, 112, 10, ag.minuto, 59);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta | Segure");
+        _display.desenharTextoMini(0, 56, "Cima/Baixo ajusta | OK volta | Segure");
         return;
     }
 
@@ -996,7 +996,7 @@ void DisplayManager::desenharTelaProgramar()
         snprintf(valor, sizeof(valor), "%umin", ag.duracaoMin);
         _display.desenharTextoGrande(30, 16, valor);
         desenharBarra(8, 38, 112, 10, ag.duracaoMin, 240);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta | Segure");
+        _display.desenharTextoMini(0, 56, "Cima/Baixo ajusta | OK volta | Segure");
         return;
     }
 
@@ -1023,7 +1023,7 @@ void DisplayManager::desenharTelaProgramar()
                 _display.desenharRetangulo(x + 2, 32, 10, 10);
             }
         }
-        _display.desenharTextoMini(0, 50, "Gire: cursor | OK: marca");
+        _display.desenharTextoMini(0, 50, "Cima/Baixo: cursor | OK: marca");
         _display.desenharTextoMini(0, 56, "Segure: voltar submenu");
         return;
     }
@@ -1074,7 +1074,7 @@ void DisplayManager::desenharTelaProgramar()
                      (inicio / linhasVisiveis) + 1,
                      (totalItens + linhasVisiveis - 1) / linhasVisiveis);
         else
-            snprintf(rodape, sizeof(rodape), "Gire/OK marca Pg %d/%d",
+            snprintf(rodape, sizeof(rodape), "Cima/Baixo+OK marca Pg %d/%d",
                      (inicio / linhasVisiveis) + 1,
                      (totalItens + linhasVisiveis - 1) / linhasVisiveis);
         _display.desenharTextoMini(0, 56, rodape);
@@ -1404,7 +1404,7 @@ void DisplayManager::desenharTelaConfig()
         char valor[16];
         snprintf(valor, sizeof(valor), "%02d", _menu.configHora());
         _display.desenharTextoGrande(52, 22, valor);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
+        _display.desenharTextoMini(0, 56, "Cima/Baixo ajusta | OK volta");
         return;
     }
 
@@ -1414,7 +1414,7 @@ void DisplayManager::desenharTelaConfig()
         char valor[16];
         snprintf(valor, sizeof(valor), "%02d", _menu.configMinuto());
         _display.desenharTextoGrande(52, 22, valor);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
+        _display.desenharTextoMini(0, 56, "Cima/Baixo ajusta | OK volta");
         return;
     }
 
@@ -1424,7 +1424,7 @@ void DisplayManager::desenharTelaConfig()
         char valor[16];
         snprintf(valor, sizeof(valor), "%02d", _menu.configDia());
         _display.desenharTextoGrande(52, 22, valor);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
+        _display.desenharTextoMini(0, 56, "Cima/Baixo ajusta | OK volta");
         return;
     }
 
@@ -1434,7 +1434,7 @@ void DisplayManager::desenharTelaConfig()
         char valor[16];
         snprintf(valor, sizeof(valor), "%02d", _menu.configMes());
         _display.desenharTextoGrande(52, 22, valor);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
+        _display.desenharTextoMini(0, 56, "Cima/Baixo ajusta | OK volta");
         return;
     }
 
@@ -1444,7 +1444,7 @@ void DisplayManager::desenharTelaConfig()
         char valor[16];
         snprintf(valor, sizeof(valor), "%04d", _menu.configAno());
         _display.desenharTextoGrande(40, 22, valor);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
+        _display.desenharTextoMini(0, 56, "Cima/Baixo ajusta | OK volta");
         return;
     }
 
@@ -1454,7 +1454,7 @@ void DisplayManager::desenharTelaConfig()
         char valor[16];
         snprintf(valor, sizeof(valor), "%dmin", _menu.configTimeoutManualMin());
         _display.desenharTextoGrande(36, 22, valor);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK salva");
+        _display.desenharTextoMini(0, 56, "Cima/Baixo ajusta | OK salva");
         return;
     }
 
@@ -1464,7 +1464,7 @@ void DisplayManager::desenharTelaConfig()
         char valor[16];
         snprintf(valor, sizeof(valor), "%dmin", _menu.configDuracaoPadraoMin());
         _display.desenharTextoGrande(36, 22, valor);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK salva");
+        _display.desenharTextoMini(0, 56, "Cima/Baixo ajusta | OK salva");
         return;
     }
 
@@ -1472,7 +1472,7 @@ void DisplayManager::desenharTelaConfig()
     {
         desenharCabecalho("LIMPAR AGENDAS?");
         _display.desenharTextoMini(0, 20, "Apagar todas as agendas?");
-        _display.desenharTextoMini(0, 30, "Gire: SIM/NAO | OK confirma");
+        _display.desenharTextoMini(0, 30, "Cima/Baixo: SIM/NAO | OK confirma");
 
         int opc = _menu.opcaoConfirmarLimparAgendas();
         if (opc == 0)
@@ -1502,7 +1502,7 @@ void DisplayManager::desenharTelaConfig()
     {
         desenharCabecalho("RESTAURAR PADRAO?");
         _display.desenharTextoMini(0, 20, "Resetar timeout/duracao?");
-        _display.desenharTextoMini(0, 30, "Gire: SIM/NAO | OK confirma");
+        _display.desenharTextoMini(0, 30, "Cima/Baixo: SIM/NAO | OK confirma");
 
         int opc = _menu.opcaoConfirmarRestaurarPadrao();
         if (opc == 0)
@@ -1626,7 +1626,7 @@ void DisplayManager::desenharTelaWebServer()
     if (totalPaginas > 1)
     {
         char rodape[26];
-        snprintf(rodape, sizeof(rodape), "Pag %d/%d Gire OK/Seg", paginaAtual + 1, totalPaginas);
+        snprintf(rodape, sizeof(rodape), "Pag %d/%d Cima/Baixo OK/Seg", paginaAtual + 1, totalPaginas);
         _display.desenharTextoMini(0, 56, rodape);
     }
     else

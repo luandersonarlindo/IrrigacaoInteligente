@@ -11,7 +11,8 @@ Este README descreve o estado atual implementado no firmware.
 - 🌐 Dashboard web local (AP Wi-Fi) para monitorar e controlar o sistema.
 - 💾 Persistencia de agendas e configuracoes runtime na flash (NVS), com versao e CRC.
 - 🕒 Operacao mesmo sem RTC (sem hora real).
-- 🛡️ Timeout de seguranca no modo manual.
+- 🛡️ Timeout de seguranca no modo manual e fechamento preventivo ao sair do teste de valvulas.
+- 🔁 Reconexao STA periodica sem bloquear o AP local.
 
 ## 🧭 Sumario
 
@@ -108,6 +109,16 @@ Constantes relevantes em Config.h:
 - BAUD_RATE = 115200
 - DEBUG_SERIAL = false
 
+Faixas aplicadas em runtime (com clamp no firmware):
+
+- timeout manual: 1..120 min (60000..7200000 ms)
+- duracao padrao: 1..240 min
+- duracao por agenda na UI: 1..240 min
+
+Observacao de comportamento:
+
+- O timeout de inatividade do menu usa o valor runtime de timeout manual (carregado do RuntimeConfigManager).
+
 Rede/AP:
 
 - WIFI_AP_SSID, WIFI_AP_PASSWORD
@@ -154,12 +165,13 @@ Modulos:
 4. Em irrigacao manual, clique curto faz toggle do setor selecionado.
 5. Em teste de valvulas (Configuracoes), clique curto faz toggle do setor em teste.
 6. Se houver exclusao de agenda, cancela execucao automatica em andamento.
-7. Atualiza irrigacao (timeouts e fechamento por deadline).
-8. Se RTC ativo, avalia disparos de agenda do minuto atual e enfileira setores.
-9. Processa execucao sequencial por lotes (limite de simultaneos + intervalo entre lotes).
-10. Publica estado da agenda sequencial para o display.
-11. Mantem servidor HTTP responsivo.
-12. Atualiza display.
+7. Ao sair do modo TESTE_VALVULAS, fecha todas as valvulas por seguranca.
+8. Atualiza irrigacao (timeouts e fechamento por deadline).
+9. Se RTC ativo, avalia disparos de agenda do minuto atual e enfileira setores.
+10. Processa execucao sequencial por lotes (limite de simultaneos + intervalo entre lotes).
+11. Publica estado da agenda sequencial para o display.
+12. Mantem servidor HTTP responsivo.
+13. Atualiza display.
 
 ## 7. 🕹️ Operacao da interface
 
@@ -216,8 +228,10 @@ Motor de execucao:
 
 - Verificacao por minuto (evita repeticao no mesmo minuto).
 - Identifica lote atual considerando horario de inicio, duracao e intervalo entre lotes.
+- Se o minuto atual cair no meio da janela da agenda, calcula lote-alvo e tempo remanescente.
 - Respeita limite de simultaneos (MAX_SETOR_SIMULTANEOS_AGENDA).
 - Em conflito no mesmo setor/minuto, aplica maior duracao.
+- Marca slot executado no dia para evitar repeticao no mesmo dia.
 - Exclusao de agenda cancela execucao automatica em andamento.
 
 ## 9. 🌐 Dashboard web
@@ -237,6 +251,11 @@ Rotas principais:
 - POST /api/config/runtime
 - POST /api/rtc/set
 
+Detalhes de contrato das rotas:
+
+- index (valvula) e slot (agenda) aceitam entrada em base 1 (1..N) e base 0 (0..N-1).
+- Rotas /api/* invalidas retornam JSON de erro; rotas nao API invalidas retornam texto 404.
+
 ## 10. 💾 Persistencia
 
 Persistencia com Preferences (NVS):
@@ -253,6 +272,7 @@ Persistencia com Preferences (NVS):
 No boot:
 
 - Se versao/CRC/leitura estiver invalida, reinicializa banco padrao seguro.
+- Runtime config aplica limites de seguranca ao salvar timeout manual e duracao padrao.
 
 ## 11. 🗂️ Estrutura do projeto
 
@@ -342,4 +362,4 @@ Proximos passos sugeridos:
 
 ---
 
-Ultima revisao deste documento: 2026-04-13
+Ultima revisao deste documento: 2026-04-15

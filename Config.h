@@ -12,8 +12,8 @@
 #define PIN_BTN_SELECT 4
 #define PIN_BTN_BACK 16
 
-// --- Compatibilidade legada: Encoder rotativo ---
-// Mantem o projeto compilando caso exista arquivo antigo encoder_driver.*
+// --- Compatibilidade legada: aliases de navegacao ---
+// Mantem o projeto compilando caso exista codigo antigo de entrada local.
 // mapeando para os mesmos pinos de navegação local.
 #ifndef PIN_ENCODER_CLK
 #define PIN_ENCODER_CLK PIN_BTN_DOWN
