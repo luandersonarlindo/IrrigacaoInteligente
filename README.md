@@ -223,15 +223,17 @@ Comportamento:
 - Inicializa AP Wi-Fi no boot.
 - Se STA estiver habilitada, tenta conexao periodicamente sem bloquear AP.
 - Exibe pagina web local para status, valvulas, agendas e configuracoes runtime.
+- Exibe alertas ativos e historico de eventos operacionais (rede, irrigacao, agenda e configuracao).
 
 Rotas principais:
 
 - GET /, GET /status
-- GET /api/status, GET /api/schedules
+- GET /api/status, GET /api/schedules, GET /api/events
 - POST /api/valve/toggle, /api/valve/set, /api/valves/off-all
 - POST /api/schedule/save, /api/schedule/delete, /api/schedule/clear
 - POST /api/config/runtime
 - POST /api/rtc/set
+- POST /api/events/clear
 
 ## 10. 💾 Persistencia
 

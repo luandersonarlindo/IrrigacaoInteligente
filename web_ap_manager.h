@@ -10,6 +10,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include <stdint.h>
 #include "Config.h"
 #include "irrigation_controller.h"
 #include "schedule_manager.h"
@@ -41,6 +42,19 @@ public:
     String urlAcesso() const;
 
 private:
+    static const uint8_t MAX_HISTORICO_EVENTOS = 40;
+
+    struct EventoSistema
+    {
+        uint32_t id;
+        uint32_t uptimeS;
+        char data[11];
+        char hora[9];
+        char tipo[20];
+        char nivel[10];
+        char mensagem[96];
+    };
+
     IrrigationController &_irrigacao;
     ScheduleManager &_schedule;
     RuntimeConfigManager &_config;
@@ -52,9 +66,26 @@ private:
     bool _staConfigurada;
     wl_status_t _ultimoStatusSta;
     unsigned long _ultimoRetryStaMs;
+    EventoSistema _historicoEventos[MAX_HISTORICO_EVENTOS];
+    uint8_t _historicoCount;
+    uint8_t _historicoHead;
+    uint32_t _proximoEventoId;
+    bool _monitoramentoInicializado;
+    bool _ultimoEstadoValvulas[NUM_VALVULAS];
+    bool _ultimaOrigemAgenda[NUM_VALVULAS];
+    bool _ultimaStaConectada;
+    int _ultimoTotalAgendasAtivas;
 
     void configurarRotas();
     void tentarConexaoSta();
+    void inicializarMonitoramentoEstado();
+    void atualizarHistoricoEstado();
+    void registrarEvento(const char *tipo, const char *nivel, const String &mensagem);
+    void enviarAlertasHistorico();
+    void limparHistoricoEventos();
+    int contarValvulasManuaisAbertas() const;
+    int contarValvulasAutomaticasAbertas() const;
+    static String escaparJson(const char *texto);
 
     void enviarPaginaPrincipal();
     void enviarStatusSistema();

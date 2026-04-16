@@ -314,6 +314,116 @@ namespace
       color: var(--text2);
     }
 
+    .alerts-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .alerts-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 0.72rem;
+      color: var(--text2);
+      font-weight: 600;
+    }
+
+    .alert-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .alert-item {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: #f9fbf9;
+      font-size: 0.74rem;
+    }
+
+    .alert-item.warning {
+      border-color: #f1c27d;
+      background: #fff8eb;
+    }
+
+    .alert-item.critical {
+      border-color: #f2b8b5;
+      background: #fff0ef;
+    }
+
+    .alert-item.info {
+      border-color: #c7d9f7;
+      background: #f2f7ff;
+    }
+
+    .alert-meta {
+      font-size: 0.62rem;
+      color: var(--muted);
+      margin-top: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .empty-alert {
+      border: 1px dashed var(--border2);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      background: #fcfdfc;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 220px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .history-item {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: #fff;
+    }
+
+    .history-item.warning {
+      border-color: #f1c27d;
+    }
+
+    .history-item.critical {
+      border-color: #f2b8b5;
+    }
+
+    .history-item.info {
+      border-color: #c7d9f7;
+    }
+
+    .history-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.66rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .history-msg {
+      font-size: 0.73rem;
+      color: var(--text);
+    }
+
     .editor-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -460,6 +570,16 @@ namespace
     Limpar todas as agendas
   </button>
 
+  <div class="section-label">Alertas e Historico</div>
+  <div class="alerts-wrap">
+    <div class="alerts-head">
+      <span id="alertSummary">Carregando alertas...</span>
+      <button class="tiny-btn" onclick="limparHistoricoEventos()">Limpar historico</button>
+    </div>
+    <div class="alert-list" id="alertBox"></div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+
   <div class="network-info" id="networkInfo">Rede carregando...</div>
 </div>
 
@@ -485,6 +605,15 @@ async function requestJson(url, options) {
 
 function pad2(v) {
   return String(v).padStart(2, '0');
+}
+
+function escapeHtml(texto) {
+  return String(texto || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function renderValvulas(valvulas) {
@@ -518,6 +647,59 @@ function atualizarRede(rede) {
       : ('STA tentando conectar em ' + sta.ssid);
   }
   info.textContent = 'AP: ' + ap.ssid + ' (' + ap.ip + ') | ' + linhaSta;
+}
+
+function classeNivel(nivel) {
+  const n = String(nivel || 'info').toLowerCase();
+  if (n === 'critical') return 'critical';
+  if (n === 'warning') return 'warning';
+  return 'info';
+}
+
+function renderAlertas(alertas) {
+  const alvo = document.getElementById('alertBox');
+  const resumo = document.getElementById('alertSummary');
+
+  if (!Array.isArray(alertas) || alertas.length === 0) {
+    resumo.textContent = 'Nenhum alerta ativo';
+    alvo.innerHTML = '<div class="empty-alert">Sistema operando sem alertas ativos no momento.</div>';
+    return;
+  }
+
+  resumo.textContent = alertas.length + ' alerta(s) ativo(s)';
+  alvo.innerHTML = alertas.map(a => {
+    const nivel = classeNivel(a.nivel);
+    return `
+      <div class="alert-item ${nivel}">
+        <div>${escapeHtml(a.mensagem || 'Sem descricao')}</div>
+        <div class="alert-meta">${escapeHtml(a.nivel || 'info')}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderHistorico(historico) {
+  const alvo = document.getElementById('historyList');
+
+  if (!Array.isArray(historico) || historico.length === 0) {
+    alvo.innerHTML = '<div class="empty-alert">Sem registros de eventos ate o momento.</div>';
+    return;
+  }
+
+  const itens = historico.slice().reverse();
+  alvo.innerHTML = itens.map(e => {
+    const nivel = classeNivel(e.nivel);
+    const dataHora = (e.data || '--/--/----') + ' ' + (e.hora || '--:--:--');
+    return `
+      <div class="history-item ${nivel}">
+        <div class="history-head">
+          <span>${escapeHtml(dataHora)}</span>
+          <span>${escapeHtml((e.tipo || 'evento') + ' | ' + (e.nivel || 'info'))}</span>
+        </div>
+        <div class="history-msg">${escapeHtml(e.mensagem || 'Sem mensagem')}</div>
+      </div>
+    `;
+  }).join('');
 }
 
 function maskAtivo(mask, bit) {
@@ -649,11 +831,27 @@ async function limparAgendasVisual() {
   }
 }
 
+async function limparHistoricoEventos() {
+  try {
+    await requestJson('/api/events/clear', { method: 'POST' });
+    showToast('Historico de eventos limpo');
+    await carregarAlertasHistorico();
+  } catch (err) {
+    showToast('Erro ao limpar historico: ' + err.message);
+  }
+}
+
 async function carregarStatus() {
   const dados = await requestJson('/api/status');
   document.getElementById('clock').textContent = dados.hora || '--:--:--';
   renderValvulas(dados.valvulas || []);
   atualizarRede(dados.rede || { ap: {}, sta: {} });
+}
+
+async function carregarAlertasHistorico() {
+  const dados = await requestJson('/api/events');
+  renderAlertas(dados.alertas || []);
+  renderHistorico(dados.historico || []);
 }
 
 async function carregarAgendas(forcarEditor = false) {
@@ -674,7 +872,7 @@ async function alternarValvula(indice) {
 
 async function refreshAll() {
   try {
-    await Promise.all([carregarStatus(), carregarAgendas(true)]);
+    await Promise.all([carregarStatus(), carregarAgendas(true), carregarAlertasHistorico()]);
   } catch (err) {
     showToast('Falha de comunicacao: ' + err.message);
   }
@@ -683,6 +881,7 @@ async function refreshAll() {
 refreshAll();
 setInterval(carregarStatus, 2000);
 setInterval(carregarAgendas, 10000);
+setInterval(carregarAlertasHistorico, 4000);
 </script>
 
 </body>
@@ -703,161 +902,191 @@ WebApManager::WebApManager(IrrigationController &irrigacao,
       _rotasConfiguradas(false),
       _staConfigurada(WIFI_STA_ENABLED && strlen(WIFI_STA_SSID) > 0),
       _ultimoStatusSta(WL_IDLE_STATUS),
-      _ultimoRetryStaMs(0)
+      _ultimoRetryStaMs(0),
+      _historicoCount(0),
+      _historicoHead(0),
+      _proximoEventoId(1),
+      _monitoramentoInicializado(false),
+      _ultimaStaConectada(false),
+      _ultimoTotalAgendasAtivas(0)
 {
+  for (int i = 0; i < NUM_VALVULAS; i++)
+  {
+    _ultimoEstadoValvulas[i] = false;
+    _ultimaOrigemAgenda[i] = false;
+  }
 }
 
 void WebApManager::begin()
 {
-    iniciarApServidor();
+  if (!iniciarApServidor())
+  {
+    return;
+  }
+
+  inicializarMonitoramentoEstado();
+  registrarEvento("sistema", "info", "Servidor web iniciado");
 }
 
 void WebApManager::atualizar()
 {
-    if (!_ativo)
+  if (!_ativo)
+  {
+    if (iniciarApServidor())
     {
-        iniciarApServidor();
-        return;
+      inicializarMonitoramentoEstado();
+      registrarEvento("sistema", "info", "Servidor web reiniciado");
     }
+    return;
+  }
 
-    _server.handleClient();
-    tentarConexaoSta();
+  _server.handleClient();
+  tentarConexaoSta();
+  atualizarHistoricoEstado();
 }
 
 bool WebApManager::iniciarApServidor()
 {
-    if (_ativo)
-    {
-        return true;
-    }
-
-    WiFi.persistent(false);
-    WiFi.setSleep(false);
-
-    WiFi.mode(_staConfigurada ? WIFI_AP_STA : WIFI_AP);
-
-    bool okAp = WiFi.softAP(WIFI_AP_SSID,
-                            WIFI_AP_PASSWORD,
-                            WIFI_AP_CHANNEL,
-                            false,
-                            WIFI_AP_MAX_CONNECTIONS);
-    if (!okAp)
-    {
-        return false;
-    }
-
-    if (_staConfigurada)
-    {
-        WiFi.begin(WIFI_STA_SSID, WIFI_STA_PASSWORD);
-        _ultimoRetryStaMs = millis();
-        _ultimoStatusSta = WiFi.status();
-    }
-
-    if (!_rotasConfiguradas)
-    {
-        configurarRotas();
-        _rotasConfiguradas = true;
-    }
-
-    _server.begin();
-    _ativo = true;
-
+  if (_ativo)
+  {
     return true;
+  }
+
+  WiFi.persistent(false);
+  WiFi.setSleep(false);
+
+  WiFi.mode(_staConfigurada ? WIFI_AP_STA : WIFI_AP);
+
+  bool okAp = WiFi.softAP(WIFI_AP_SSID,
+                          WIFI_AP_PASSWORD,
+                          WIFI_AP_CHANNEL,
+                          false,
+                          WIFI_AP_MAX_CONNECTIONS);
+  if (!okAp)
+  {
+    return false;
+  }
+
+  if (_staConfigurada)
+  {
+    WiFi.begin(WIFI_STA_SSID, WIFI_STA_PASSWORD);
+    _ultimoRetryStaMs = millis();
+    _ultimoStatusSta = WiFi.status();
+  }
+
+  if (!_rotasConfiguradas)
+  {
+    configurarRotas();
+    _rotasConfiguradas = true;
+  }
+
+  _server.begin();
+  _ativo = true;
+
+  return true;
 }
 
 void WebApManager::pararApServidor()
 {
-    if (!_ativo)
-    {
-        return;
-    }
+  if (!_ativo)
+  {
+    return;
+  }
 
-    _server.stop();
-    WiFi.softAPdisconnect(true);
-    if (_staConfigurada)
-    {
-        WiFi.disconnect(true, true);
-    }
-    WiFi.mode(WIFI_OFF);
-    _ativo = false;
+  _server.stop();
+  WiFi.softAPdisconnect(true);
+  if (_staConfigurada)
+  {
+    WiFi.disconnect(true, true);
+  }
+  WiFi.mode(WIFI_OFF);
+  _ativo = false;
 }
 
 bool WebApManager::ativo() const
 {
-    return _ativo;
+  return _ativo;
 }
 
 const char *WebApManager::ssid() const
 {
-    return WIFI_AP_SSID;
+  return WIFI_AP_SSID;
 }
 
 const char *WebApManager::senha() const
 {
-    return WIFI_AP_PASSWORD;
+  return WIFI_AP_PASSWORD;
 }
 
 String WebApManager::ipTexto() const
 {
-    return WiFi.softAPIP().toString();
+  return WiFi.softAPIP().toString();
 }
 
 String WebApManager::ipStaTexto() const
 {
-    if (!staConectada())
-    {
-        return String("0.0.0.0");
-    }
+  if (!staConectada())
+  {
+    return String("0.0.0.0");
+  }
 
-    return WiFi.localIP().toString();
+  return WiFi.localIP().toString();
 }
 
 bool WebApManager::staConectada() const
 {
-    return _staConfigurada && (WiFi.status() == WL_CONNECTED);
+  return _staConfigurada && (WiFi.status() == WL_CONNECTED);
 }
 
 String WebApManager::urlAcessoAp() const
 {
-    return String("http://") + ipTexto() + "/";
+  return String("http://") + ipTexto() + "/";
 }
 
 String WebApManager::urlAcessoSta() const
 {
-    if (!staConectada())
-    {
-        return String("");
-    }
+  if (!staConectada())
+  {
+    return String("");
+  }
 
-    return String("http://") + ipStaTexto() + "/";
+  return String("http://") + ipStaTexto() + "/";
 }
 
 String WebApManager::urlAcesso() const
 {
-    if (staConectada())
-    {
-        return urlAcessoSta();
-    }
+  if (staConectada())
+  {
+    return urlAcessoSta();
+  }
 
-    return urlAcessoAp();
+  return urlAcessoAp();
 }
 
 void WebApManager::configurarRotas()
 {
-    _server.on("/", HTTP_GET, [this]()
-               { enviarPaginaPrincipal(); });
+  _server.on("/", HTTP_GET, [this]()
+             { enviarPaginaPrincipal(); });
 
-    _server.on("/status", HTTP_GET, [this]()
-               { enviarStatusSistema(); });
+  _server.on("/status", HTTP_GET, [this]()
+             { enviarStatusSistema(); });
 
-    _server.on("/api/status", HTTP_GET, [this]()
-               { enviarStatusSistema(); });
+  _server.on("/api/status", HTTP_GET, [this]()
+             { enviarStatusSistema(); });
 
-    _server.on("/api/schedules", HTTP_GET, [this]()
-               { enviarListaAgendas(); });
+  _server.on("/api/schedules", HTTP_GET, [this]()
+             { enviarListaAgendas(); });
 
-    _server.on("/api/valve/toggle", HTTP_POST, [this]()
-               {
+  _server.on("/api/events", HTTP_GET, [this]()
+             { enviarAlertasHistorico(); });
+
+  _server.on("/api/events/clear", HTTP_POST, [this]()
+             {
+       limparHistoricoEventos();
+       enviarAlertasHistorico(); });
+
+  _server.on("/api/valve/toggle", HTTP_POST, [this]()
+             {
         int indice = lerIndiceValvula();
         if (indice < 0)
         {
@@ -865,11 +1094,19 @@ void WebApManager::configurarRotas()
             return;
         }
 
-        _irrigacao.toggleValvula(indice);
+        EstadoValvula novoEstado = _irrigacao.toggleValvula(indice);
+        bool aberta = (novoEstado == EstadoValvula::ABERTA);
+        bool origemAgenda = _irrigacao.valvulaEmAgendamento(indice);
+
+        String msg = String("Setor ") + String(indice + 1) +
+               (aberta ? " aberto via API toggle (" : " fechado via API toggle (") +
+               String(origemAgenda ? "agenda" : "manual") + ")";
+        registrarEvento("irrigacao", "info", msg);
+
         enviarStatusSistema(); });
 
-    _server.on("/api/valve/set", HTTP_POST, [this]()
-               {
+  _server.on("/api/valve/set", HTTP_POST, [this]()
+             {
         int indice = lerIndiceValvula();
         if (indice < 0)
         {
@@ -899,25 +1136,50 @@ void WebApManager::configurarRotas()
         }
 
         bool ligar = textoParaBool(lower);
-        bool aberta = (_irrigacao.estadoValvula(indice) == EstadoValvula::ABERTA);
+        bool abertaAntes = (_irrigacao.estadoValvula(indice) == EstadoValvula::ABERTA);
 
-        if (ligar && !aberta)
+        if (ligar && !abertaAntes)
         {
             _irrigacao.toggleValvula(indice);
         }
-        else if (!ligar && aberta)
+        else if (!ligar && abertaAntes)
         {
             _irrigacao.fecharValvula(indice);
         }
+
+        bool abertaDepois = (_irrigacao.estadoValvula(indice) == EstadoValvula::ABERTA);
+        if (abertaDepois != abertaAntes)
+        {
+          String msg = String("Setor ") + String(indice + 1) +
+                 (abertaDepois ? " aberto" : " fechado") +
+                 " via API set";
+          registrarEvento("irrigacao", "info", msg);
+        }
+
         enviarStatusSistema(); });
 
-    _server.on("/api/valves/off-all", HTTP_POST, [this]()
-               {
+  _server.on("/api/valves/off-all", HTTP_POST, [this]()
+             {
+        int abertasAntes = 0;
+        for (int i = 0; i < NUM_VALVULAS; i++)
+        {
+          if (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA)
+          {
+            abertasAntes++;
+          }
+        }
+
         _irrigacao.fecharTodas();
+
+        if (abertasAntes > 0)
+        {
+          registrarEvento("irrigacao", "warning", String("Todas as valvulas foram desligadas via API (") + String(abertasAntes) + " abertas)");
+        }
+
         enviarStatusSistema(); });
 
-    _server.on("/api/schedule/save", HTTP_POST, [this]()
-               {
+  _server.on("/api/schedule/save", HTTP_POST, [this]()
+             {
         int slot = lerSlotAgenda();
         if (slot < 0)
         {
@@ -955,10 +1217,12 @@ void WebApManager::configurarRotas()
             return;
         }
 
+        registrarEvento("agenda", "info", String("Agenda ") + String(slot + 1) + " salva via dashboard");
+
         enviarListaAgendas(); });
 
-    _server.on("/api/schedule/delete", HTTP_POST, [this]()
-               {
+  _server.on("/api/schedule/delete", HTTP_POST, [this]()
+             {
         int slot = lerSlotAgenda();
         if (slot < 0)
         {
@@ -972,20 +1236,24 @@ void WebApManager::configurarRotas()
             return;
         }
 
+        registrarEvento("agenda", "warning", String("Agenda ") + String(slot + 1) + " removida via dashboard");
+
         enviarListaAgendas(); });
 
-    _server.on("/api/schedule/clear", HTTP_POST, [this]()
-               {
+  _server.on("/api/schedule/clear", HTTP_POST, [this]()
+             {
         if (!_schedule.limparTodasAgendas())
         {
             enviarErroJson(500, "falha ao limpar agendas");
             return;
         }
 
+        registrarEvento("agenda", "critical", "Todas as agendas foram limpas via dashboard");
+
         enviarListaAgendas(); });
 
-    _server.on("/api/config/runtime", HTTP_POST, [this]()
-               {
+  _server.on("/api/config/runtime", HTTP_POST, [this]()
+             {
         uint32_t timeoutMin = _config.timeoutManualMs() / 60000UL;
         uint16_t duracaoMin = _config.duracaoPadraoMin();
 
@@ -1003,10 +1271,12 @@ void WebApManager::configurarRotas()
             return;
         }
 
+        registrarEvento("config", "info", String("Runtime atualizado: timeout=") + String(timeoutMin) + " min, duracao=" + String(duracaoMin) + " min");
+
         enviarStatusSistema(); });
 
-    _server.on("/api/rtc/set", HTTP_POST, [this]()
-               {
+  _server.on("/api/rtc/set", HTTP_POST, [this]()
+             {
         DateTime atual = _rtc.agora();
         int ano = atual.year();
         int mes = atual.month();
@@ -1036,10 +1306,13 @@ void WebApManager::configurarRotas()
         }
 
         _rtc.ajustarHora(DateTime(ano, mes, dia, hora, minuto, 0));
+        char bufferDataHora[24];
+        snprintf(bufferDataHora, sizeof(bufferDataHora), "%02d/%02d/%04d %02d:%02d", dia, mes, ano, hora, minuto);
+        registrarEvento("rtc", "info", String("RTC ajustado via dashboard para ") + String(bufferDataHora));
         enviarStatusSistema(); });
 
-    _server.onNotFound([this]()
-                       {
+  _server.onNotFound([this]()
+                     {
         if (_server.uri().startsWith("/api/"))
         {
             enviarErroJson(404, "rota nao encontrada");
@@ -1050,268 +1323,524 @@ void WebApManager::configurarRotas()
 
 void WebApManager::tentarConexaoSta()
 {
-    if (!_staConfigurada)
+  if (!_staConfigurada)
+  {
+    return;
+  }
+
+  wl_status_t statusAtual = WiFi.status();
+  if (statusAtual != _ultimoStatusSta)
+  {
+    _ultimoStatusSta = statusAtual;
+  }
+
+  if (statusAtual == WL_CONNECTED)
+  {
+    return;
+  }
+
+  unsigned long agora = millis();
+  if ((unsigned long)(agora - _ultimoRetryStaMs) < WIFI_STA_RETRY_MS)
+  {
+    return;
+  }
+
+  _ultimoRetryStaMs = agora;
+  WiFi.disconnect(false, false);
+  WiFi.begin(WIFI_STA_SSID, WIFI_STA_PASSWORD);
+}
+
+void WebApManager::inicializarMonitoramentoEstado()
+{
+  for (int i = 0; i < NUM_VALVULAS; i++)
+  {
+    _ultimoEstadoValvulas[i] = (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA);
+    _ultimaOrigemAgenda[i] = _irrigacao.valvulaEmAgendamento(i);
+  }
+
+  _ultimaStaConectada = staConectada();
+  _ultimoTotalAgendasAtivas = _schedule.totalAtivas();
+  _monitoramentoInicializado = true;
+}
+
+void WebApManager::atualizarHistoricoEstado()
+{
+  if (!_monitoramentoInicializado)
+  {
+    inicializarMonitoramentoEstado();
+    return;
+  }
+
+  bool staAtual = staConectada();
+  if (_staConfigurada && staAtual != _ultimaStaConectada)
+  {
+    registrarEvento("rede",
+                    staAtual ? "info" : "warning",
+                    staAtual ? "Conexao STA estabelecida" : "Conexao STA perdida");
+  }
+  _ultimaStaConectada = staAtual;
+
+  int totalAtivas = _schedule.totalAtivas();
+  if (totalAtivas != _ultimoTotalAgendasAtivas)
+  {
+    registrarEvento("agenda", "info", String("Total de agendas ativas atualizado para ") + String(totalAtivas));
+    _ultimoTotalAgendasAtivas = totalAtivas;
+  }
+
+  for (int i = 0; i < NUM_VALVULAS; i++)
+  {
+    bool aberta = (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA);
+    bool origemAgenda = _irrigacao.valvulaEmAgendamento(i);
+
+    if (aberta != _ultimoEstadoValvulas[i])
     {
-        return;
+      if (aberta)
+      {
+        String msg = String("Setor ") + String(i + 1) +
+                     " aberto (" +
+                     String(origemAgenda ? "agenda" : "manual") +
+                     ")";
+        registrarEvento("irrigacao", "info", msg);
+      }
+      else
+      {
+        String origemAnterior = _ultimaOrigemAgenda[i] ? "agenda" : "manual";
+        String msg = String("Setor ") + String(i + 1) +
+                     " fechado (origem anterior: " +
+                     origemAnterior + ")";
+        registrarEvento("irrigacao", _ultimaOrigemAgenda[i] ? "info" : "warning", msg);
+      }
+    }
+    else if (aberta && origemAgenda != _ultimaOrigemAgenda[i])
+    {
+      String msg = String("Setor ") + String(i + 1) +
+                   " mudou para origem " +
+                   String(origemAgenda ? "agenda" : "manual");
+      registrarEvento("irrigacao", "info", msg);
     }
 
-    wl_status_t statusAtual = WiFi.status();
-    if (statusAtual != _ultimoStatusSta)
-    {
-        _ultimoStatusSta = statusAtual;
-    }
+    _ultimoEstadoValvulas[i] = aberta;
+    _ultimaOrigemAgenda[i] = origemAgenda;
+  }
+}
 
-    if (statusAtual == WL_CONNECTED)
-    {
-        return;
-    }
+void WebApManager::registrarEvento(const char *tipo, const char *nivel, const String &mensagem)
+{
+  EventoSistema &evento = _historicoEventos[_historicoHead];
+  evento.id = _proximoEventoId++;
+  evento.uptimeS = millis() / 1000UL;
 
-    unsigned long agora = millis();
-    if ((unsigned long)(agora - _ultimoRetryStaMs) < WIFI_STA_RETRY_MS)
-    {
-        return;
-    }
+  DateTime agora = _rtc.agora();
+  snprintf(evento.data, sizeof(evento.data), "%02d/%02d/%04d", agora.day(), agora.month(), agora.year());
+  snprintf(evento.hora, sizeof(evento.hora), "%02d:%02d:%02d", agora.hour(), agora.minute(), agora.second());
+  snprintf(evento.tipo, sizeof(evento.tipo), "%s", (tipo != nullptr) ? tipo : "sistema");
+  snprintf(evento.nivel, sizeof(evento.nivel), "%s", (nivel != nullptr) ? nivel : "info");
 
-    _ultimoRetryStaMs = agora;
-    WiFi.disconnect(false, false);
-    WiFi.begin(WIFI_STA_SSID, WIFI_STA_PASSWORD);
+  size_t tamanho = mensagem.length();
+  if (tamanho >= sizeof(evento.mensagem))
+  {
+    tamanho = sizeof(evento.mensagem) - 1;
+  }
+
+  if (tamanho > 0)
+  {
+    memcpy(evento.mensagem, mensagem.c_str(), tamanho);
+  }
+  evento.mensagem[tamanho] = '\0';
+
+  _historicoHead = (uint8_t)((_historicoHead + 1) % MAX_HISTORICO_EVENTOS);
+  if (_historicoCount < MAX_HISTORICO_EVENTOS)
+  {
+    _historicoCount++;
+  }
+}
+
+void WebApManager::limparHistoricoEventos()
+{
+  _historicoCount = 0;
+  _historicoHead = 0;
+}
+
+int WebApManager::contarValvulasManuaisAbertas() const
+{
+  int total = 0;
+  for (int i = 0; i < NUM_VALVULAS; i++)
+  {
+    bool aberta = (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA);
+    if (aberta && !_irrigacao.valvulaEmAgendamento(i))
+    {
+      total++;
+    }
+  }
+  return total;
+}
+
+int WebApManager::contarValvulasAutomaticasAbertas() const
+{
+  int total = 0;
+  for (int i = 0; i < NUM_VALVULAS; i++)
+  {
+    if (_irrigacao.valvulaEmAgendamento(i))
+    {
+      total++;
+    }
+  }
+  return total;
+}
+
+String WebApManager::escaparJson(const char *texto)
+{
+  if (texto == nullptr)
+  {
+    return String("");
+  }
+
+  String saida;
+  saida.reserve(strlen(texto) + 8);
+
+  for (const char *ptr = texto; *ptr != '\0'; ++ptr)
+  {
+    char c = *ptr;
+    switch (c)
+    {
+    case '"':
+      saida += "\\\"";
+      break;
+    case '\\':
+      saida += "\\\\";
+      break;
+    case '\n':
+      saida += "\\n";
+      break;
+    case '\r':
+      saida += "\\r";
+      break;
+    case '\t':
+      saida += "\\t";
+      break;
+    default:
+      saida += c;
+      break;
+    }
+  }
+
+  return saida;
+}
+
+void WebApManager::enviarAlertasHistorico()
+{
+  int manuaisAbertas = contarValvulasManuaisAbertas();
+  int automaticasAbertas = contarValvulasAutomaticasAbertas();
+  int agendasAtivas = _schedule.totalAtivas();
+  bool staOk = staConectada();
+
+  String json;
+  json.reserve(7800);
+  json += "{";
+  json += "\"ok\":true,";
+  json += "\"resumo\":{";
+  json += "\"manuaisAbertas\":" + String(manuaisAbertas) + ",";
+  json += "\"automaticasAbertas\":" + String(automaticasAbertas) + ",";
+  json += "\"agendasAtivas\":" + String(agendasAtivas) + ",";
+  json += "\"staConectada\":" + String(staOk ? "true" : "false");
+  json += "},";
+
+  json += "\"alertas\":[";
+  bool primeiroAlerta = true;
+
+  if (_staConfigurada && !staOk)
+  {
+    json += "{\"id\":\"sta_offline\",\"nivel\":\"warning\",\"mensagem\":\"STA configurado, mas desconectado\"}";
+    primeiroAlerta = false;
+  }
+
+  if (manuaisAbertas > 0)
+  {
+    if (!primeiroAlerta)
+    {
+      json += ",";
+    }
+    json += "{\"id\":\"manual_open\",\"nivel\":\"warning\",\"mensagem\":\"";
+    json += String(manuaisAbertas);
+    json += " valvula(s) manual(is) aberta(s)\"}";
+    primeiroAlerta = false;
+  }
+
+  if (agendasAtivas == 0)
+  {
+    if (!primeiroAlerta)
+    {
+      json += ",";
+    }
+    json += "{\"id\":\"no_schedule\",\"nivel\":\"info\",\"mensagem\":\"Nenhuma agenda ativa configurada\"}";
+  }
+  json += "],";
+
+  json += "\"historico\":[";
+  int inicio = (_historicoHead + MAX_HISTORICO_EVENTOS - _historicoCount) % MAX_HISTORICO_EVENTOS;
+
+  for (int i = 0; i < _historicoCount; i++)
+  {
+    int idx = (inicio + i) % MAX_HISTORICO_EVENTOS;
+    const EventoSistema &evento = _historicoEventos[idx];
+
+    json += "{";
+    json += "\"id\":" + String(evento.id) + ",";
+    json += "\"uptime_s\":" + String(evento.uptimeS) + ",";
+    json += "\"data\":\"" + escaparJson(evento.data) + "\",";
+    json += "\"hora\":\"" + escaparJson(evento.hora) + "\",";
+    json += "\"tipo\":\"" + escaparJson(evento.tipo) + "\",";
+    json += "\"nivel\":\"" + escaparJson(evento.nivel) + "\",";
+    json += "\"mensagem\":\"" + escaparJson(evento.mensagem) + "\"";
+    json += "}";
+
+    if (i < (_historicoCount - 1))
+    {
+      json += ",";
+    }
+  }
+
+  json += "]";
+  json += "}";
+
+  enviarRespostaJson(200, json);
 }
 
 void WebApManager::enviarPaginaPrincipal()
 {
-    _server.send_P(200, "text/html; charset=utf-8", WEB_DASHBOARD_HTML);
+  _server.send_P(200, "text/html; charset=utf-8", WEB_DASHBOARD_HTML);
 }
 
 void WebApManager::enviarStatusSistema()
 {
-    DateTime agora = _rtc.agora();
+  DateTime agora = _rtc.agora();
 
-    char hora[10];
-    snprintf(hora, sizeof(hora), "%02d:%02d:%02d", agora.hour(), agora.minute(), agora.second());
+  char hora[10];
+  snprintf(hora, sizeof(hora), "%02d:%02d:%02d", agora.hour(), agora.minute(), agora.second());
 
-    char data[16];
-    snprintf(data, sizeof(data), "%02d/%02d/%04d", agora.day(), agora.month(), agora.year());
+  char data[16];
+  snprintf(data, sizeof(data), "%02d/%02d/%04d", agora.day(), agora.month(), agora.year());
 
-    bool staConectada = this->staConectada();
+  bool staConectada = this->staConectada();
 
-    String json;
-    json.reserve(2000);
+  String json;
+  json.reserve(2000);
+  json += "{";
+  json += "\"ok\":true,";
+  json += "\"hora\":\"" + String(hora) + "\",";
+  json += "\"data\":\"" + String(data) + "\",";
+  json += "\"uptime_s\":" + String(millis() / 1000UL) + ",";
+
+  json += "\"rede\":{";
+  json += "\"ap\":{";
+  json += "\"ativo\":" + String(_ativo ? "true" : "false") + ",";
+  json += "\"ssid\":\"" + String(ssid()) + "\",";
+  json += "\"ip\":\"" + ipTexto() + "\",";
+  json += "\"url\":\"" + urlAcessoAp() + "\"";
+  json += "},";
+  json += "\"sta\":{";
+  json += "\"configurado\":" + String(_staConfigurada ? "true" : "false") + ",";
+  json += "\"conectado\":" + String(staConectada ? "true" : "false") + ",";
+  json += "\"ssid\":\"" + String(_staConfigurada ? WIFI_STA_SSID : "") + "\",";
+  json += "\"ip\":\"" + ipStaTexto() + "\",";
+  json += "\"url\":\"" + String(staConectada ? urlAcessoSta() : String("")) + "\"";
+  json += "}";
+  json += "},";
+
+  json += "\"agendas_ativas\":" + String(_schedule.totalAtivas()) + ",";
+
+  json += "\"valvulas\":[";
+  for (int i = 0; i < NUM_VALVULAS; i++)
+  {
+    bool aberta = (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA);
+    bool autoAgenda = _irrigacao.valvulaEmAgendamento(i);
+
     json += "{";
-    json += "\"ok\":true,";
-    json += "\"hora\":\"" + String(hora) + "\",";
-    json += "\"data\":\"" + String(data) + "\",";
-    json += "\"uptime_s\":" + String(millis() / 1000UL) + ",";
-
-    json += "\"rede\":{";
-    json += "\"ap\":{";
-    json += "\"ativo\":" + String(_ativo ? "true" : "false") + ",";
-    json += "\"ssid\":\"" + String(ssid()) + "\",";
-    json += "\"ip\":\"" + ipTexto() + "\",";
-    json += "\"url\":\"" + urlAcessoAp() + "\"";
-    json += "},";
-    json += "\"sta\":{";
-    json += "\"configurado\":" + String(_staConfigurada ? "true" : "false") + ",";
-    json += "\"conectado\":" + String(staConectada ? "true" : "false") + ",";
-    json += "\"ssid\":\"" + String(_staConfigurada ? WIFI_STA_SSID : "") + "\",";
-    json += "\"ip\":\"" + ipStaTexto() + "\",";
-    json += "\"url\":\"" + String(staConectada ? urlAcessoSta() : String("")) + "\"";
+    json += "\"id\":" + String(i + 1) + ",";
+    json += "\"gpio\":" + String(gpioValvula(i)) + ",";
+    json += "\"ativa\":" + String(aberta ? "true" : "false") + ",";
+    json += "\"status\":\"" + String(aberta ? "Ativa" : "Inativa") + "\",";
+    json += "\"origem\":\"" + String(!aberta ? "desligada" : (autoAgenda ? "agenda" : "manual")) + "\"";
     json += "}";
-    json += "},";
 
-    json += "\"agendas_ativas\":" + String(_schedule.totalAtivas()) + ",";
-
-    json += "\"valvulas\":[";
-    for (int i = 0; i < NUM_VALVULAS; i++)
+    if (i < (NUM_VALVULAS - 1))
     {
-        bool aberta = (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA);
-        bool autoAgenda = _irrigacao.valvulaEmAgendamento(i);
-
-        json += "{";
-        json += "\"id\":" + String(i + 1) + ",";
-        json += "\"gpio\":" + String(gpioValvula(i)) + ",";
-        json += "\"ativa\":" + String(aberta ? "true" : "false") + ",";
-        json += "\"status\":\"" + String(aberta ? "Ativa" : "Inativa") + "\",";
-        json += "\"origem\":\"" + String(!aberta ? "desligada" : (autoAgenda ? "agenda" : "manual")) + "\"";
-        json += "}";
-
-        if (i < (NUM_VALVULAS - 1))
-        {
-            json += ",";
-        }
+      json += ",";
     }
-    json += "]";
+  }
+  json += "]";
 
-    json += "}";
+  json += "}";
 
-    enviarRespostaJson(200, json);
+  enviarRespostaJson(200, json);
 }
 
 void WebApManager::enviarListaAgendas()
 {
-    DateTime agora = _rtc.agora();
+  DateTime agora = _rtc.agora();
 
-    String json;
-    json.reserve(1400);
+  String json;
+  json.reserve(1400);
+  json += "{";
+  json += "\"ok\":true,";
+  json += "\"total_ativas\":" + String(_schedule.totalAtivas()) + ",";
+  json += "\"slots\":[";
+
+  for (int slot = 0; slot < MAX_AGENDAS_TOTAIS; slot++)
+  {
+    AgendaSetor agenda;
+    _schedule.obterAgenda(slot, agenda);
+
     json += "{";
-    json += "\"ok\":true,";
-    json += "\"total_ativas\":" + String(_schedule.totalAtivas()) + ",";
-    json += "\"slots\":[";
-
-    for (int slot = 0; slot < MAX_AGENDAS_TOTAIS; slot++)
-    {
-        AgendaSetor agenda;
-        _schedule.obterAgenda(slot, agenda);
-
-        json += "{";
-        json += "\"slot\":" + String(slot + 1) + ",";
-        json += "\"ativa\":" + String(agenda.ativa ? "true" : "false") + ",";
-        json += "\"hora\":" + String(agenda.hora) + ",";
-        json += "\"minuto\":" + String(agenda.minuto) + ",";
-        json += "\"duracaoMin\":" + String(agenda.duracaoMin) + ",";
-        json += "\"diasMask\":" + String(agenda.diasMask) + ",";
-        json += "\"setoresMask\":" + String(agenda.setoresMask);
-        json += "}";
-
-        if (slot < (MAX_AGENDAS_TOTAIS - 1))
-        {
-            json += ",";
-        }
-    }
-    json += "],";
-
-    DateTime proximaData;
-    AgendaSetor proximaAgenda;
-    int slotProximo = -1;
-    bool temProxima = _schedule.obterProximaExecucao(agora, proximaData, proximaAgenda, slotProximo);
-
-    json += "\"proxima\":";
-    if (!temProxima)
-    {
-        json += "null";
-    }
-    else
-    {
-        json += "{";
-        json += "\"slot\":" + String(slotProximo + 1) + ",";
-        json += "\"hora\":" + String(proximaData.hour()) + ",";
-        json += "\"minuto\":" + String(proximaData.minute()) + ",";
-        json += "\"diasMask\":" + String(proximaAgenda.diasMask) + ",";
-        json += "\"setoresMask\":" + String(proximaAgenda.setoresMask);
-        json += "}";
-    }
-
+    json += "\"slot\":" + String(slot + 1) + ",";
+    json += "\"ativa\":" + String(agenda.ativa ? "true" : "false") + ",";
+    json += "\"hora\":" + String(agenda.hora) + ",";
+    json += "\"minuto\":" + String(agenda.minuto) + ",";
+    json += "\"duracaoMin\":" + String(agenda.duracaoMin) + ",";
+    json += "\"diasMask\":" + String(agenda.diasMask) + ",";
+    json += "\"setoresMask\":" + String(agenda.setoresMask);
     json += "}";
 
-    enviarRespostaJson(200, json);
+    if (slot < (MAX_AGENDAS_TOTAIS - 1))
+    {
+      json += ",";
+    }
+  }
+  json += "],";
+
+  DateTime proximaData;
+  AgendaSetor proximaAgenda;
+  int slotProximo = -1;
+  bool temProxima = _schedule.obterProximaExecucao(agora, proximaData, proximaAgenda, slotProximo);
+
+  json += "\"proxima\":";
+  if (!temProxima)
+  {
+    json += "null";
+  }
+  else
+  {
+    json += "{";
+    json += "\"slot\":" + String(slotProximo + 1) + ",";
+    json += "\"hora\":" + String(proximaData.hour()) + ",";
+    json += "\"minuto\":" + String(proximaData.minute()) + ",";
+    json += "\"diasMask\":" + String(proximaAgenda.diasMask) + ",";
+    json += "\"setoresMask\":" + String(proximaAgenda.setoresMask);
+    json += "}";
+  }
+
+  json += "}";
+
+  enviarRespostaJson(200, json);
 }
 
 void WebApManager::enviarRespostaJson(int statusCode, const String &json)
 {
-    _server.sendHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
-    _server.send(statusCode, "application/json; charset=utf-8", json);
+  _server.sendHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+  _server.send(statusCode, "application/json; charset=utf-8", json);
 }
 
 void WebApManager::enviarErroJson(int statusCode, const char *mensagem)
 {
-    String json;
-    json.reserve(160);
-    json += "{\"ok\":false,\"erro\":\"";
-    json += mensagem;
-    json += "\"}";
+  String json;
+  json.reserve(160);
+  json += "{\"ok\":false,\"erro\":\"";
+  json += mensagem;
+  json += "\"}";
 
-    enviarRespostaJson(statusCode, json);
+  enviarRespostaJson(statusCode, json);
 }
 
 int WebApManager::lerIndiceValvula() const
 {
-    if (!_server.hasArg("index"))
-    {
-        return -1;
-    }
-
-    String txt = _server.arg("index");
-    txt.trim();
-
-    char *endPtr = nullptr;
-    long valor = strtol(txt.c_str(), &endPtr, 10);
-    if (endPtr == txt.c_str() || *endPtr != '\0')
-    {
-        return -1;
-    }
-
-    if (valor >= 1 && valor <= NUM_VALVULAS)
-    {
-        return (int)valor - 1;
-    }
-
-    if (valor >= 0 && valor < NUM_VALVULAS)
-    {
-        return (int)valor;
-    }
-
+  if (!_server.hasArg("index"))
+  {
     return -1;
+  }
+
+  String txt = _server.arg("index");
+  txt.trim();
+
+  char *endPtr = nullptr;
+  long valor = strtol(txt.c_str(), &endPtr, 10);
+  if (endPtr == txt.c_str() || *endPtr != '\0')
+  {
+    return -1;
+  }
+
+  if (valor >= 1 && valor <= NUM_VALVULAS)
+  {
+    return (int)valor - 1;
+  }
+
+  if (valor >= 0 && valor < NUM_VALVULAS)
+  {
+    return (int)valor;
+  }
+
+  return -1;
 }
 
 int WebApManager::lerSlotAgenda() const
 {
-    if (!_server.hasArg("slot"))
-    {
-        return -1;
-    }
-
-    String txt = _server.arg("slot");
-    txt.trim();
-
-    char *endPtr = nullptr;
-    long valor = strtol(txt.c_str(), &endPtr, 10);
-    if (endPtr == txt.c_str() || *endPtr != '\0')
-    {
-        return -1;
-    }
-
-    if (valor >= 1 && valor <= MAX_AGENDAS_TOTAIS)
-    {
-        return (int)valor - 1;
-    }
-
-    if (valor >= 0 && valor < MAX_AGENDAS_TOTAIS)
-    {
-        return (int)valor;
-    }
-
+  if (!_server.hasArg("slot"))
+  {
     return -1;
+  }
+
+  String txt = _server.arg("slot");
+  txt.trim();
+
+  char *endPtr = nullptr;
+  long valor = strtol(txt.c_str(), &endPtr, 10);
+  if (endPtr == txt.c_str() || *endPtr != '\0')
+  {
+    return -1;
+  }
+
+  if (valor >= 1 && valor <= MAX_AGENDAS_TOTAIS)
+  {
+    return (int)valor - 1;
+  }
+
+  if (valor >= 0 && valor < MAX_AGENDAS_TOTAIS)
+  {
+    return (int)valor;
+  }
+
+  return -1;
 }
 
 uint8_t WebApManager::gpioValvula(int indice)
 {
-    switch (indice)
-    {
-    case 0:
-        return PIN_RELAY_1;
-    case 1:
-        return PIN_RELAY_2;
-    case 2:
-        return PIN_RELAY_3;
-    case 3:
-        return PIN_RELAY_4;
-    case 4:
-        return PIN_RELAY_5;
-    case 5:
-        return PIN_RELAY_6;
-    case 6:
-        return PIN_RELAY_7;
-    case 7:
-        return PIN_RELAY_8;
-    default:
-        return 0;
-    }
+  switch (indice)
+  {
+  case 0:
+    return PIN_RELAY_1;
+  case 1:
+    return PIN_RELAY_2;
+  case 2:
+    return PIN_RELAY_3;
+  case 3:
+    return PIN_RELAY_4;
+  case 4:
+    return PIN_RELAY_5;
+  case 5:
+    return PIN_RELAY_6;
+  case 6:
+    return PIN_RELAY_7;
+  case 7:
+    return PIN_RELAY_8;
+  default:
+    return 0;
+  }
 }
 
 bool WebApManager::textoParaBool(const String &texto)
 {
-    String valor = texto;
-    valor.trim();
-    valor.toLowerCase();
+  String valor = texto;
+  valor.trim();
+  valor.toLowerCase();
 
-    return (valor == "1" || valor == "true" || valor == "on" || valor == "ligado" || valor == "sim");
+  return (valor == "1" || valor == "true" || valor == "on" || valor == "ligado" || valor == "sim");
 }

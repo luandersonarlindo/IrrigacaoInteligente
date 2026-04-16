@@ -161,6 +161,7 @@ O modulo web_ap_manager faz:
 - Exibir dashboard com status de valvulas e agendas.
 - Permitir comandos web para valvulas e agendas.
 - Permitir ajuste de runtime e RTC por API.
+- Exibir alertas ativos e historico de registros do sistema em tempo real.
 
 Uso didatico:
 

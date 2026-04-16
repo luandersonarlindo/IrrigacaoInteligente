@@ -6,8 +6,8 @@
 // ============================================================
 
 // --- Pinos: Encoder ---
-#define PIN_ENCODER_CLK 19
-#define PIN_ENCODER_DT 18
+#define PIN_ENCODER_CLK 18
+#define PIN_ENCODER_DT 19
 #define PIN_ENCODER_BTN 4
 
 // --- Pinos: Display OLED (I2C) ---
@@ -55,8 +55,8 @@
 #define WIFI_AP_CHANNEL 6
 #define WIFI_AP_MAX_CONNECTIONS 4
 #define WIFI_STA_ENABLED true
-#define WIFI_STA_SSID "Conexao_Social"
-#define WIFI_STA_PASSWORD "000000789!@#$"
+#define WIFI_STA_SSID "autotec"
+#define WIFI_STA_PASSWORD "000000789ACS"
 #define WIFI_STA_RETRY_MS 15000
 
 // --- Web Dashboard (valores padrao enquanto sensores externos nao forem ligados) ---
