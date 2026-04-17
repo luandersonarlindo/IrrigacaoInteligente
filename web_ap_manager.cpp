@@ -675,8 +675,6 @@ namespace
     <button id="notifButton" class="notif-btn" onclick="alternarPainelNotificacoes()" aria-label="Notificacoes" title="Notificacoes">
       <img id="notifIcon" alt="Notificacoes" src=""/>
     </button>
-    <span class="badge"><span class="badge-dot"></span>Online</span>
-    <span id="clock">--:--:--</span>
   </div>
 </div>
 
@@ -1234,7 +1232,6 @@ async function limparAgendasVisual() {
 
 async function carregarStatus() {
   const dados = await requestJson('/api/status');
-  document.getElementById('clock').textContent = dados.hora || '--:--:--';
   renderValvulas(dados.valvulas || []);
   atualizarRede(dados.rede || { ap: {}, sta: {} });
 }
@@ -1624,13 +1621,42 @@ void WebApManager::configurarRotas()
 
   _server.on("/api/schedule/clear", HTTP_POST, [this]()
              {
+        int agendasAtivasAntes = _schedule.totalAtivas();
+        int setoresInterrompidos = 0;
+
+        for (int i = 0; i < NUM_VALVULAS; i++)
+        {
+          bool aberta = (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA);
+          if (aberta && _irrigacao.valvulaEmAgendamento(i))
+          {
+            _irrigacao.fecharValvula(i);
+            setoresInterrompidos++;
+          }
+        }
+
         if (!_schedule.limparTodasAgendas())
         {
             enviarErroJson(500, "falha ao limpar agendas");
             return;
         }
 
-        registrarEvento("agenda", "critical", "Todas as agendas foram limpas via dashboard");
+        String msg = "Limpeza de agendas selecionada: ";
+        if (setoresInterrompidos > 0)
+        {
+          msg += "ciclo automatico interrompido e agendas apagadas";
+        }
+        else
+        {
+          msg += "agendas apagadas";
+        }
+
+        msg += " (";
+        msg += String(agendasAtivasAntes);
+        msg += " agenda(s) ativa(s) antes, ";
+        msg += String(setoresInterrompidos);
+        msg += " setor(es) interrompido(s))";
+
+        registrarEvento("agenda", "critical", msg);
 
         enviarListaAgendas(); });
 
@@ -2059,9 +2085,6 @@ void WebApManager::enviarStatusSistema()
 {
   DateTime agora = _rtc.agora();
 
-  char hora[10];
-  snprintf(hora, sizeof(hora), "%02d:%02d:%02d", agora.hour(), agora.minute(), agora.second());
-
   char data[16];
   snprintf(data, sizeof(data), "%02d/%02d/%04d", agora.day(), agora.month(), agora.year());
 
@@ -2071,7 +2094,6 @@ void WebApManager::enviarStatusSistema()
   json.reserve(2000);
   json += "{";
   json += "\"ok\":true,";
-  json += "\"hora\":\"" + String(hora) + "\",";
   json += "\"data\":\"" + String(data) + "\",";
   json += "\"uptime_s\":" + String(millis() / 1000UL) + ",";
 

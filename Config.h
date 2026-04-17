@@ -55,10 +55,8 @@
 #define WIFI_AP_CHANNEL 6
 #define WIFI_AP_MAX_CONNECTIONS 4
 #define WIFI_STA_ENABLED true
-// #define WIFI_STA_SSID "autotec"
-// #define WIFI_STA_PASSWORD "000000789ACS"
-#define WIFI_STA_SSID "ARLINDO"
-#define WIFI_STA_PASSWORD "96984949"
+#define WIFI_STA_SSID "autotec"
+#define WIFI_STA_PASSWORD "000000789ACS"
 #define WIFI_STA_RETRY_MS 15000
 
 // --- Web Dashboard (valores padrao enquanto sensores externos nao forem ligados) ---
