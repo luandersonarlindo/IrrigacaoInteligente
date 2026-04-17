@@ -233,7 +233,6 @@ Rotas principais:
 - POST /api/schedule/save, /api/schedule/delete, /api/schedule/clear
 - POST /api/config/runtime
 - POST /api/rtc/set
-- POST /api/events/clear
 
 ## 10. 💾 Persistencia
 

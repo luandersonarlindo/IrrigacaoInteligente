@@ -82,7 +82,6 @@ private:
     void atualizarHistoricoEstado();
     void registrarEvento(const char *tipo, const char *nivel, const String &mensagem);
     void enviarAlertasHistorico();
-    void limparHistoricoEventos();
     int contarValvulasManuaisAbertas() const;
     int contarValvulasAutomaticasAbertas() const;
     static String escaparJson(const char *texto);

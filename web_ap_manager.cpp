@@ -92,6 +92,36 @@ namespace
       color: var(--text2);
     }
 
+    .notif-btn {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      background: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color .15s ease, background .15s ease;
+      padding: 0;
+    }
+
+    .notif-btn img {
+      width: 19px;
+      height: 19px;
+      display: block;
+      opacity: 0.85;
+    }
+
+    .notif-btn.active {
+      border-color: #f1c27d;
+      background: #fff8eb;
+    }
+
+    .notif-btn.active img {
+      opacity: 1;
+    }
+
     .badge {
       display: inline-flex;
       align-items: center;
@@ -115,6 +145,17 @@ namespace
       max-width: 860px;
       margin: 0 auto;
       padding: 28px 20px 0;
+    }
+
+    .notif-panel {
+      max-width: 860px;
+      margin: 10px auto 0;
+      padding: 0 20px;
+      display: none;
+    }
+
+    .notif-panel.open {
+      display: block;
     }
 
     .sensor-grid {
@@ -315,10 +356,10 @@ namespace
     }
 
     .alerts-wrap {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
+      background: #f4f6fb;
+      border: 1px solid #e3e7f0;
+      border-radius: 16px;
+      padding: 14px;
       box-shadow: var(--shadow);
       margin-bottom: 16px;
     }
@@ -328,100 +369,177 @@ namespace
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      margin-bottom: 10px;
-      font-size: 0.72rem;
-      color: var(--text2);
+      margin-bottom: 12px;
+    }
+
+    .alerts-title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .alerts-title {
+      font-size: 1.05rem;
+      color: #222b45;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .alerts-subtitle {
+      font-size: 0.68rem;
+      color: #7d8799;
       font-weight: 600;
     }
 
-    .alert-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+    .notif-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .notif-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      background: #e9ecf3;
+      border-radius: 12px;
+      padding: 4px;
       margin-bottom: 10px;
     }
 
-    .alert-item {
-      border: 1px solid var(--border);
-      border-radius: 10px;
+    .notif-tab {
+      border: none;
+      border-radius: 9px;
       padding: 8px 10px;
-      background: #f9fbf9;
-      font-size: 0.74rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      color: #6f7891;
+      background: transparent;
+      cursor: pointer;
     }
 
-    .alert-item.warning {
-      border-color: #f1c27d;
-      background: #fff8eb;
+    .notif-tab.active {
+      background: #fff;
+      color: #29314a;
+      box-shadow: 0 1px 2px #00000014;
     }
 
-    .alert-item.critical {
-      border-color: #f2b8b5;
-      background: #fff0ef;
+    .notif-tab-content {
+      display: block;
     }
 
-    .alert-item.info {
-      border-color: #c7d9f7;
-      background: #f2f7ff;
+    .notif-tab-content.hidden {
+      display: none;
     }
 
-    .alert-meta {
-      font-size: 0.62rem;
-      color: var(--muted);
-      margin-top: 3px;
+    .notif-list-wrap {
+      max-height: 360px;
+      overflow-y: auto;
+      padding-right: 3px;
+    }
+
+    .notif-group-label {
+      font-size: 0.66rem;
+      font-weight: 700;
+      color: #7f889f;
       text-transform: uppercase;
       letter-spacing: 0.08em;
+      margin: 8px 2px;
     }
 
-    .empty-alert {
-      border: 1px dashed var(--border2);
-      border-radius: 10px;
-      padding: 10px;
-      font-size: 0.72rem;
-      color: var(--muted);
-      background: #fcfdfc;
+    @media(max-width:640px){
+      .alerts-head {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .notif-actions {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .notif-actions .tiny-btn {
+        width: 100%;
+      }
+    }
+
+    .alert-list {
+      display: block;
+      margin: 0;
     }
 
     .history-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      max-height: 220px;
-      overflow-y: auto;
-      padding-right: 4px;
+      display: block;
+      margin: 0;
     }
 
-    .history-item {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 8px 10px;
+    .notif-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 11px 8px;
       background: #fff;
+      border: 1px solid #e6ebf5;
+      border-radius: 12px;
+      margin-bottom: 8px;
     }
 
-    .history-item.warning {
-      border-color: #f1c27d;
-    }
-
-    .history-item.critical {
-      border-color: #f2b8b5;
-    }
-
-    .history-item.info {
-      border-color: #c7d9f7;
-    }
-
-    .history-head {
-      display: flex;
+    .notif-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: inline-flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      font-size: 0.66rem;
-      color: var(--muted);
-      margin-bottom: 4px;
+      justify-content: center;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #3f61d8;
+      background: #e7ecff;
+      border: 1px solid #d6dfff;
+      flex-shrink: 0;
     }
 
-    .history-msg {
-      font-size: 0.73rem;
-      color: var(--text);
+    .notif-icon.warning {
+      color: #a56a13;
+      background: #fff3df;
+      border-color: #f6d39d;
+    }
+
+    .notif-icon.critical {
+      color: #b23a33;
+      background: #ffe8e6;
+      border-color: #f6c2be;
+    }
+
+    .notif-text {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .notif-msg {
+      font-size: 0.79rem;
+      color: #2e3448;
+      line-height: 1.35;
+      font-weight: 600;
+    }
+
+    .notif-meta {
+      margin-top: 3px;
+      font-size: 0.66rem;
+      color: #818aa2;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .empty-alert {
+      border: 1px dashed #cfd6e6;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 0.72rem;
+      color: #74809a;
+      background: #fff;
     }
 
     .editor-grid {
@@ -554,8 +672,38 @@ namespace
     </div>
   </div>
   <div class="topbar-right">
+    <button id="notifButton" class="notif-btn" onclick="alternarPainelNotificacoes()" aria-label="Notificacoes" title="Notificacoes">
+      <img id="notifIcon" alt="Notificacoes" src=""/>
+    </button>
     <span class="badge"><span class="badge-dot"></span>Online</span>
     <span id="clock">--:--:--</span>
+  </div>
+</div>
+
+<div id="notifPanel" class="notif-panel">
+  <div class="alerts-wrap">
+    <div class="alerts-head">
+      <div class="alerts-title-wrap">
+        <span class="alerts-title">Notificacoes</span>
+        <span class="alerts-subtitle" id="alertSummary">Verificando notificacoes...</span>
+      </div>
+      <div class="notif-actions">
+        <button class="tiny-btn" onclick="marcarNotificacoesLidas()">Marcar tudo como lido</button>
+      </div>
+    </div>
+
+    <div class="notif-tabs">
+      <button id="notifTabAlertas" class="notif-tab active" onclick="selecionarAbaNotificacoes('alertas')">Avisos</button>
+      <button id="notifTabHistorico" class="notif-tab" onclick="selecionarAbaNotificacoes('historico')">Historico</button>
+    </div>
+
+    <div id="notifTabContentAlertas" class="notif-tab-content">
+      <div class="alert-list notif-list-wrap" id="alertBox"></div>
+    </div>
+
+    <div id="notifTabContentHistorico" class="notif-tab-content hidden">
+      <div class="history-list notif-list-wrap" id="historyList"></div>
+    </div>
   </div>
 </div>
 
@@ -570,16 +718,6 @@ namespace
     Limpar todas as agendas
   </button>
 
-  <div class="section-label">Alertas e Historico</div>
-  <div class="alerts-wrap">
-    <div class="alerts-head">
-      <span id="alertSummary">Carregando alertas...</span>
-      <button class="tiny-btn" onclick="limparHistoricoEventos()">Limpar historico</button>
-    </div>
-    <div class="alert-list" id="alertBox"></div>
-    <div class="history-list" id="historyList"></div>
-  </div>
-
   <div class="network-info" id="networkInfo">Rede carregando...</div>
 </div>
 
@@ -587,6 +725,23 @@ namespace
 
 <script>
 const toastEl = document.getElementById('toast');
+const notifButtonEl = document.getElementById('notifButton');
+const notifIconEl = document.getElementById('notifIcon');
+const notifPanelEl = document.getElementById('notifPanel');
+const notifTabAlertasEl = document.getElementById('notifTabAlertas');
+const notifTabHistoricoEl = document.getElementById('notifTabHistorico');
+const notifTabContentAlertasEl = document.getElementById('notifTabContentAlertas');
+const notifTabContentHistoricoEl = document.getElementById('notifTabContentHistorico');
+
+const BELL_ICON_INACTIVE = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWJlbGwtaWNvbiBsdWNpZGUtYmVsbCI+PHBhdGggZD0iTTEwLjI2OCAyMWEyIDIgMCAwIDAgMy40NjQgMCIvPjxwYXRoIGQ9Ik0zLjI2MiAxNS4zMjZBMSAxIDAgMCAwIDQgMTdoMTZhMSAxIDAgMCAwIC43NC0xLjY3M0MxOS40MSAxMy45NTYgMTggMTIuNDk5IDE4IDhBNiA2IDAgMCAwIDYgOGMwIDQuNDk5LTEuNDExIDUuOTU2LTIuNzM4IDcuMzI2Ii8+PC9zdmc+';
+const BELL_ICON_ACTIVE = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWJlbGwtZG90LWljb24gbHVjaWRlLWJlbGwtZG90Ij48cGF0aCBkPSJNMTAuMjY4IDIxYTIgMiAwIDAgMCAzLjQ2NCAwIi8+PHBhdGggZD0iTTExLjY4IDIuMDA5QTYgNiAwIDAgMCA2IDhjMCA0LjQ5OS0xLjQxMSA1Ljk1Ni0yLjczOCA3LjMyNkExIDEgMCAwIDAgNCAxN2gxNmExIDEgMCAwIDAgLjc0LTEuNjczYy0uODI0LS44NS0xLjY3OC0xLjczMS0yLjIxLTMuMzQ4Ii8+PGNpcmNsZSBjeD0iMTgiIGN5PSI1IiByPSIzIi8+PC9zdmc+';
+
+const STORAGE_NOTIFICACOES_HIST = 'irrigacao.notificacoes.historico';
+const STORAGE_NOTIFICACOES_LIDAS_ATE = 'irrigacao.notificacoes.lidasAte';
+
+let cacheAlertasAtivos = [];
+let cacheHistoricoNotificacoes = [];
+let abaNotificacaoAtual = 'alertas';
 
 function showToast(msg) {
   toastEl.textContent = msg;
@@ -605,6 +760,97 @@ async function requestJson(url, options) {
 
 function pad2(v) {
   return String(v).padStart(2, '0');
+}
+
+function carregarHistoricoLocalStorage() {
+  try {
+    const bruto = localStorage.getItem(STORAGE_NOTIFICACOES_HIST);
+    if (!bruto) return [];
+    const dados = JSON.parse(bruto);
+    return Array.isArray(dados) ? dados : [];
+  } catch (_err) {
+    return [];
+  }
+}
+
+function salvarHistoricoLocalStorage(historico) {
+  try {
+    localStorage.setItem(STORAGE_NOTIFICACOES_HIST, JSON.stringify(Array.isArray(historico) ? historico : []));
+  } catch (_err) {
+  }
+}
+
+function obterMaiorIdNotificacao(historico) {
+  if (!Array.isArray(historico) || historico.length === 0) return 0;
+  return historico.reduce((acc, item) => {
+    const id = Number(item?.id || 0);
+    return id > acc ? id : acc;
+  }, 0);
+}
+
+function obterIdLidoAte() {
+  try {
+    const valor = Number(localStorage.getItem(STORAGE_NOTIFICACOES_LIDAS_ATE) || 0);
+    return Number.isFinite(valor) ? valor : 0;
+  } catch (_err) {
+    return 0;
+  }
+}
+
+function definirIdLidoAte(id) {
+  try {
+    localStorage.setItem(STORAGE_NOTIFICACOES_LIDAS_ATE, String(Math.max(0, Number(id || 0))));
+  } catch (_err) {
+  }
+}
+
+function existeNotificacaoNaoLida(historico) {
+  const ultimoLido = obterIdLidoAte();
+  return Array.isArray(historico) && historico.some(item => Number(item?.id || 0) > ultimoLido);
+}
+
+function atualizarIndicadorNotificacoes() {
+  const temAlertaRelevante = Array.isArray(cacheAlertasAtivos) &&
+    cacheAlertasAtivos.some(a => String(a?.nivel || 'info').toLowerCase() !== 'info');
+  const ativo = temAlertaRelevante || existeNotificacaoNaoLida(cacheHistoricoNotificacoes);
+  notifIconEl.src = ativo ? BELL_ICON_ACTIVE : BELL_ICON_INACTIVE;
+  notifButtonEl.classList.toggle('active', ativo);
+}
+
+function marcarNotificacoesLidas() {
+  const maiorId = obterMaiorIdNotificacao(cacheHistoricoNotificacoes);
+  definirIdLidoAte(maiorId);
+  atualizarIndicadorNotificacoes();
+  showToast('Notificacoes marcadas como lidas');
+}
+
+function selecionarAbaNotificacoes(aba) {
+  abaNotificacaoAtual = aba === 'historico' ? 'historico' : 'alertas';
+
+  const emAlertas = abaNotificacaoAtual === 'alertas';
+
+  if (notifTabAlertasEl) {
+    notifTabAlertasEl.classList.toggle('active', emAlertas);
+  }
+  if (notifTabHistoricoEl) {
+    notifTabHistoricoEl.classList.toggle('active', !emAlertas);
+  }
+  if (notifTabContentAlertasEl) {
+    notifTabContentAlertasEl.classList.toggle('hidden', !emAlertas);
+  }
+  if (notifTabContentHistoricoEl) {
+    notifTabContentHistoricoEl.classList.toggle('hidden', emAlertas);
+  }
+}
+
+function alternarPainelNotificacoes() {
+  notifPanelEl.classList.toggle('open');
+  if (notifPanelEl.classList.contains('open')) {
+    const maiorId = obterMaiorIdNotificacao(cacheHistoricoNotificacoes);
+    definirIdLidoAte(maiorId);
+    atualizarIndicadorNotificacoes();
+    selecionarAbaNotificacoes(abaNotificacaoAtual);
+  }
 }
 
 function escapeHtml(texto) {
@@ -656,25 +902,170 @@ function classeNivel(nivel) {
   return 'info';
 }
 
+function rotuloNivelLeigo(nivel) {
+  const n = String(nivel || 'info').toLowerCase();
+  if (n === 'critical') return 'Urgente';
+  if (n === 'warning') return 'Atencao';
+  return 'Informacao';
+}
+
+function iconeNivelLeigo(nivel) {
+  const n = String(nivel || 'info').toLowerCase();
+  if (n === 'critical') return '!!';
+  if (n === 'warning') return '!';
+  return 'i';
+}
+
+function traduzirMensagemLeiga(mensagem) {
+  const texto = String(mensagem || '').trim();
+  if (!texto) return 'Atualizacao do sistema.';
+
+  const manuaisAbertas = texto.match(/(\d+)\s+valvula\(s\)\s+manual\(is\)\s+aberta\(s\)/i);
+  if (manuaisAbertas) {
+    return manuaisAbertas[1] + ' setor(es) estao ligados manualmente neste momento.';
+  }
+
+  if (/STA configurado, mas desconectado/i.test(texto)) {
+    return 'O Wi-Fi da casa esta desconectado. O acesso local do equipamento continua funcionando.';
+  }
+
+  if (/Conexao STA estabelecida/i.test(texto)) {
+    return 'Wi-Fi da casa conectado com sucesso.';
+  }
+
+  if (/Conexao STA perdida/i.test(texto)) {
+    return 'Wi-Fi da casa foi desconectado.';
+  }
+
+  if (/Nenhuma agenda ativa configurada/i.test(texto)) {
+    return 'Nenhuma programacao automatica ativa foi configurada.';
+  }
+
+  if (/Servidor web iniciado/i.test(texto)) {
+    return 'Painel web iniciado e pronto para uso.';
+  }
+
+  const setorAtualizado = texto.match(/Setor\s+(\d+)\s+(aberto|fechado)/i);
+  if (setorAtualizado) {
+    const acao = setorAtualizado[2].toLowerCase() === 'aberto' ? 'ligado' : 'desligado';
+    return 'Setor ' + setorAtualizado[1] + ' foi ' + acao + '.';
+  }
+
+  const agendaSalva = texto.match(/Agenda\s+(\d+)\s+salva/i);
+  if (agendaSalva) {
+    return 'Programacao ' + agendaSalva[1] + ' foi salva.';
+  }
+
+  const agendaRemovida = texto.match(/Agenda\s+(\d+)\s+removida/i);
+  if (agendaRemovida) {
+    return 'Programacao ' + agendaRemovida[1] + ' foi removida.';
+  }
+
+  return texto;
+}
+
+function formatarDataHoraLeiga(data, hora) {
+  const dataTxt = String(data || '').trim();
+  const horaTxt = String(hora || '').trim();
+  if (!dataTxt && !horaTxt) return 'Horario indisponivel';
+  if (dataTxt && horaTxt) return dataTxt + ' as ' + horaTxt;
+  if (dataTxt) return dataTxt;
+  return horaTxt;
+}
+
+function normalizarDataBr(data) {
+  const texto = String(data || '').trim();
+  const partes = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!partes) return '';
+  return pad2(Number(partes[1])) + '/' + pad2(Number(partes[2])) + '/' + partes[3];
+}
+
+function dataBrComOffset(dias) {
+  const data = new Date();
+  data.setDate(data.getDate() + dias);
+  return pad2(data.getDate()) + '/' + pad2(data.getMonth() + 1) + '/' + data.getFullYear();
+}
+
+function agruparHistoricoPorDia(itens) {
+  const hoje = dataBrComOffset(0);
+  const ontem = dataBrComOffset(-1);
+  const grupos = { hoje: [], ontem: [], anteriores: [] };
+
+  (itens || []).forEach(item => {
+    const dataItem = normalizarDataBr(item?.data);
+    if (dataItem === hoje) {
+      grupos.hoje.push(item);
+      return;
+    }
+    if (dataItem === ontem) {
+      grupos.ontem.push(item);
+      return;
+    }
+    grupos.anteriores.push(item);
+  });
+
+  return grupos;
+}
+
+function removerDuplicatasHistoricoVisual(itens) {
+  const vistos = new Set();
+  return (itens || []).filter(item => {
+    const mensagem = traduzirMensagemLeiga(item?.mensagem || 'Sem mensagem');
+    const nivel = String(item?.nivel || 'info').toLowerCase();
+    const data = normalizarDataBr(item?.data);
+    const hora = String(item?.hora || '').trim();
+    const chave = mensagem + '|' + nivel + '|' + data + '|' + hora;
+
+    if (vistos.has(chave)) {
+      return false;
+    }
+
+    vistos.add(chave);
+    return true;
+  });
+}
+
+function montarLinhaNotificacao(mensagem, detalhe, nivel) {
+  const classe = classeNivel(nivel);
+  const icone = iconeNivelLeigo(nivel);
+
+  return `
+    <div class="notif-row">
+      <div class="notif-icon ${classe}">${escapeHtml(icone)}</div>
+      <div class="notif-text">
+        <div class="notif-msg">${escapeHtml(mensagem)}</div>
+        <div class="notif-meta">${escapeHtml(detalhe)}</div>
+      </div>
+    </div>
+  `;
+}
+
 function renderAlertas(alertas) {
   const alvo = document.getElementById('alertBox');
   const resumo = document.getElementById('alertSummary');
 
   if (!Array.isArray(alertas) || alertas.length === 0) {
-    resumo.textContent = 'Nenhum alerta ativo';
-    alvo.innerHTML = '<div class="empty-alert">Sistema operando sem alertas ativos no momento.</div>';
+    resumo.textContent = 'Tudo certo no momento.';
+    alvo.innerHTML = '<div class="empty-alert">Nenhum aviso importante agora.</div>';
     return;
   }
 
-  resumo.textContent = alertas.length + ' alerta(s) ativo(s)';
+  const total = alertas.length;
+  resumo.textContent = total === 1
+    ? 'Voce tem 1 aviso importante.'
+    : ('Voce tem ' + total + ' avisos importantes.');
+
   alvo.innerHTML = alertas.map(a => {
-    const nivel = classeNivel(a.nivel);
-    return `
-      <div class="alert-item ${nivel}">
-        <div>${escapeHtml(a.mensagem || 'Sem descricao')}</div>
-        <div class="alert-meta">${escapeHtml(a.nivel || 'info')}</div>
-      </div>
-    `;
+    const nivelLeigo = rotuloNivelLeigo(a.nivel);
+    const titulo = nivelLeigo === 'Urgente'
+      ? 'Acao recomendada agora'
+      : (nivelLeigo === 'Atencao' ? 'Atencao necessaria' : 'Informacao do sistema');
+
+    return montarLinhaNotificacao(
+      titulo + ': ' + traduzirMensagemLeiga(a.mensagem || 'Sem descricao'),
+      nivelLeigo,
+      a.nivel
+    );
   }).join('');
 }
 
@@ -686,20 +1077,30 @@ function renderHistorico(historico) {
     return;
   }
 
-  const itens = historico.slice().reverse();
-  alvo.innerHTML = itens.map(e => {
-    const nivel = classeNivel(e.nivel);
-    const dataHora = (e.data || '--/--/----') + ' ' + (e.hora || '--:--:--');
-    return `
-      <div class="history-item ${nivel}">
-        <div class="history-head">
-          <span>${escapeHtml(dataHora)}</span>
-          <span>${escapeHtml((e.tipo || 'evento') + ' | ' + (e.nivel || 'info'))}</span>
-        </div>
-        <div class="history-msg">${escapeHtml(e.mensagem || 'Sem mensagem')}</div>
-      </div>
-    `;
-  }).join('');
+  const itens = removerDuplicatasHistoricoVisual(historico.slice().reverse()).slice(0, 20);
+  const grupos = agruparHistoricoPorDia(itens);
+
+  const montarSecao = (titulo, lista) => {
+    if (!Array.isArray(lista) || lista.length === 0) {
+      return '';
+    }
+
+    const linhas = lista.map(e => {
+      const nivelLeigo = rotuloNivelLeigo(e.nivel);
+      const dataHora = formatarDataHoraLeiga('', e.hora || '--:--:--');
+      const mensagem = traduzirMensagemLeiga(e.mensagem || 'Sem mensagem');
+      return montarLinhaNotificacao(mensagem, nivelLeigo + ' | ' + dataHora, e.nivel);
+    }).join('');
+
+    return '<div class="notif-group-label">' + escapeHtml(titulo) + '</div>' + linhas;
+  };
+
+  const secoes =
+    montarSecao('Hoje', grupos.hoje) +
+    montarSecao('Ontem', grupos.ontem) +
+    montarSecao('Anteriores', grupos.anteriores);
+
+  alvo.innerHTML = secoes || '<div class="empty-alert">Sem registros de eventos ate o momento.</div>';
 }
 
 function maskAtivo(mask, bit) {
@@ -831,16 +1232,6 @@ async function limparAgendasVisual() {
   }
 }
 
-async function limparHistoricoEventos() {
-  try {
-    await requestJson('/api/events/clear', { method: 'POST' });
-    showToast('Historico de eventos limpo');
-    await carregarAlertasHistorico();
-  } catch (err) {
-    showToast('Erro ao limpar historico: ' + err.message);
-  }
-}
-
 async function carregarStatus() {
   const dados = await requestJson('/api/status');
   document.getElementById('clock').textContent = dados.hora || '--:--:--';
@@ -850,8 +1241,14 @@ async function carregarStatus() {
 
 async function carregarAlertasHistorico() {
   const dados = await requestJson('/api/events');
-  renderAlertas(dados.alertas || []);
-  renderHistorico(dados.historico || []);
+  cacheAlertasAtivos = dados.alertas || [];
+  cacheHistoricoNotificacoes = dados.historico || [];
+
+  salvarHistoricoLocalStorage(cacheHistoricoNotificacoes);
+
+  renderAlertas(cacheAlertasAtivos);
+  renderHistorico(cacheHistoricoNotificacoes);
+  atualizarIndicadorNotificacoes();
 }
 
 async function carregarAgendas(forcarEditor = false) {
@@ -877,6 +1274,12 @@ async function refreshAll() {
     showToast('Falha de comunicacao: ' + err.message);
   }
 }
+
+cacheHistoricoNotificacoes = carregarHistoricoLocalStorage();
+renderHistorico(cacheHistoricoNotificacoes);
+renderAlertas([]);
+atualizarIndicadorNotificacoes();
+selecionarAbaNotificacoes('alertas');
 
 refreshAll();
 setInterval(carregarStatus, 2000);
@@ -1080,11 +1483,6 @@ void WebApManager::configurarRotas()
   _server.on("/api/events", HTTP_GET, [this]()
              { enviarAlertasHistorico(); });
 
-  _server.on("/api/events/clear", HTTP_POST, [this]()
-             {
-       limparHistoricoEventos();
-       enviarAlertasHistorico(); });
-
   _server.on("/api/valve/toggle", HTTP_POST, [this]()
              {
         int indice = lerIndiceValvula();
@@ -1094,14 +1492,7 @@ void WebApManager::configurarRotas()
             return;
         }
 
-        EstadoValvula novoEstado = _irrigacao.toggleValvula(indice);
-        bool aberta = (novoEstado == EstadoValvula::ABERTA);
-        bool origemAgenda = _irrigacao.valvulaEmAgendamento(indice);
-
-        String msg = String("Setor ") + String(indice + 1) +
-               (aberta ? " aberto via API toggle (" : " fechado via API toggle (") +
-               String(origemAgenda ? "agenda" : "manual") + ")";
-        registrarEvento("irrigacao", "info", msg);
+        _irrigacao.toggleValvula(indice);
 
         enviarStatusSistema(); });
 
@@ -1145,15 +1536,6 @@ void WebApManager::configurarRotas()
         else if (!ligar && abertaAntes)
         {
             _irrigacao.fecharValvula(indice);
-        }
-
-        bool abertaDepois = (_irrigacao.estadoValvula(indice) == EstadoValvula::ABERTA);
-        if (abertaDepois != abertaAntes)
-        {
-          String msg = String("Setor ") + String(indice + 1) +
-                 (abertaDepois ? " aberto" : " fechado") +
-                 " via API set";
-          registrarEvento("irrigacao", "info", msg);
         }
 
         enviarStatusSistema(); });
@@ -1455,12 +1837,6 @@ void WebApManager::registrarEvento(const char *tipo, const char *nivel, const St
   }
 }
 
-void WebApManager::limparHistoricoEventos()
-{
-  _historicoCount = 0;
-  _historicoHead = 0;
-}
-
 int WebApManager::contarValvulasManuaisAbertas() const
 {
   int total = 0;
@@ -1533,6 +1909,21 @@ void WebApManager::enviarAlertasHistorico()
   int automaticasAbertas = contarValvulasAutomaticasAbertas();
   int agendasAtivas = _schedule.totalAtivas();
   bool staOk = staConectada();
+  DateTime agora = _rtc.agora();
+
+  DateTime proximaDataHora;
+  AgendaSetor proximaAgenda = {};
+  int slotProximo = -1;
+  bool temProxima = _schedule.obterProximaExecucao(agora, proximaDataHora, proximaAgenda, slotProximo);
+
+  int setoresProxima = 0;
+  for (int i = 0; i < NUM_VALVULAS; i++)
+  {
+    if (proximaAgenda.setoresMask & (1U << i))
+    {
+      setoresProxima++;
+    }
+  }
 
   String json;
   json.reserve(7800);
@@ -1566,7 +1957,60 @@ void WebApManager::enviarAlertasHistorico()
     primeiroAlerta = false;
   }
 
-  if (agendasAtivas == 0)
+  if (agendasAtivas > 0)
+  {
+    if (!primeiroAlerta)
+    {
+      json += ",";
+    }
+    json += "{\"id\":\"agendas_ativas\",\"nivel\":\"info\",\"mensagem\":\"Agendas ativas: ";
+    json += String(agendasAtivas);
+    json += "\"}";
+    primeiroAlerta = false;
+
+    if (automaticasAbertas > 0)
+    {
+      json += ",";
+      json += "{\"id\":\"agenda_execucao\",\"nivel\":\"info\",\"mensagem\":\"Agenda ativa em execucao: AUTO S";
+      json += String(automaticasAbertas);
+      json += "/";
+      json += String(NUM_VALVULAS);
+      json += "\"}";
+    }
+
+    if (temProxima)
+    {
+      const char *dias[7] = {"DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"};
+      int dow = proximaDataHora.dayOfTheWeek();
+      if (dow < 0 || dow > 6)
+      {
+        dow = 0;
+      }
+
+      json += ",";
+      json += "{\"id\":\"proxima_agenda\",\"nivel\":\"info\",\"mensagem\":\"Proxima agenda: ";
+      json += String(dias[dow]);
+      json += " ";
+
+      char horarioProximo[6];
+      snprintf(horarioProximo, sizeof(horarioProximo), "%02d:%02d", proximaDataHora.hour(), proximaDataHora.minute());
+      json += String(horarioProximo);
+
+      json += " | Setores: S";
+      json += String(setoresProxima);
+      json += "/";
+      json += String(NUM_VALVULAS);
+
+      if (slotProximo >= 0)
+      {
+        json += " | Agenda ";
+        json += String(slotProximo + 1);
+      }
+
+      json += "\"}";
+    }
+  }
+  else
   {
     if (!primeiroAlerta)
     {
