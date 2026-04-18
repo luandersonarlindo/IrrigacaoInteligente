@@ -103,7 +103,7 @@ void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bo
 
     if (_menuAtivo && !houveInteracao)
     {
-        if ((unsigned long)(millis() - _ultimoEventoMenuMs) >= _config.timeoutManualMs())
+        if ((unsigned long)(millis() - _ultimoEventoMenuMs) >= (unsigned long)MENU_TIMEOUT_MS)
         {
             if (DEBUG_SERIAL)
             {

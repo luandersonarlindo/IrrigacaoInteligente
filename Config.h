@@ -5,6 +5,13 @@
 //  Altere aqui sem precisar tocar nos outros arquivos
 // ============================================================
 
+// Permite sobrescrever configuracoes locais sem versionar segredos.
+#if defined(__has_include)
+#if __has_include("Config_privado.h")
+#include "Config_privado.h"
+#endif
+#endif
+
 // --- Pinos: Encoder ---
 #define PIN_ENCODER_CLK 18
 #define PIN_ENCODER_DT 19
@@ -54,10 +61,18 @@
 #define WIFI_AP_PASSWORD "12345678"
 #define WIFI_AP_CHANNEL 6
 #define WIFI_AP_MAX_CONNECTIONS 4
+#ifndef WIFI_STA_ENABLED
 #define WIFI_STA_ENABLED true
-#define WIFI_STA_SSID "autotec"
-#define WIFI_STA_PASSWORD "000000789ACS"
+#endif
+#ifndef WIFI_STA_SSID
+#define WIFI_STA_SSID "SEU_SSID_WIFI"
+#endif
+#ifndef WIFI_STA_PASSWORD
+#define WIFI_STA_PASSWORD "SUA_SENHA_WIFI"
+#endif
+#ifndef WIFI_STA_RETRY_MS
 #define WIFI_STA_RETRY_MS 15000
+#endif
 
 // --- Web Dashboard (valores padrao enquanto sensores externos nao forem ligados) ---
 #define WEB_FORCE_DEFAULT_SECONDS 20

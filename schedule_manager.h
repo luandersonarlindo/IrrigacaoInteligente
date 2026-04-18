@@ -60,8 +60,17 @@ public:
 private:
     RuntimeConfigManager &_config;
     static const uint16_t VERSAO_BANCO = 1;
+    static const uint16_t VERSAO_CACHE_EXECUCAO = 1;
     static constexpr const char *NAMESPACE_NVS = "irrig_sched";
     static constexpr const char *KEY_BANCO = "bank";
+    static constexpr const char *KEY_CACHE_EXECUCAO = "exec_cache";
+
+    struct CacheExecucaoDiaria
+    {
+        uint16_t versao;
+        uint16_t crc;
+        int32_t ultimaExecucaoDiaPorSlot[MAX_AGENDAS_TOTAIS];
+    };
 
     BancoAgendas _banco;
     Preferences _prefs;
@@ -72,6 +81,9 @@ private:
     void inicializarBancoPadrao();
     bool carregarBanco();
     bool salvarBanco();
+    void limparCacheExecucaoDiaMemoria();
+    bool carregarCacheExecucaoDia();
+    bool salvarCacheExecucaoDia();
 
     bool indiceSlotValido(int slot) const;
 

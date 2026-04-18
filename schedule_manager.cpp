@@ -4,11 +4,6 @@ ScheduleManager::ScheduleManager(RuntimeConfigManager &config)
     : _config(config),
       _ultimaChaveMinuto(-1)
 {
-    for (int i = 0; i < MAX_AGENDAS_TOTAIS; i++)
-    {
-        _ultimaExecucaoDiaPorSlot[i] = -1;
-    }
-
     inicializarBancoPadrao();
 }
 
@@ -23,6 +18,7 @@ bool ScheduleManager::begin()
         return false;
     }
 
+    bool bancoReiniciado = false;
     if (!carregarBanco())
     {
         inicializarBancoPadrao();
@@ -30,6 +26,19 @@ bool ScheduleManager::begin()
         {
             return false;
         }
+        bancoReiniciado = true;
+    }
+
+    if (bancoReiniciado)
+    {
+        // Evita reaproveitar cache de execucao diaria quando o banco foi recriado.
+        limparCacheExecucaoDiaMemoria();
+        salvarCacheExecucaoDia();
+    }
+    else if (!carregarCacheExecucaoDia())
+    {
+        limparCacheExecucaoDiaMemoria();
+        salvarCacheExecucaoDia();
     }
 
     if (DEBUG_SERIAL)
@@ -82,6 +91,7 @@ bool ScheduleManager::salvarAgenda(int slot, const AgendaSetor &agenda, String &
     _ultimaChaveMinuto = -1;
     // Permite novo disparo do slot no mesmo dia apos edicao/salvamento.
     _ultimaExecucaoDiaPorSlot[slot] = -1;
+    salvarCacheExecucaoDia();
 
     erro = "";
     return true;
@@ -110,6 +120,7 @@ bool ScheduleManager::removerAgenda(int slot)
         _ultimaChaveMinuto = -1;
         // Libera o slot para nova execucao no dia atual.
         _ultimaExecucaoDiaPorSlot[slot] = -1;
+        salvarCacheExecucaoDia();
     }
     return ok;
 }
@@ -130,10 +141,8 @@ bool ScheduleManager::limparTodasAgendas()
     if (ok)
     {
         _ultimaChaveMinuto = -1;
-        for (int slot = 0; slot < MAX_AGENDAS_TOTAIS; slot++)
-        {
-            _ultimaExecucaoDiaPorSlot[slot] = -1;
-        }
+        limparCacheExecucaoDiaMemoria();
+        salvarCacheExecucaoDia();
     }
     return ok;
 }
@@ -238,6 +247,7 @@ void ScheduleManager::avaliarDisparos(const DateTime &agora, uint16_t duracoesMi
     uint8_t bitDia = bitDiaSemana(agora);
     int chaveDiaAtual = chaveDia(agora);
     uint32_t agoraEpoch = agora.unixtime();
+    bool cacheExecucaoAtualizado = false;
 
     for (int slot = 0; slot < MAX_AGENDAS_TOTAIS; slot++)
     {
@@ -380,6 +390,12 @@ void ScheduleManager::avaliarDisparos(const DateTime &agora, uint16_t duracoesMi
         }
 
         _ultimaExecucaoDiaPorSlot[slot] = chaveDiaAtual;
+        cacheExecucaoAtualizado = true;
+    }
+
+    if (cacheExecucaoAtualizado)
+    {
+        salvarCacheExecucaoDia();
     }
 }
 
@@ -387,6 +403,7 @@ void ScheduleManager::inicializarBancoPadrao()
 {
     _banco.versao = VERSAO_BANCO;
     _banco.crc = 0;
+    limparCacheExecucaoDiaMemoria();
 
     for (int slot = 0; slot < MAX_AGENDAS_TOTAIS; slot++)
     {
@@ -396,7 +413,6 @@ void ScheduleManager::inicializarBancoPadrao()
         _banco.agendas[slot].duracaoMin = _config.duracaoPadraoMin();
         _banco.agendas[slot].diasMask = 0;
         _banco.agendas[slot].setoresMask = 0;
-        _ultimaExecucaoDiaPorSlot[slot] = -1;
     }
 }
 
@@ -461,6 +477,87 @@ bool ScheduleManager::salvarBanco()
     if (!ok && DEBUG_SERIAL)
     {
         Serial.println("[Agenda] ERRO: falha ao salvar banco na NVS.");
+    }
+
+    return ok;
+}
+
+void ScheduleManager::limparCacheExecucaoDiaMemoria()
+{
+    for (int slot = 0; slot < MAX_AGENDAS_TOTAIS; slot++)
+    {
+        _ultimaExecucaoDiaPorSlot[slot] = -1;
+    }
+}
+
+bool ScheduleManager::carregarCacheExecucaoDia()
+{
+    size_t esperado = sizeof(CacheExecucaoDiaria);
+    size_t atual = _prefs.getBytesLength(KEY_CACHE_EXECUCAO);
+    if (atual != esperado)
+    {
+        return false;
+    }
+
+    CacheExecucaoDiaria cache = {};
+    size_t lidos = _prefs.getBytes(KEY_CACHE_EXECUCAO, &cache, sizeof(CacheExecucaoDiaria));
+    if (lidos != sizeof(CacheExecucaoDiaria))
+    {
+        if (DEBUG_SERIAL)
+        {
+            Serial.println("[Agenda] Falha ao ler cache de execucao diaria.");
+        }
+        return false;
+    }
+
+    if (cache.versao != VERSAO_CACHE_EXECUCAO)
+    {
+        if (DEBUG_SERIAL)
+        {
+            Serial.println("[Agenda] Versao do cache de execucao invalida.");
+        }
+        return false;
+    }
+
+    uint16_t crcSalvo = cache.crc;
+    cache.crc = 0;
+    uint16_t crcCalc = calcularCrc16(reinterpret_cast<const uint8_t *>(&cache), sizeof(CacheExecucaoDiaria));
+    if (crcSalvo != crcCalc)
+    {
+        if (DEBUG_SERIAL)
+        {
+            Serial.println("[Agenda] CRC invalido no cache de execucao diaria.");
+        }
+        return false;
+    }
+
+    for (int slot = 0; slot < MAX_AGENDAS_TOTAIS; slot++)
+    {
+        _ultimaExecucaoDiaPorSlot[slot] = cache.ultimaExecucaoDiaPorSlot[slot];
+    }
+
+    return true;
+}
+
+bool ScheduleManager::salvarCacheExecucaoDia()
+{
+    CacheExecucaoDiaria cache = {};
+    cache.versao = VERSAO_CACHE_EXECUCAO;
+    cache.crc = 0;
+
+    for (int slot = 0; slot < MAX_AGENDAS_TOTAIS; slot++)
+    {
+        cache.ultimaExecucaoDiaPorSlot[slot] = _ultimaExecucaoDiaPorSlot[slot];
+    }
+
+    cache.crc = calcularCrc16(reinterpret_cast<const uint8_t *>(&cache), sizeof(CacheExecucaoDiaria));
+
+    size_t escritos = _prefs.putBytes(KEY_CACHE_EXECUCAO, &cache, sizeof(CacheExecucaoDiaria));
+    bool ok = (escritos == sizeof(CacheExecucaoDiaria));
+
+    if (!ok && DEBUG_SERIAL)
+    {
+        Serial.println("[Agenda] ERRO: falha ao salvar cache de execucao diaria.");
     }
 
     return ok;
