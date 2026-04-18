@@ -10,6 +10,7 @@ Este documento explica o projeto de forma simples, para ensino de alunos de 15 a
 - 💧 Controle fisico de 8 valvulas por rele.
 - 💾 Agendas salvas na memoria flash (NVS).
 - 🌐 Dashboard web no celular/computador via Wi-Fi AP.
+- 🚨 Dashboard com alertas ativos e historico de eventos.
 
 ## 🧭 Sumario
 
@@ -47,8 +48,8 @@ Componentes principais:
 
 Pinos importantes (Config.h):
 
-- Encoder CLK: 19
-- Encoder DT: 18
+- Encoder CLK: 18
+- Encoder DT: 19
 - Encoder BTN: 4
 - OLED SDA/SCL: 21/22
 
@@ -67,10 +68,13 @@ Exemplos importantes:
 - Duracao padrao: 10 min
 - Timeout manual de seguranca: 10 min
 - Maximo de setores simultaneos por lote da agenda: 2
+- Faixa de timeout manual em runtime: 1..120 min
+- Faixa de duracao padrao em runtime: 1..240 min
 
 Ideia para aula:
 
 - Se for trocar pino ou limite, altere primeiro no Config.h.
+- O timeout de inatividade do menu usa o valor runtime de timeout manual.
 
 ## 4. 🧱 Arquitetura
 
@@ -100,11 +104,12 @@ No loop principal:
 1. Le encoder.
 2. Processa menu.
 3. Executa irrigacao manual (quando houver clique curto na tela manual).
-4. Atualiza irrigacao (timeout e deadlines).
-5. Verifica disparos de agenda por minuto (RTC).
-6. Processa lotes da agenda (simultaneos + intervalo).
-7. Atualiza servidor web.
-8. Atualiza display.
+4. Se sair do teste de valvulas, fecha todas as valvulas por seguranca.
+5. Atualiza irrigacao (timeout e deadlines).
+6. Verifica disparos de agenda por minuto (RTC).
+7. Processa lotes da agenda (simultaneos + intervalo).
+8. Atualiza servidor web.
+9. Atualiza display.
 
 Resumo:
 
@@ -146,6 +151,8 @@ O modulo schedule_manager faz:
 - Validar hora, minuto, duracao, dias e setores.
 - Evitar agenda duplicada.
 - Disparar irrigacao no minuto correto.
+- Retomar lote correto quando o horario atual estiver dentro da janela da agenda.
+- Evitar repeticao do mesmo slot no mesmo dia apos disparo.
 
 Modelo atual:
 
@@ -162,6 +169,7 @@ O modulo web_ap_manager faz:
 - Permitir comandos web para valvulas e agendas.
 - Permitir ajuste de runtime e RTC por API.
 - Exibir alertas ativos e historico de registros do sistema em tempo real.
+- Disponibilizar endpoint /api/events para alertas e historico.
 
 Uso didatico:
 
@@ -203,6 +211,7 @@ Correcoes importantes deste guia (alinhadas ao codigo atual):
 - Ja existe modulo de agenda com persistencia (schedule_manager).
 - Ja existe dashboard web com AP dedicado (web_ap_manager).
 - O loop principal inclui disparo automatico por minuto e execucao por lotes.
+- Timeout manual e duracao padrao possuem limites de seguranca no firmware.
 
 ## 12. 🚀 Proximos passos didaticos
 
@@ -214,4 +223,4 @@ Correcoes importantes deste guia (alinhadas ao codigo atual):
 
 ---
 
-Ultima revisao deste guia: 2026-04-12
+Ultima revisao deste guia: 2026-04-17

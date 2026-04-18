@@ -1,7 +1,7 @@
 # 📜 Fase 5 - Contrato Tecnico de Agendamento
 
 📅 Data original: 2026-04-10
-🔄 Revisao de alinhamento: 2026-04-12
+🔄 Revisao de alinhamento: 2026-04-17
 ✅ Status: implementado (modelo global de agendas)
 
 ## 1. ✅ Decisoes de produto fechadas (revisao atual)
@@ -12,6 +12,7 @@
 4. D4: limite de 4 slots de agenda no sistema.
 5. D5: edicao por encoder com campos hora, minuto, duracao, dias e setores.
 6. D6: execucao automatica sequencial por lotes, com limite de simultaneos e intervalo entre lotes.
+7. D7: dashboard com endpoint de alertas/eventos e historico operacional.
 
 ## 2. 🎯 Escopo da Fase 5 (implementado)
 
@@ -82,6 +83,9 @@ struct BancoConfigRuntime {
 6. Limite de 4 slots de agenda no sistema.
 7. Em reboot, recarregar dados persistidos automaticamente.
 8. Se versao/CRC estiverem invalidos, resetar banco para padrao seguro.
+9. Timeout manual runtime deve ficar no intervalo de 1..120 min.
+10. Duracao padrao runtime deve ficar no intervalo de 1..240 min.
+11. Slot de agenda nao deve disparar duas vezes no mesmo dia apos execucao confirmada.
 
 ## 5. 💾 Politica de persistencia
 
@@ -108,11 +112,12 @@ Regras:
    - avaliar janela temporal da agenda;
    - identificar lote atual e lotes pendentes;
    - gerar duracoes por setor para enfileiramento.
-3. Respeitar limite de simultaneos por lote (MAX_SETOR_SIMULTANEOS_AGENDA).
-4. Respeitar intervalo entre lotes (INTERVALO_LOTE_AGENDA_MS).
-5. Em conflito no mesmo setor, manter maior duracao.
-6. Exclusao de agenda durante execucao cancela rotina automatica em andamento.
-7. Se setor manual estiver aberto e chegar comando automatico, manter coerencia por maior deadline.
+3. Se o horario atual cair no meio da janela da agenda, retomar no lote-alvo com duracao remanescente do lote corrente.
+4. Respeitar limite de simultaneos por lote (MAX_SETOR_SIMULTANEOS_AGENDA).
+5. Respeitar intervalo entre lotes (INTERVALO_LOTE_AGENDA_MS).
+6. Em conflito no mesmo setor, manter maior duracao.
+7. Exclusao de agenda durante execucao cancela rotina automatica em andamento.
+8. Se setor manual estiver aberto e chegar comando automatico, manter coerencia por maior deadline.
 
 ## 7. 🔌 Contrato entre modulos
 
@@ -143,6 +148,29 @@ No loop principal:
 4. Enfileirar e executar lotes sequenciais.
 5. Atualizar estado visual no display.
 6. Processar servidor web.
+
+## 7.3 🌐 Contrato minimo da API web
+
+Rotas principais implementadas:
+
+1. GET /api/status
+2. GET /api/schedules
+3. GET /api/events
+4. POST /api/valve/toggle
+5. POST /api/valve/set
+6. POST /api/valves/off-all
+7. POST /api/schedule/save
+8. POST /api/schedule/delete
+9. POST /api/schedule/clear
+10. POST /api/config/runtime
+11. POST /api/rtc/set
+
+Regras:
+
+1. Parametro index (valvula) aceita base 1 e base 0.
+2. Parametro slot (agenda) aceita base 1 e base 0.
+3. Erros em /api/* retornam JSON com ok=false e descricao do erro.
+4. Historico de eventos usa buffer circular de ate 40 registros.
 
 ## 8. 🖥️ UX da programacao no OLED (implementado)
 
@@ -196,6 +224,8 @@ SUBMENU_AGENDA
 6. Execucao por lotes respeita simultaneidade e intervalo.
 7. Nao ha regressao da irrigacao manual existente.
 8. Dashboard web apresenta status e aplica comandos sem erro.
+9. Endpoint /api/events retorna alertas ativos e historico operacional.
+10. Runtime config respeita limites de timeout e duracao apos salvar.
 
 ## 11. 🚧 Limites atuais
 

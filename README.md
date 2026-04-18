@@ -9,9 +9,11 @@ Este README descreve o estado atual implementado no firmware.
 - ✅ Controle manual de setores no menu.
 - 🗓️ Agendamento automatico semanal com execucao sequencial por lotes.
 - 🌐 Dashboard web local (AP Wi-Fi) para monitorar e controlar o sistema.
+- 🚨 Dashboard com alertas ativos e historico de eventos do sistema.
 - 💾 Persistencia de agendas e configuracoes runtime na flash (NVS), com versao e CRC.
 - 🕒 Operacao mesmo sem RTC (sem hora real).
 - 🛡️ Timeout de seguranca no modo manual.
+- 🔁 Reconexao STA periodica sem bloquear o AP local.
 
 ## 🧭 Sumario
 
@@ -61,8 +63,8 @@ Mapeamento de pinos (Config.h):
 
 | Recurso     | Pino |
 | ----------- | ---- |
-| Encoder CLK | 19   |
-| Encoder DT  | 18   |
+| Encoder CLK | 18   |
+| Encoder DT  | 19   |
 | Encoder BTN | 4    |
 | OLED SDA    | 21   |
 | OLED SCL    | 22   |
@@ -103,8 +105,19 @@ Constantes relevantes em Config.h:
 - TIMEOUT_MANUAL_MS = 600000 (10 minutos)
 - MAX_SETOR_SIMULTANEOS_AGENDA = 2
 - INTERVALO_LOTE_AGENDA_MS = 10000
+- ENCODER_STEPS_POR_ITEM = 2
 - BAUD_RATE = 115200
 - DEBUG_SERIAL = false
+
+Faixas aplicadas em runtime (com clamp no firmware):
+
+- timeout manual: 1..120 min (60000..7200000 ms)
+- duracao padrao: 1..240 min
+- duracao por agenda na UI: 1..240 min
+
+Observacao de comportamento:
+
+- O timeout de inatividade do menu usa o valor runtime de timeout manual.
 
 Rede/AP:
 
@@ -152,12 +165,13 @@ Modulos:
 4. Em irrigacao manual, clique curto faz toggle do setor selecionado.
 5. Em teste de valvulas (Configuracoes), clique curto faz toggle do setor em teste.
 6. Se houver exclusao de agenda, cancela execucao automatica em andamento.
-7. Atualiza irrigacao (timeouts e fechamento por deadline).
-8. Se RTC ativo, avalia disparos de agenda do minuto atual e enfileira setores.
-9. Processa execucao sequencial por lotes (limite de simultaneos + intervalo entre lotes).
-10. Publica estado da agenda sequencial para o display.
-11. Mantem servidor HTTP responsivo.
-12. Atualiza display.
+7. Ao sair do modo TESTE_VALVULAS, fecha todas as valvulas por seguranca.
+8. Atualiza irrigacao (timeouts e fechamento por deadline).
+9. Se RTC ativo, avalia disparos de agenda do minuto atual e enfileira setores.
+10. Processa execucao sequencial por lotes (limite de simultaneos + intervalo entre lotes).
+11. Publica estado da agenda sequencial para o display.
+12. Mantem servidor HTTP responsivo.
+13. Atualiza display.
 
 ## 7. 🕹️ Operacao da interface
 
@@ -212,8 +226,10 @@ Motor de execucao:
 
 - Verificacao por minuto (evita repeticao no mesmo minuto).
 - Identifica lote atual considerando horario de inicio, duracao e intervalo entre lotes.
+- Se o minuto atual cair no meio da janela da agenda, calcula lote-alvo e tempo remanescente.
 - Respeita limite de simultaneos (MAX_SETOR_SIMULTANEOS_AGENDA).
 - Em conflito no mesmo setor/minuto, aplica maior duracao.
+- Marca slot executado no dia para evitar repeticao no mesmo dia.
 - Exclusao de agenda cancela execucao automatica em andamento.
 
 ## 9. 🌐 Dashboard web
@@ -224,6 +240,7 @@ Comportamento:
 - Se STA estiver habilitada, tenta conexao periodicamente sem bloquear AP.
 - Exibe pagina web local para status, valvulas, agendas e configuracoes runtime.
 - Exibe alertas ativos e historico de eventos operacionais (rede, irrigacao, agenda e configuracao).
+- Historico usa buffer circular com ate 40 registros.
 
 Rotas principais:
 
@@ -233,6 +250,11 @@ Rotas principais:
 - POST /api/schedule/save, /api/schedule/delete, /api/schedule/clear
 - POST /api/config/runtime
 - POST /api/rtc/set
+
+Detalhes de contrato das rotas:
+
+- index (valvula) e slot (agenda) aceitam entrada em base 1 (1..N) e base 0 (0..N-1).
+- Rotas /api/* invalidas retornam JSON de erro; rotas nao API invalidas retornam texto 404.
 
 ## 10. 💾 Persistencia
 
@@ -250,6 +272,7 @@ Persistencia com Preferences (NVS):
 No boot:
 
 - Se versao/CRC/leitura estiver invalida, reinicializa banco padrao seguro.
+- Runtime config aplica limites de seguranca ao salvar timeout manual e duracao padrao.
 
 ## 11. 🗂️ Estrutura do projeto
 
@@ -284,7 +307,7 @@ Problemas comuns e verificacoes:
   - confira SDA/SCL (21/22)
   - confira alimentacao e GND
 - Encoder nao responde:
-  - confira pinos 19/18/4
+  - confira pinos 18/19/4
   - confira pull-up do botao
 - RTC nao encontrado:
   - o sistema continua, mas sem hora real
@@ -339,4 +362,4 @@ Proximos passos sugeridos:
 
 ---
 
-Ultima revisao deste documento: 2026-04-12
+Ultima revisao deste documento: 2026-04-17
