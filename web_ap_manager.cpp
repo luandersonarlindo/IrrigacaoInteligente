@@ -93,6 +93,59 @@ namespace
       color: var(--text2);
     }
 
+    .ws-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 0.66rem;
+      font-weight: 700;
+      background: #fff;
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      min-height: 30px;
+      white-space: nowrap;
+    }
+
+    .ws-badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #8fa299;
+      flex-shrink: 0;
+    }
+
+    .ws-badge.connected {
+      border-color: #b6dcc4;
+      background: var(--green-light);
+      color: var(--green);
+    }
+
+    .ws-badge.connected .ws-badge-dot {
+      background: var(--green-mid);
+    }
+
+    .ws-badge.reconnecting {
+      border-color: #f6d39d;
+      background: #fff6e7;
+      color: var(--amber);
+    }
+
+    .ws-badge.reconnecting .ws-badge-dot {
+      background: #d1892e;
+    }
+
+    .ws-badge.fallback {
+      border-color: #c8d3ea;
+      background: #eef3ff;
+      color: var(--blue);
+    }
+
+    .ws-badge.fallback .ws-badge-dot {
+      background: #4f7fd3;
+    }
+
     .notif-btn {
       width: 34px;
       height: 34px;
@@ -673,6 +726,10 @@ namespace
     </div>
   </div>
   <div class="topbar-right">
+    <div id="wsBadge" class="ws-badge reconnecting" title="WebSocket em reconexao">
+      <span class="ws-badge-dot"></span>
+      <span id="wsBadgeText">WS Reconectando</span>
+    </div>
     <button id="notifButton" class="notif-btn" onclick="alternarPainelNotificacoes()" aria-label="Notificacoes" title="Notificacoes">
       <img id="notifIcon" alt="Notificacoes" src=""/>
     </button>
@@ -731,6 +788,8 @@ const notifTabAlertasEl = document.getElementById('notifTabAlertas');
 const notifTabHistoricoEl = document.getElementById('notifTabHistorico');
 const notifTabContentAlertasEl = document.getElementById('notifTabContentAlertas');
 const notifTabContentHistoricoEl = document.getElementById('notifTabContentHistorico');
+const wsBadgeEl = document.getElementById('wsBadge');
+const wsBadgeTextEl = document.getElementById('wsBadgeText');
 
 const BELL_ICON_INACTIVE = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWJlbGwtaWNvbiBsdWNpZGUtYmVsbCI+PHBhdGggZD0iTTEwLjI2OCAyMWEyIDIgMCAwIDAgMy40NjQgMCIvPjxwYXRoIGQ9Ik0zLjI2MiAxNS4zMjZBMSAxIDAgMCAwIDQgMTdoMTZhMSAxIDAgMCAwIC43NC0xLjY3M0MxOS40MSAxMy45NTYgMTggMTIuNDk5IDE4IDhBNiA2IDAgMCAwIDYgOGMwIDQuNDk5LTEuNDExIDUuOTU2LTIuNzM4IDcuMzI2Ii8+PC9zdmc+';
 const BELL_ICON_ACTIVE = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWJlbGwtZG90LWljb24gbHVjaWRlLWJlbGwtZG90Ij48cGF0aCBkPSJNMTAuMjY4IDIxYTIgMiAwIDAgMCAzLjQ2NCAwIi8+PHBhdGggZD0iTTExLjY4IDIuMDA5QTYgNiAwIDAgMCA2IDhjMCA0LjQ5OS0xLjQxMSA1Ljk1Ni0yLjczOCA3LjMyNkExIDEgMCAwIDAgNCAxN2gxNmExIDEgMCAwIDAgLjc0LTEuNjczYy0uODI0LS44NS0xLjY3OC0xLjczMS0yLjIxLTMuMzQ4Ii8+PGNpcmNsZSBjeD0iMTgiIGN5PSI1IiByPSIzIi8+PC9zdmc+';
@@ -911,11 +970,38 @@ function atualizarRede(rede) {
   }
 
   info.textContent = 'AP: ' + (ap.ssid || '-') + ' (' + (ap.ip || '0.0.0.0') + ') | ' + linhaSta + ' | ' + linhaWs;
+  atualizarBadgeWebSocket();
 }
 
 function websocketPermitido() {
   const ws = estadoRedeAtual?.websocket || {};
   return Boolean(ws.habilitado && ws.biblioteca);
+}
+
+function atualizarBadgeWebSocket() {
+  if (!wsBadgeEl || !wsBadgeTextEl) {
+    return;
+  }
+
+  wsBadgeEl.classList.remove('connected', 'reconnecting', 'fallback');
+
+  if (!websocketPermitido()) {
+    wsBadgeEl.classList.add('fallback');
+    wsBadgeEl.title = 'WebSocket indisponivel, usando fallback HTTP';
+    wsBadgeTextEl.textContent = 'HTTP Fallback';
+    return;
+  }
+
+  if (wsConectado) {
+    wsBadgeEl.classList.add('connected');
+    wsBadgeEl.title = 'Canal WebSocket conectado em tempo real';
+    wsBadgeTextEl.textContent = 'WS Conectado';
+    return;
+  }
+
+  wsBadgeEl.classList.add('reconnecting');
+  wsBadgeEl.title = 'Canal WebSocket reconectando';
+  wsBadgeTextEl.textContent = 'WS Reconectando';
 }
 
 function classeNivel(nivel) {
@@ -1402,6 +1488,7 @@ renderHistorico(cacheHistoricoNotificacoes);
 renderAlertas([]);
 atualizarIndicadorNotificacoes();
 selecionarAbaNotificacoes('alertas');
+atualizarBadgeWebSocket();
 
 refreshAll().then(() => {
   if (websocketPermitido()) {
