@@ -105,6 +105,8 @@ Constantes relevantes em `Config.h`:
 - `MENU_TIMEOUT_MS = 30000`
 - `BAUD_RATE = 115200`
 - `DEBUG_SERIAL = false`
+- `WIFI_MDNS_ENABLED = true`
+- `WIFI_MDNS_HOSTNAME = "irrigacaoesp32"`
 
 Faixas aplicadas em runtime:
 
@@ -234,6 +236,7 @@ Comportamento:
 
 - Inicializa AP Wi-Fi no boot.
 - Se STA estiver habilitada/configurada, tenta reconectar periodicamente sem bloquear o AP.
+- Com STA conectada, ativa mDNS para acesso por `http://<hostname>.local/`.
 - Exibe dashboard para status, válvulas, agendas e runtime.
 - Exibe alertas ativos e histórico operacional (rede, irrigação, agenda, configuração e RTC).
 - Histórico usa buffer circular com até 40 registros.
@@ -331,6 +334,7 @@ Problemas comuns:
 - Dashboard não abre:
   - confira SSID/senha do AP
   - confirme o IP exibido na tela WEBSERVER
+  - se estiver na mesma rede do roteador, teste `http://irrigacaoesp32.local/`
 
 ## 14. ✅ Validação recomendada
 

@@ -1626,6 +1626,21 @@ void DisplayManager::desenharTelaWebServer()
             totalLinhas = adicionarTextoQuebrado(_display, String("IP STA: ") + _webAp.ipStaTexto(), linhas, totalLinhas);
 
             String urlSta = _webAp.urlAcessoSta();
+            bool mdnsAtivo = (urlSta.indexOf(".local/") >= 0);
+
+            totalLinhas = adicionarTextoQuebrado(_display,
+                                                 String("mDNS: ") + (mdnsAtivo ? "ativo" : "inativo"),
+                                                 linhas,
+                                                 totalLinhas);
+
+            if (mdnsAtivo)
+            {
+                totalLinhas = adicionarTextoQuebrado(_display,
+                                                     String("Host mDNS: ") + WIFI_MDNS_HOSTNAME + ".local",
+                                                     linhas,
+                                                     totalLinhas);
+            }
+
             if (urlSta.length() > 0)
             {
                 totalLinhas = adicionarTextoQuebrado(_display, String("URL STA: ") + urlSta, linhas, totalLinhas);
@@ -1634,6 +1649,9 @@ void DisplayManager::desenharTelaWebServer()
         else
         {
             totalLinhas = adicionarTextoQuebrado(_display, "STA: sem conexao", linhas, totalLinhas);
+#if WIFI_MDNS_ENABLED
+            totalLinhas = adicionarTextoQuebrado(_display, "mDNS: aguardando STA", linhas, totalLinhas);
+#endif
         }
     }
 

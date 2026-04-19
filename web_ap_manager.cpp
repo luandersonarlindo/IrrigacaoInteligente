@@ -4,6 +4,7 @@
 
 #include "web_ap_manager.h"
 
+#include <ESPmDNS.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -1303,6 +1304,8 @@ WebApManager::WebApManager(IrrigationController &irrigacao,
       _staConfigurada(WIFI_STA_ENABLED && strlen(WIFI_STA_SSID) > 0),
       _ultimoStatusSta(WL_IDLE_STATUS),
       _ultimoRetryStaMs(0),
+      _mdnsAtivo(false),
+      _mdnsFalhaLogada(false),
       _historicoCount(0),
       _historicoHead(0),
       _proximoEventoId(1),
@@ -1342,6 +1345,7 @@ void WebApManager::atualizar()
 
   _server.handleClient();
   tentarConexaoSta();
+  atualizarMdns();
   atualizarHistoricoEstado();
 }
 
@@ -1394,6 +1398,7 @@ void WebApManager::pararApServidor()
   }
 
   _server.stop();
+  desativarMdns();
   WiFi.softAPdisconnect(true);
   if (_staConfigurada)
   {
@@ -1449,6 +1454,13 @@ String WebApManager::urlAcessoSta() const
   {
     return String("");
   }
+
+#if WIFI_MDNS_ENABLED
+  if (_mdnsAtivo)
+  {
+    return String("http://") + WIFI_MDNS_HOSTNAME + ".local/";
+  }
+#endif
 
   return String("http://") + ipStaTexto() + "/";
 }
@@ -1756,6 +1768,61 @@ void WebApManager::tentarConexaoSta()
   _ultimoRetryStaMs = agora;
   WiFi.disconnect(false, false);
   WiFi.begin(WIFI_STA_SSID, WIFI_STA_PASSWORD);
+}
+
+void WebApManager::atualizarMdns()
+{
+#if WIFI_MDNS_ENABLED
+  if (!_staConfigurada)
+  {
+    desativarMdns();
+    return;
+  }
+
+  if (staConectada())
+  {
+    if (_mdnsAtivo)
+    {
+      return;
+    }
+
+    if (MDNS.begin(WIFI_MDNS_HOSTNAME))
+    {
+      MDNS.addService("http", "tcp", 80);
+      _mdnsAtivo = true;
+      _mdnsFalhaLogada = false;
+      registrarEvento("rede", "info", String("mDNS ativo em http://") + WIFI_MDNS_HOSTNAME + ".local/");
+      return;
+    }
+
+    if (!_mdnsFalhaLogada)
+    {
+      registrarEvento("rede", "warning", "Falha ao iniciar mDNS");
+      _mdnsFalhaLogada = true;
+    }
+    return;
+  }
+
+  if (_mdnsAtivo)
+  {
+    desativarMdns();
+    registrarEvento("rede", "warning", "mDNS desativado (STA desconectada)");
+  }
+  _mdnsFalhaLogada = false;
+#else
+  desativarMdns();
+#endif
+}
+
+void WebApManager::desativarMdns()
+{
+  if (!_mdnsAtivo)
+  {
+    return;
+  }
+
+  MDNS.end();
+  _mdnsAtivo = false;
 }
 
 void WebApManager::inicializarMonitoramentoEstado()
@@ -2089,9 +2156,12 @@ void WebApManager::enviarStatusSistema()
   snprintf(data, sizeof(data), "%02d/%02d/%04d", agora.day(), agora.month(), agora.year());
 
   bool staConectada = this->staConectada();
+  String urlSta = staConectada ? urlAcessoSta() : String("");
+  String mdnsHost = String(WIFI_MDNS_HOSTNAME) + ".local";
+  String mdnsUrl = _mdnsAtivo ? (String("http://") + mdnsHost + "/") : String("");
 
   String json;
-  json.reserve(2000);
+  json.reserve(2200);
   json += "{";
   json += "\"ok\":true,";
   json += "\"data\":\"" + String(data) + "\",";
@@ -2109,7 +2179,10 @@ void WebApManager::enviarStatusSistema()
   json += "\"conectado\":" + String(staConectada ? "true" : "false") + ",";
   json += "\"ssid\":\"" + String(_staConfigurada ? WIFI_STA_SSID : "") + "\",";
   json += "\"ip\":\"" + ipStaTexto() + "\",";
-  json += "\"url\":\"" + String(staConectada ? urlAcessoSta() : String("")) + "\"";
+  json += "\"url\":\"" + urlSta + "\",";
+  json += "\"mdns_ativo\":" + String(_mdnsAtivo ? "true" : "false") + ",";
+  json += "\"mdns_host\":\"" + mdnsHost + "\",";
+  json += "\"mdns_url\":\"" + mdnsUrl + "\"";
   json += "}";
   json += "},";
 

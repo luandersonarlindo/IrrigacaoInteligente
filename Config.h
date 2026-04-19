@@ -73,6 +73,12 @@
 #ifndef WIFI_STA_RETRY_MS
 #define WIFI_STA_RETRY_MS 15000
 #endif
+#ifndef WIFI_MDNS_ENABLED
+#define WIFI_MDNS_ENABLED true
+#endif
+#ifndef WIFI_MDNS_HOSTNAME
+#define WIFI_MDNS_HOSTNAME "irrigacaoesp32"
+#endif
 
 // --- Web Dashboard (valores padrão enquanto sensores externos não forem ligados) ---
 #define WEB_FORCE_DEFAULT_SECONDS 20

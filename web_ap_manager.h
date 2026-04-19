@@ -66,6 +66,8 @@ private:
     bool _staConfigurada;
     wl_status_t _ultimoStatusSta;
     unsigned long _ultimoRetryStaMs;
+    bool _mdnsAtivo;
+    bool _mdnsFalhaLogada;
     EventoSistema _historicoEventos[MAX_HISTORICO_EVENTOS];
     uint8_t _historicoCount;
     uint8_t _historicoHead;
@@ -78,6 +80,8 @@ private:
 
     void configurarRotas();
     void tentarConexaoSta();
+    void atualizarMdns();
+    void desativarMdns();
     void inicializarMonitoramentoEstado();
     void atualizarHistoricoEstado();
     void registrarEvento(const char *tipo, const char *nivel, const String &mensagem);
