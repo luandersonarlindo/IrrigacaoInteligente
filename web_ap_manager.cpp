@@ -741,6 +741,12 @@ const STORAGE_NOTIFICACOES_LIDAS_ATE = 'irrigacao.notificacoes.lidasAte';
 let cacheAlertasAtivos = [];
 let cacheHistoricoNotificacoes = [];
 let abaNotificacaoAtual = 'alertas';
+let estadoRedeAtual = { ap: {}, sta: {}, websocket: {} };
+let wsPainel = null;
+let wsConectado = false;
+let wsTimerReconexao = null;
+let wsPortaAtual = 81;
+const WS_RECONEXAO_MS = 3000;
 
 function showToast(msg) {
   toastEl.textContent = msg;
@@ -883,15 +889,33 @@ function renderValvulas(valvulas) {
 
 function atualizarRede(rede) {
   const info = document.getElementById('networkInfo');
-  const ap = rede.ap;
-  const sta = rede.sta;
+  const ap = rede.ap || {};
+  const sta = rede.sta || {};
+  const ws = rede.websocket || {};
   let linhaSta = 'STA desativado';
   if (sta.configurado) {
     linhaSta = sta.conectado
       ? ('STA conectado em ' + sta.ssid + ' (' + sta.ip + ')')
       : ('STA tentando conectar em ' + sta.ssid);
   }
-  info.textContent = 'AP: ' + ap.ssid + ' (' + ap.ip + ') | ' + linhaSta;
+
+  let linhaWs = 'WebSocket desativado';
+  if (ws.habilitado) {
+    if (!ws.biblioteca) {
+      linhaWs = 'WebSocket indisponivel (instale biblioteca)';
+    } else {
+      linhaWs = wsConectado
+        ? ('WebSocket conectado na porta ' + wsPortaAtual)
+        : ('WebSocket aguardando conexao na porta ' + wsPortaAtual);
+    }
+  }
+
+  info.textContent = 'AP: ' + (ap.ssid || '-') + ' (' + (ap.ip || '0.0.0.0') + ') | ' + linhaSta + ' | ' + linhaWs;
+}
+
+function websocketPermitido() {
+  const ws = estadoRedeAtual?.websocket || {};
+  return Boolean(ws.habilitado && ws.biblioteca);
 }
 
 function classeNivel(nivel) {
@@ -1231,10 +1255,108 @@ async function limparAgendasVisual() {
   }
 }
 
+function aplicarStatusSistema(dados) {
+  renderValvulas(dados.valvulas || []);
+  estadoRedeAtual = dados.rede || { ap: {}, sta: {}, websocket: {} };
+
+  const wsPorta = Number(estadoRedeAtual?.websocket?.porta || 0);
+  if (Number.isFinite(wsPorta) && wsPorta > 0) {
+    wsPortaAtual = wsPorta;
+  }
+
+  if (!websocketPermitido() && wsPainel) {
+    try {
+      wsPainel.close();
+    } catch (_err) {
+    }
+    wsPainel = null;
+    wsConectado = false;
+  }
+
+  atualizarRede(estadoRedeAtual);
+}
+
 async function carregarStatus() {
   const dados = await requestJson('/api/status');
-  renderValvulas(dados.valvulas || []);
-  atualizarRede(dados.rede || { ap: {}, sta: {} });
+  aplicarStatusSistema(dados);
+}
+
+function agendarReconexaoWebSocket() {
+  if (!websocketPermitido()) {
+    return;
+  }
+
+  if (wsTimerReconexao) {
+    return;
+  }
+
+  wsTimerReconexao = setTimeout(() => {
+    wsTimerReconexao = null;
+    conectarWebSocket();
+  }, WS_RECONEXAO_MS);
+}
+
+function processarMensagemWebSocket(texto) {
+  let pacote;
+  try {
+    pacote = JSON.parse(texto);
+  } catch (_err) {
+    return;
+  }
+
+  if (!pacote || typeof pacote !== 'object') {
+    return;
+  }
+
+  if (pacote.type === 'status' && pacote.payload && typeof pacote.payload === 'object') {
+    aplicarStatusSistema(pacote.payload);
+  }
+}
+
+function conectarWebSocket() {
+  if (typeof WebSocket === 'undefined') {
+    return;
+  }
+
+  if (!websocketPermitido()) {
+    return;
+  }
+
+  if (wsPainel && (wsPainel.readyState === WebSocket.OPEN || wsPainel.readyState === WebSocket.CONNECTING)) {
+    return;
+  }
+
+  const protocolo = location.protocol === 'https:' ? 'wss://' : 'ws://';
+  const url = protocolo + location.hostname + ':' + wsPortaAtual + '/';
+
+  try {
+    wsPainel = new WebSocket(url);
+  } catch (_err) {
+    wsConectado = false;
+    atualizarRede(estadoRedeAtual);
+    agendarReconexaoWebSocket();
+    return;
+  }
+
+  wsPainel.onopen = () => {
+    wsConectado = true;
+    atualizarRede(estadoRedeAtual);
+  };
+
+  wsPainel.onmessage = (evento) => {
+    processarMensagemWebSocket(evento.data || '');
+  };
+
+  wsPainel.onerror = () => {
+    wsConectado = false;
+    atualizarRede(estadoRedeAtual);
+  };
+
+  wsPainel.onclose = () => {
+    wsConectado = false;
+    atualizarRede(estadoRedeAtual);
+    agendarReconexaoWebSocket();
+  };
 }
 
 async function carregarAlertasHistorico() {
@@ -1259,7 +1381,9 @@ async function carregarAgendas(forcarEditor = false) {
 async function alternarValvula(indice) {
   try {
     await requestJson('/api/valve/toggle?index=' + indice, { method: 'POST' });
-    await carregarStatus();
+    if (!wsConectado) {
+      await carregarStatus();
+    }
   } catch (err) {
     showToast('Erro ao alternar valvula: ' + err.message);
   }
@@ -1279,8 +1403,20 @@ renderAlertas([]);
 atualizarIndicadorNotificacoes();
 selecionarAbaNotificacoes('alertas');
 
-refreshAll();
-setInterval(carregarStatus, 2000);
+refreshAll().then(() => {
+  if (websocketPermitido()) {
+    conectarWebSocket();
+  }
+}).catch(() => {
+  if (websocketPermitido()) {
+    conectarWebSocket();
+  }
+});
+setInterval(() => {
+  if (!wsConectado) {
+    carregarStatus().catch(() => {});
+  }
+}, 2000);
 setInterval(carregarAgendas, 10000);
 setInterval(carregarAlertasHistorico, 4000);
 </script>
@@ -1306,6 +1442,11 @@ WebApManager::WebApManager(IrrigationController &irrigacao,
       _ultimoRetryStaMs(0),
       _mdnsAtivo(false),
       _mdnsFalhaLogada(false),
+#if WIFI_WEBSOCKET_ENABLED && IRRIGACAO_WS_LIB_AVAILABLE
+      _webSocket(WIFI_WEBSOCKET_PORT),
+      _webSocketIniciado(false),
+      _ultimoPushStatusWsMs(0),
+#endif
       _historicoCount(0),
       _historicoHead(0),
       _proximoEventoId(1),
@@ -1344,6 +1485,9 @@ void WebApManager::atualizar()
   }
 
   _server.handleClient();
+#if WIFI_WEBSOCKET_ENABLED && IRRIGACAO_WS_LIB_AVAILABLE
+  atualizarWebSocket();
+#endif
   tentarConexaoSta();
   atualizarMdns();
   atualizarHistoricoEstado();
@@ -1385,6 +1529,9 @@ bool WebApManager::iniciarApServidor()
   }
 
   _server.begin();
+#if WIFI_WEBSOCKET_ENABLED && IRRIGACAO_WS_LIB_AVAILABLE
+  iniciarWebSocket();
+#endif
   _ativo = true;
 
   return true;
@@ -1398,6 +1545,9 @@ void WebApManager::pararApServidor()
   }
 
   _server.stop();
+#if WIFI_WEBSOCKET_ENABLED && IRRIGACAO_WS_LIB_AVAILABLE
+  _webSocketIniciado = false;
+#endif
   desativarMdns();
   WiFi.softAPdisconnect(true);
   if (_staConfigurada)
@@ -1825,6 +1975,71 @@ void WebApManager::desativarMdns()
   _mdnsAtivo = false;
 }
 
+#if WIFI_WEBSOCKET_ENABLED && IRRIGACAO_WS_LIB_AVAILABLE
+void WebApManager::iniciarWebSocket()
+{
+  if (_webSocketIniciado)
+  {
+    return;
+  }
+
+  _webSocket.begin();
+  _webSocket.onEvent([this](uint8_t clienteId, WStype_t tipo, uint8_t *payload, size_t length)
+                     {
+    (void)payload;
+    (void)length;
+
+    if (tipo == WStype_CONNECTED)
+    {
+      enviarStatusWebSocket((int)clienteId);
+    } });
+
+  _webSocketIniciado = true;
+  _ultimoPushStatusWsMs = millis();
+}
+
+void WebApManager::atualizarWebSocket()
+{
+  if (!_webSocketIniciado)
+  {
+    return;
+  }
+
+  _webSocket.loop();
+
+  unsigned long agora = millis();
+  if ((unsigned long)(agora - _ultimoPushStatusWsMs) < WIFI_WEBSOCKET_PUSH_STATUS_MS)
+  {
+    return;
+  }
+
+  _ultimoPushStatusWsMs = agora;
+  enviarStatusWebSocket();
+}
+
+void WebApManager::enviarStatusWebSocket(int clienteId)
+{
+  if (!_webSocketIniciado)
+  {
+    return;
+  }
+
+  String pacote;
+  pacote.reserve(2500);
+  pacote += "{\"type\":\"status\",\"payload\":";
+  pacote += montarJsonStatusSistema();
+  pacote += "}";
+
+  if (clienteId >= 0)
+  {
+    _webSocket.sendTXT((uint8_t)clienteId, pacote);
+    return;
+  }
+
+  _webSocket.broadcastTXT(pacote);
+}
+#endif
+
 void WebApManager::inicializarMonitoramentoEstado()
 {
   for (int i = 0; i < NUM_VALVULAS; i++)
@@ -2148,7 +2363,7 @@ void WebApManager::enviarPaginaPrincipal()
   _server.send_P(200, "text/html; charset=utf-8", WEB_DASHBOARD_HTML);
 }
 
-void WebApManager::enviarStatusSistema()
+String WebApManager::montarJsonStatusSistema()
 {
   DateTime agora = _rtc.agora();
 
@@ -2184,6 +2399,27 @@ void WebApManager::enviarStatusSistema()
   json += "\"mdns_host\":\"" + mdnsHost + "\",";
   json += "\"mdns_url\":\"" + mdnsUrl + "\"";
   json += "}";
+#if WIFI_WEBSOCKET_ENABLED
+  json += ",";
+  json += "\"websocket\":{";
+  json += "\"habilitado\":true,";
+  json += "\"biblioteca\":" + String(IRRIGACAO_WS_LIB_AVAILABLE ? "true" : "false") + ",";
+#if IRRIGACAO_WS_LIB_AVAILABLE
+  json += "\"ativo\":" + String(_webSocketIniciado ? "true" : "false") + ",";
+#else
+  json += "\"ativo\":false,";
+#endif
+  json += "\"porta\":" + String(WIFI_WEBSOCKET_PORT);
+  json += "}";
+#else
+  json += ",";
+  json += "\"websocket\":{";
+  json += "\"habilitado\":false,";
+  json += "\"biblioteca\":false,";
+  json += "\"ativo\":false,";
+  json += "\"porta\":" + String(WIFI_WEBSOCKET_PORT);
+  json += "}";
+#endif
   json += "},";
 
   json += "\"agendas_ativas\":" + String(_schedule.totalAtivas()) + ",";
@@ -2211,7 +2447,16 @@ void WebApManager::enviarStatusSistema()
 
   json += "}";
 
-  enviarRespostaJson(200, json);
+  return json;
+}
+
+void WebApManager::enviarStatusSistema()
+{
+  enviarRespostaJson(200, montarJsonStatusSistema());
+
+#if WIFI_WEBSOCKET_ENABLED && IRRIGACAO_WS_LIB_AVAILABLE
+  enviarStatusWebSocket();
+#endif
 }
 
 void WebApManager::enviarListaAgendas()

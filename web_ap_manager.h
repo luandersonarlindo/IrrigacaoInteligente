@@ -12,6 +12,16 @@
 #include <WebServer.h>
 #include <stdint.h>
 #include "Config.h"
+#if defined(__has_include)
+#if __has_include(<WebSocketsServer.h>)
+#define IRRIGACAO_WS_LIB_AVAILABLE 1
+#include <WebSocketsServer.h>
+#else
+#define IRRIGACAO_WS_LIB_AVAILABLE 0
+#endif
+#else
+#define IRRIGACAO_WS_LIB_AVAILABLE 0
+#endif
 #include "irrigation_controller.h"
 #include "schedule_manager.h"
 #include "runtime_config_manager.h"
@@ -68,6 +78,11 @@ private:
     unsigned long _ultimoRetryStaMs;
     bool _mdnsAtivo;
     bool _mdnsFalhaLogada;
+#if WIFI_WEBSOCKET_ENABLED && IRRIGACAO_WS_LIB_AVAILABLE
+    WebSocketsServer _webSocket;
+    bool _webSocketIniciado;
+    unsigned long _ultimoPushStatusWsMs;
+#endif
     EventoSistema _historicoEventos[MAX_HISTORICO_EVENTOS];
     uint8_t _historicoCount;
     uint8_t _historicoHead;
@@ -82,6 +97,11 @@ private:
     void tentarConexaoSta();
     void atualizarMdns();
     void desativarMdns();
+#if WIFI_WEBSOCKET_ENABLED && IRRIGACAO_WS_LIB_AVAILABLE
+    void iniciarWebSocket();
+    void atualizarWebSocket();
+    void enviarStatusWebSocket(int clienteId = -1);
+#endif
     void inicializarMonitoramentoEstado();
     void atualizarHistoricoEstado();
     void registrarEvento(const char *tipo, const char *nivel, const String &mensagem);
@@ -93,6 +113,7 @@ private:
     void enviarPaginaPrincipal();
     void enviarStatusSistema();
     void enviarListaAgendas();
+    String montarJsonStatusSistema();
     void enviarRespostaJson(int statusCode, const String &json);
     void enviarErroJson(int statusCode, const char *mensagem);
 

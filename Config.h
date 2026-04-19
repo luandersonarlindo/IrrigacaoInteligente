@@ -79,6 +79,15 @@
 #ifndef WIFI_MDNS_HOSTNAME
 #define WIFI_MDNS_HOSTNAME "irrigacaoesp32"
 #endif
+#ifndef WIFI_WEBSOCKET_ENABLED
+#define WIFI_WEBSOCKET_ENABLED true
+#endif
+#ifndef WIFI_WEBSOCKET_PORT
+#define WIFI_WEBSOCKET_PORT 81
+#endif
+#ifndef WIFI_WEBSOCKET_PUSH_STATUS_MS
+#define WIFI_WEBSOCKET_PUSH_STATUS_MS 2000
+#endif
 
 // --- Web Dashboard (valores padrão enquanto sensores externos não forem ligados) ---
 #define WEB_FORCE_DEFAULT_SECONDS 20

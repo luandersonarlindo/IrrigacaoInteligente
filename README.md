@@ -107,6 +107,9 @@ Constantes relevantes em `Config.h`:
 - `DEBUG_SERIAL = false`
 - `WIFI_MDNS_ENABLED = true`
 - `WIFI_MDNS_HOSTNAME = "irrigacaoesp32"`
+- `WIFI_WEBSOCKET_ENABLED = true`
+- `WIFI_WEBSOCKET_PORT = 81`
+- `WIFI_WEBSOCKET_PUSH_STATUS_MS = 2000`
 
 Faixas aplicadas em runtime:
 
@@ -237,9 +240,15 @@ Comportamento:
 - Inicializa AP Wi-Fi no boot.
 - Se STA estiver habilitada/configurada, tenta reconectar periodicamente sem bloquear o AP.
 - Com STA conectada, ativa mDNS para acesso por `http://<hostname>.local/`.
+- Publica status em tempo real por WebSocket (porta 81) com fallback para polling HTTP no dashboard.
 - Exibe dashboard para status, válvulas, agendas e runtime.
 - Exibe alertas ativos e histórico operacional (rede, irrigação, agenda, configuração e RTC).
 - Histórico usa buffer circular com até 40 registros.
+
+Observação sobre biblioteca:
+
+- O WebSocket usa a biblioteca `WebSocketsServer` (Links2004/WebSockets).
+- Se a biblioteca não estiver instalada, o firmware continua compilando e o dashboard mantém funcionamento por HTTP (polling).
 
 Rotas principais:
 
