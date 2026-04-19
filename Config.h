@@ -5,7 +5,7 @@
 //  Altere aqui sem precisar tocar nos outros arquivos
 // ============================================================
 
-// Permite sobrescrever configuracoes locais sem versionar segredos.
+// Permite sobrescrever configurações locais sem versionar segredos.
 #if defined(__has_include)
 #if __has_include("Config_privado.h")
 #include "Config_privado.h"
@@ -53,7 +53,7 @@
 #define MAX_AGENDAS_TOTAIS 4           // Fase 5 (refino): agendas globais com seleção de setores
 #define DURACAO_PADRAO_MIN 10          // Duração padrão de irrigação em minutos
 #define TIMEOUT_MANUAL_MS 600000       // 10 min — desliga válvula esquecida (modo manual)
-#define MAX_SETOR_SIMULTANEOS_AGENDA 2 // Limite de setores simultaneos em agenda
+#define MAX_SETOR_SIMULTANEOS_AGENDA 2 // Limite de setores simultâneos em agenda
 #define INTERVALO_LOTE_AGENDA_MS 10000 // Intervalo entre lotes da agenda (ms)
 
 // --- Wi-Fi AP + WebServer ---
@@ -74,7 +74,7 @@
 #define WIFI_STA_RETRY_MS 15000
 #endif
 
-// --- Web Dashboard (valores padrao enquanto sensores externos nao forem ligados) ---
+// --- Web Dashboard (valores padrão enquanto sensores externos não forem ligados) ---
 #define WEB_FORCE_DEFAULT_SECONDS 20
 #define WEB_TEMP_DEFAULT_C 28.4f
 #define WEB_HUMIDADE_AR_DEFAULT_PCT 72.0f

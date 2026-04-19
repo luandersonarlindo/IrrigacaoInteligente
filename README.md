@@ -1,63 +1,62 @@
 # 🌱 IrrigacaoInteligente
 
-Sistema de irrigacao inteligente com ESP32, display OLED, encoder rotativo, RTC DS3231 e controle de ate 8 valvulas por rele.
+Sistema de irrigação inteligente com ESP32, display OLED, encoder rotativo, RTC DS3231 e controle de até 8 válvulas por relé.
 
-Este README descreve o estado atual implementado no firmware.
+Este README descreve o comportamento real implementado no firmware.
 
-## 👀 Visao rapida
+## 👀 Visão rápida
 
-- ✅ Controle manual de setores no menu.
-- 🗓️ Agendamento automatico semanal com execucao sequencial por lotes.
-- 🌐 Dashboard web local (AP Wi-Fi) para monitorar e controlar o sistema.
-- 🚨 Dashboard com alertas ativos e historico de eventos do sistema.
-- 💾 Persistencia de agendas e configuracoes runtime na flash (NVS), com versao e CRC.
-- 🕒 Operacao mesmo sem RTC (sem hora real).
-- 🛡️ Timeout de seguranca no modo manual.
-- 🔁 Reconexao STA periodica sem bloquear o AP local.
+- ✅ Controle manual de setores no menu local.
+- 🗓️ Agendamento automático semanal com execução sequencial por lotes.
+- 🌐 Dashboard web local via AP do ESP32, com tentativas periódicas de STA.
+- 🚨 API de alertas e histórico operacional em tempo real.
+- 💾 Persistência em NVS com versão e CRC para agendas e configurações runtime.
+- 🛡️ Timeout de segurança no modo manual.
 
-## 🧭 Sumario
+## 🧭 Sumário
 
 1. 🎯 Escopo
 2. 🧰 Hardware
-3. ⚡ Configuracao rapida
-4. ⚙️ Configuracoes principais
+3. ⚡ Configuração rápida
+4. ⚙️ Configurações principais
 5. 🧱 Arquitetura
 6. 🔄 Fluxo do firmware
-7. 🕹️ Operacao da interface
+7. 🕹️ Operação da interface
 8. 📅 Agendamento
 9. 🌐 Dashboard web
-10. 💾 Persistencia
+10. 💾 Persistência
 11. 🗂️ Estrutura do projeto
-12. 🛠️ Build e gravacao
-13. 🩺 Troubleshooting rapido
-14. ✅ Validacao recomendada
+12. 🛠️ Build e gravação
+13. 🩺 Troubleshooting rápido
+14. ✅ Validação recomendada
 15. 🛣️ Limites atuais e roadmap
 
 ## 1. 🎯 Escopo
 
 O firmware entrega:
 
-- Irrigacao manual por setor com feedback no OLED.
-- Irrigacao automatica por agenda semanal.
-- Controle fisico de reles (trigger HIGH).
-- Dashboard web com AP dedicado e tentativas de conexao STA.
-- Persistencia de agendas e configuracoes runtime apos reboot.
-- Regras de seguranca e validacao para evitar configuracoes invalidas.
+- Irrigação manual por setor com feedback no OLED.
+- Irrigação automática por agenda semanal.
+- Controle físico de relés (trigger HIGH).
+- Dashboard web para status, válvulas, agendas, runtime e RTC.
+- Persistência de agendas e configurações runtime após reboot.
+- Regras de validação para evitar configurações inválidas.
 
 Documentos complementares:
 
-- GUIA_DIDATICO_PROJETO.md
-- FASE5_CONTRATO_TECNICO.md
+- `GUIA_DIDATICO_PROJETO.md`
+- `FASE5_CONTRATO_TECNICO.md`
+- `PLANO_AULAS_12_ENCONTROS.md`
 
 ## 2. 🧰 Hardware
 
 Plataforma:
 
 - ESP32
-- Encoder rotativo com botao (HW-040 ou equivalente)
+- Encoder rotativo com botão (HW-040 ou equivalente)
 - OLED SSD1306 128x64 I2C
 - RTC DS3231 I2C
-- 2 modulos de rele 4 canais (8 canais no total)
+- 2 módulos de relé 4 canais (8 canais no total)
 
 Mapeamento de pinos (Config.h):
 
@@ -68,298 +67,311 @@ Mapeamento de pinos (Config.h):
 | Encoder BTN | 4    |
 | OLED SDA    | 21   |
 | OLED SCL    | 22   |
-| Rele 1      | 23   |
-| Rele 2      | 25   |
-| Rele 3      | 26   |
-| Rele 4      | 27   |
-| Rele 5      | 32   |
-| Rele 6      | 33   |
-| Rele 7      | 13   |
-| Rele 8      | 14   |
+| Relé 1      | 23   |
+| Relé 2      | 25   |
+| Relé 3      | 26   |
+| Relé 4      | 27   |
+| Relé 5      | 32   |
+| Relé 6      | 33   |
+| Relé 7      | 13   |
+| Relé 8      | 14   |
 
-Observacao: OLED e DS3231 compartilham o barramento I2C.
+Observação: OLED e DS3231 compartilham o mesmo barramento I2C.
 
-## 3. ⚡ Configuracao rapida
+## 3. ⚡ Configuração rápida
 
-Passo a passo curto para colocar o sistema para rodar:
-
-1. Monte os componentes conforme os pinos definidos em Config.h.
+1. Monte os componentes conforme os pinos definidos em `Config.h`.
 2. Instale as bibliotecas na IDE Arduino:
    - U8g2
    - RTClib
    - ESP32Encoder
 3. Selecione a placa ESP32 e a porta serial.
 4. Compile e grave o firmware.
-5. Abra o monitor serial em 115200 para acompanhar logs.
-6. Gire o encoder para abrir o menu e testar irrigacao manual.
-7. Se quiser usar dashboard web, conecte no AP e abra a URL exibida na tela WEBSERVER.
+5. Abra o monitor serial em 115200.
+6. Navegue com o encoder e teste a irrigação manual.
+7. Conecte no AP e acesse a URL mostrada na tela WEBSERVER.
 
-## 4. ⚙️ Configuracoes principais
+## 4. ⚙️ Configurações principais
 
-Constantes relevantes em Config.h:
+Constantes relevantes em `Config.h`:
 
-- NUM_VALVULAS = 8
-- MAX_AGENDAS_TOTAIS = 4
-- MAX_AGENDAS_POR_SETOR = 4 (referencia contratual)
-- DURACAO_PADRAO_MIN = 10
-- TIMEOUT_MANUAL_MS = 600000 (10 minutos)
-- MAX_SETOR_SIMULTANEOS_AGENDA = 2
-- INTERVALO_LOTE_AGENDA_MS = 10000
-- ENCODER_STEPS_POR_ITEM = 2
-- BAUD_RATE = 115200
-- DEBUG_SERIAL = false
+- `NUM_VALVULAS = 8`
+- `MAX_AGENDAS_TOTAIS = 4`
+- `MAX_AGENDAS_POR_SETOR = 4` (referência contratual)
+- `DURACAO_PADRAO_MIN = 10`
+- `TIMEOUT_MANUAL_MS = 600000` (10 min)
+- `MAX_SETOR_SIMULTANEOS_AGENDA = 2`
+- `INTERVALO_LOTE_AGENDA_MS = 10000`
+- `MENU_TIMEOUT_MS = 30000`
+- `BAUD_RATE = 115200`
+- `DEBUG_SERIAL = false`
 
-Faixas aplicadas em runtime (com clamp no firmware):
+Faixas aplicadas em runtime:
 
-- timeout manual: 1..120 min (60000..7200000 ms)
-- duracao padrao: 1..240 min
-- duracao por agenda na UI: 1..240 min
+- Timeout manual: 1..120 min
+- Duração padrão: 1..240 min
+- Duração por agenda na UI: 1..240 min
 
-Observacao de comportamento:
+Comportamentos importantes:
 
-- O timeout de inatividade do menu usa o valor runtime de timeout manual.
+- O timeout de inatividade do menu usa `MENU_TIMEOUT_MS` (fixo no firmware).
+- O timeout manual é configuração runtime separada.
 
-Rede/AP:
+Rede e segredos:
 
-- WIFI_AP_SSID, WIFI_AP_PASSWORD
-- WIFI_STA_ENABLED, WIFI_STA_SSID, WIFI_STA_PASSWORD
-- WIFI_STA_RETRY_MS
+- O firmware tenta incluir `Config_privado.h` automaticamente quando o arquivo existe.
+- `Config_privado.h` está no `.gitignore` para evitar versionar credenciais.
+- Na ausência dele, são usados os valores padrão de `WIFI_STA_SSID` e `WIFI_STA_PASSWORD` definidos em `Config.h`.
 
 ## 5. 🧱 Arquitetura
 
-Separacao adotada:
+Separação adotada:
 
 - Drivers: acesso ao hardware.
-- Managers/Controllers: regras de negocio e estado.
-- Arquivo .ino: orquestracao do ciclo principal.
+- Managers/Controllers: regras de negócio e estado.
+- Arquivo `.ino`: orquestração do setup e loop.
 
-Modulos:
+Módulos:
 
-- encoder_driver.*: leitura do encoder, debounce, clique curto e longo.
-- display_driver_oled.*: primitivas de desenho no OLED.
-- rtc_driver_ds3231.*: leitura/ajuste de data e hora.
-- runtime_config_manager.*: configuracoes runtime (timeout manual e duracao padrao) persistidas em NVS.
-- menu_controller.*: maquina de estados do menu, programacao e configuracoes.
-- display_manager.*: composicao das telas, incluindo status de agenda sequencial e tela WEBSERVER.
-- irrigation_controller.*: acionamento de reles, origem manual/agenda e deadlines.
-- schedule_manager.*: CRUD de agenda, validacao, NVS, proxima execucao e disparo por janela de lote.
-- web_ap_manager.*: AP Wi-Fi, servidor HTTP e API do dashboard.
-- IrrigacaoInteligente.ino: setup e loop.
+- `encoder_driver.*`: leitura do encoder, debounce e clique longo.
+- `display_driver_oled.*`: primitivas de desenho no OLED.
+- `rtc_driver_ds3231.*`: leitura e ajuste de data/hora.
+- `runtime_config_manager.*`: persistência de timeout manual e duração padrão.
+- `menu_controller.*`: estados do menu, programação e configurações.
+- `display_manager.*`: composição das telas e página WEBSERVER no OLED.
+- `irrigation_controller.*`: acionamento de relés, origem manual/agenda e deadlines.
+- `schedule_manager.*`: CRUD de agenda, validação, NVS, cache diário e disparo.
+- `web_ap_manager.*`: AP/STA, servidor HTTP e API do dashboard.
+- `IrrigacaoInteligente.ino`: setup e loop principal.
 
 ## 6. 🔄 Fluxo do firmware
 
 ### 6.1 🚀 Setup
 
 1. Inicializa Serial (se debug ativo).
-2. Inicializa I2C (Wire.begin).
+2. Inicializa I2C (`Wire.begin`).
 3. Inicializa encoder e display.
-4. Inicializa RTC (se indisponivel, continua sem hora real).
+4. Inicializa RTC (se ausente, continua sem hora real).
 5. Inicializa runtime config e schedule manager.
-6. Inicializa irrigacao, web AP manager e display manager.
+6. Inicializa irrigação, web AP manager e display manager.
 
 ### 6.2 🔁 Loop
 
 1. Atualiza encoder.
-2. Le direcao e botoes.
+2. Lê direção e botões.
 3. Processa menu.
-4. Em irrigacao manual, clique curto faz toggle do setor selecionado.
-5. Em teste de valvulas (Configuracoes), clique curto faz toggle do setor em teste.
-6. Se houver exclusao de agenda, cancela execucao automatica em andamento.
-7. Ao sair do modo TESTE_VALVULAS, fecha todas as valvulas por seguranca.
-8. Atualiza irrigacao (timeouts e fechamento por deadline).
-9. Se RTC ativo, avalia disparos de agenda do minuto atual e enfileira setores.
-10. Processa execucao sequencial por lotes (limite de simultaneos + intervalo entre lotes).
+4. Em irrigação manual, clique curto faz toggle do setor selecionado.
+5. Em teste de válvulas, clique curto faz toggle do setor em teste.
+6. Se houver exclusão de agenda, cancela execução automática em andamento.
+7. Ao sair de `TESTE_VALVULAS`, fecha todas as válvulas por segurança.
+8. Atualiza irrigação (timeout/deadline).
+9. Se RTC ativo, avalia disparos do minuto atual e enfileira setores.
+10. Processa execução sequencial por lotes.
 11. Publica estado da agenda sequencial para o display.
-12. Mantem servidor HTTP responsivo.
+12. Mantém servidor HTTP responsivo.
 13. Atualiza display.
 
-## 7. 🕹️ Operacao da interface
+## 7. 🕹️ Operação da interface
 
 Menu principal:
 
 - Irrigar Agora
 - Programar
 - WEBSERVER
-- Configuracoes
+- Configurações
 
 Encoder:
 
 - Giro: navega itens e campos.
-- Clique curto: seleciona/edita.
-- Clique longo: voltar/cancelar conforme a tela.
+- Clique curto: seleciona, confirma ou alterna campo.
+- Clique longo: atalho implementado na etapa `EDIT_DIAS` (retorna ao submenu da agenda).
 
-Irrigacao manual:
+Irrigação manual:
 
-- Seleciona setor de 1 a 8.
-- Existe item Voltar na navegacao (apos o setor 8).
-- Clique curto abre/fecha rele do setor.
-- Timeout manual fecha automaticamente apos o tempo configurado.
+- Seleção de setor 1..8.
+- Existe item `Voltar` na navegação.
+- Clique curto abre/fecha relé do setor.
+- Timeout manual fecha automaticamente após o tempo configurado.
 
 Programar:
 
 - 4 slots globais de agenda.
-- Submenu com editar hora/minuto/duracao/dias/setores, salvar, excluir e voltar.
+- Submenu: editar hora/minuto/duração/dias/setores, salvar, excluir e voltar.
 
-Configuracoes:
+Configurações:
 
-- Submenu Relogio: hora, minuto, dia, mes, ano e timeout manual.
-- Submenu Sistema: duracao padrao, teste de valvulas, limpar agendas, restaurar padrao e info sistema.
+- Submenu Relógio: hora, minuto, dia, mês, ano e timeout manual.
+- Submenu Sistema: duração padrão, teste de válvulas, limpar agendas, restaurar padrão e informações.
 
 ## 8. 📅 Agendamento
 
-Modelo implementado atualmente:
+Modelo atual:
 
-- Ate 4 agendas globais (MAX_AGENDAS_TOTAIS = 4).
-- Cada agenda possui diasMask (DOM..SAB) e setoresMask (setores 1..8).
-- Cada agenda pode acionar mais de um setor no mesmo horario.
+- Até 4 agendas globais (`MAX_AGENDAS_TOTAIS = 4`).
+- Cada agenda possui `diasMask` (DOM..SAB) e `setoresMask` (setores 1..8).
+- Cada agenda pode acionar múltiplos setores no mesmo horário.
 
-Validacoes:
+Validações:
 
 - Hora: 0..23
 - Minuto: 0..59
-- Duracao: >= 1
-- Minimo 1 dia selecionado
-- Minimo 1 setor selecionado
-- Sem duplicidade exata (hora + minuto + dias + setores)
+- Duração: >= 1
+- Pelo menos 1 dia selecionado
+- Pelo menos 1 setor selecionado
+- Sem duplicidade exata (hora + minuto + diasMask + setoresMask)
 
-Motor de execucao:
+Motor de execução:
 
-- Verificacao por minuto (evita repeticao no mesmo minuto).
-- Identifica lote atual considerando horario de inicio, duracao e intervalo entre lotes.
-- Se o minuto atual cair no meio da janela da agenda, calcula lote-alvo e tempo remanescente.
-- Respeita limite de simultaneos (MAX_SETOR_SIMULTANEOS_AGENDA).
-- Em conflito no mesmo setor/minuto, aplica maior duracao.
-- Marca slot executado no dia para evitar repeticao no mesmo dia.
-- Exclusao de agenda cancela execucao automatica em andamento.
+- Verificação por minuto (evita repetição no mesmo minuto).
+- Retomada de janela ativa no lote correto, com tempo remanescente.
+- Respeita `MAX_SETOR_SIMULTANEOS_AGENDA` e `INTERVALO_LOTE_AGENDA_MS`.
+- Em conflito no mesmo setor, mantém a maior duração.
+- Marca execução diária por slot e persiste cache para evitar repetição indevida após reboot.
 
 ## 9. 🌐 Dashboard web
 
 Comportamento:
 
 - Inicializa AP Wi-Fi no boot.
-- Se STA estiver habilitada, tenta conexao periodicamente sem bloquear AP.
-- Exibe pagina web local para status, valvulas, agendas e configuracoes runtime.
-- Exibe alertas ativos e historico de eventos operacionais (rede, irrigacao, agenda e configuracao).
-- Historico usa buffer circular com ate 40 registros.
+- Se STA estiver habilitada/configurada, tenta reconectar periodicamente sem bloquear o AP.
+- Exibe dashboard para status, válvulas, agendas e runtime.
+- Exibe alertas ativos e histórico operacional (rede, irrigação, agenda, configuração e RTC).
+- Histórico usa buffer circular com até 40 registros.
 
 Rotas principais:
 
-- GET /, GET /status
-- GET /api/status, GET /api/schedules, GET /api/events
-- POST /api/valve/toggle, /api/valve/set, /api/valves/off-all
-- POST /api/schedule/save, /api/schedule/delete, /api/schedule/clear
-- POST /api/config/runtime
-- POST /api/rtc/set
+- `GET /`
+- `GET /status`
+- `GET /api/status`
+- `GET /api/schedules`
+- `GET /api/events`
+- `POST /api/valve/toggle`
+- `POST /api/valve/set`
+- `POST /api/valves/off-all`
+- `POST /api/schedule/save`
+- `POST /api/schedule/delete`
+- `POST /api/schedule/clear`
+- `POST /api/config/runtime`
+- `POST /api/rtc/set`
 
-Detalhes de contrato das rotas:
+Detalhes de contrato:
 
-- index (valvula) e slot (agenda) aceitam entrada em base 1 (1..N) e base 0 (0..N-1).
-- Rotas /api/* invalidas retornam JSON de erro; rotas nao API invalidas retornam texto 404.
+- `index` (válvula) e `slot` (agenda) aceitam base 1 e base 0.
+- `state` em `/api/valve/set` aceita `1/0`, `true/false`, `on/off`, `ligado/desligado`.
+- Erros em `/api/*` retornam JSON com `ok=false`.
+- Rotas não API inexistentes retornam texto 404.
 
-## 10. 💾 Persistencia
+## 10. 💾 Persistência
 
-Persistencia com Preferences (NVS):
+Persistência com `Preferences` (NVS):
 
 - Agenda:
-  - namespace: irrig_sched
-  - chave: bank
-  - conteudo: versao + crc + vetor de agendas
+  - namespace: `irrig_sched`
+  - chave: `bank`
+  - conteúdo: versão + CRC + vetor de agendas
+- Cache de execução diária:
+  - namespace: `irrig_sched`
+  - chave: `exec_cache`
+  - conteúdo: versão + CRC + última execução por slot
 - Config runtime:
-  - namespace: irrig_cfg
-  - chave: cfg
-  - conteudo: versao + crc + timeoutManualMs + duracaoPadraoMin
+  - namespace: `irrig_cfg`
+  - chave: `cfg`
+  - conteúdo: versão + CRC + timeoutManualMs + duracaoPadraoMin
 
 No boot:
 
-- Se versao/CRC/leitura estiver invalida, reinicializa banco padrao seguro.
-- Runtime config aplica limites de seguranca ao salvar timeout manual e duracao padrao.
+- Se versão/CRC estiver inválido, reinicializa banco padrão seguro.
+- Runtime config aplica clamp de segurança ao salvar timeout/duração.
 
 ## 11. 🗂️ Estrutura do projeto
 
-- IrrigacaoInteligente.ino - entrada do firmware
-- Config.h - configuracoes globais
-- encoder_driver.h/.cpp - leitura do encoder
-- display_driver_oled.h/.cpp - driver OLED
-- display_manager.h/.cpp - renderizacao de telas
-- rtc_driver_ds3231.h/.cpp - RTC DS3231
-- menu_controller.h/.cpp - navegacao, programacao e configuracoes
-- schedule_manager.h/.cpp - agenda e persistencia de agenda
-- runtime_config_manager.h/.cpp - persistencia de configuracoes runtime
-- irrigation_controller.h/.cpp - controle de valvulas/reles
-- web_ap_manager.h/.cpp - AP Wi-Fi e dashboard web
-- GUIA_DIDATICO_PROJETO.md - guia pedagogico
-- FASE5_CONTRATO_TECNICO.md - contrato tecnico
+- `IrrigacaoInteligente.ino` - entrada do firmware
+- `Config.h` - configurações globais
+- `Config_privado.h` - segredos locais (não versionado)
+- `encoder_driver.h/.cpp`
+- `display_driver_oled.h/.cpp`
+- `display_manager.h/.cpp`
+- `rtc_driver_ds3231.h/.cpp`
+- `runtime_config_manager.h/.cpp`
+- `menu_controller.h/.cpp`
+- `schedule_manager.h/.cpp`
+- `irrigation_controller.h/.cpp`
+- `web_ap_manager.h/.cpp`
+- `README.md`
+- `GUIA_DIDATICO_PROJETO.md`
+- `FASE5_CONTRATO_TECNICO.md`
+- `PLANO_AULAS_12_ENCONTROS.md`
 
-## 12. 🛠️ Build e gravacao
+## 12. 🛠️ Build e gravação
 
 1. Abra o projeto na IDE Arduino.
 2. Selecione a placa ESP32 correta.
-3. Verifique se as bibliotecas estao instaladas.
+3. Verifique as bibliotecas instaladas.
 4. Compile o projeto.
 5. Grave no ESP32.
 6. Abra o monitor serial em 115200.
 
-## 13. 🩺 Troubleshooting rapido
+## 13. 🩺 Troubleshooting rápido
 
-Problemas comuns e verificacoes:
+Problemas comuns:
 
-- OLED nao liga:
+- OLED não liga:
   - confira SDA/SCL (21/22)
-  - confira alimentacao e GND
-- Encoder nao responde:
+  - confira alimentação e GND
+- Encoder não responde:
   - confira pinos 18/19/4
-  - confira pull-up do botao
-- RTC nao encontrado:
+  - confira pull-up do botão
+- RTC não encontrado:
   - o sistema continua, mas sem hora real
-  - confira conexoes I2C e bateria do DS3231
-- Agenda nao dispara:
-  - confirme se o RTC esta ativo
-  - confirme se o dia atual esta marcado
-  - confirme hora/minuto e setoresMask da agenda
-- Dashboard nao abre:
-  - confira SSID/senha do AP em Config.h
-  - confirme IP mostrado na tela WEBSERVER
+  - confira I2C e bateria do DS3231
+- Agenda não dispara:
+  - confirme RTC ativo
+  - confirme dia marcado na agenda
+  - confirme hora/minuto e `setoresMask`
+- Dashboard não abre:
+  - confira SSID/senha do AP
+  - confirme o IP exibido na tela WEBSERVER
 
-## 14. ✅ Validacao recomendada
+## 14. ✅ Validação recomendada
 
-Teste funcional minimo:
+Teste funcional mínimo:
 
-1. Navegar menu e abrir/fechar setores manualmente.
+1. Navegar no menu e abrir/fechar setores manualmente.
 2. Validar timeout manual.
-3. Criar agenda valida.
-4. Reiniciar e verificar persistencia.
-5. Simular horario e validar disparo automatico.
+3. Criar agenda válida.
+4. Reiniciar e verificar persistência.
+5. Simular horário e validar disparo automático.
 6. Tentar criar duplicata e confirmar bloqueio.
 7. Testar comportamento com RTC ausente.
-8. Validar dashboard web (status, toggle de valvula, salvar agenda).
+8. Validar dashboard web (status, válvula, agenda, runtime e RTC).
 
-Checklist de aceite rapido:
+Checklist rápido:
 
-- Sem travamentos na navegacao.
+- Sem travamentos na navegação.
 - Setor acionado corresponde ao selecionado.
-- Dados permanecem apos reboot.
-- Disparo ocorre apenas no minuto esperado.
-- Dashboard responde sem erro nas rotas principais.
+- Dados persistem após reboot.
+- Disparo ocorre no minuto esperado.
+- Rotas principais respondem sem erro.
 
 ## 15. 🛣️ Limites atuais e roadmap
 
 Estado atual:
 
-- Sistema funcional com 4 agendas globais por mascara de setores.
-- Tela de configuracoes com multiplas etapas e fluxo profundo.
+- Sistema funcional com 4 agendas globais por máscara de setores.
+- Fluxo de configurações ainda profundo no OLED.
 
 Ponto de alinhamento com contrato:
 
-- Contrato original da fase descreve 4 setores x 4 agendas por setor (16 agendas).
-- Codigo atual adota 4 agendas totais globais.
+- Contrato original descrevia 4 setores x 4 agendas por setor (16 agendas).
+- Código atual adota 4 agendas totais globais.
 
-Proximos passos sugeridos:
+Próximos passos sugeridos:
 
 - Definir oficialmente o modelo final de agenda.
-- Evoluir UX de configuracoes para reduzir profundidade de navegacao.
-- Adicionar testes automatizados para agenda, persistencia e API web.
-- Criar checklist de homologacao em campo (eletrica, rede e UX).
+- Evoluir UX de configurações para reduzir profundidade de navegação.
+- Adicionar testes automatizados para agenda, persistência e API web.
+- Criar checklist de homologação de campo (elétrica, rede e UX).
 
 ---
 
-Ultima revisao deste documento: 2026-04-17
+Última revisão deste documento: 2026-04-19

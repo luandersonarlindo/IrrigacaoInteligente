@@ -31,7 +31,7 @@ public:
 
     void begin();
 
-    // Estado da execucao sequencial de agenda (lotes + intervalo).
+    // Estado da execução sequencial de agenda (lotes + intervalo).
     void atualizarEstadoAgendaSequencial(bool ativa,
                                          bool aguardandoIntervalo,
                                          uint8_t setoresEmLote,
@@ -66,7 +66,7 @@ private:
     unsigned long _ultimaAtualizacao;
     static const unsigned long INTERVALO_ATUALIZACAO_MS = 200;
 
-    // Estado operacional da agenda automatica sequencial
+    // Estado operacional da agenda automática sequencial
     bool _agendaExecucaoAtiva;
     bool _agendaAguardandoIntervalo;
     uint8_t _agendaSetoresEmLote;

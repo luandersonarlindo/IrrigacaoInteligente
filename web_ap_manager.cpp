@@ -1,5 +1,5 @@
 // ============================================================
-//  web_ap_manager.cpp - Implementacao do WebApManager
+//  web_ap_manager.cpp - Implementação do WebApManager
 // ============================================================
 
 #include "web_ap_manager.h"

@@ -27,6 +27,7 @@ MenuController::MenuController(ScheduleManager &schedule, RtcDriverDs3231 &rtc, 
       _feedbackProgramacao(FeedbackProgramacao::NENHUM),
       _eventoAgendaExcluida(false),
       _agendaProgramacao(0),
+      _opcaoVoltarProgramacao(false),
       _opcaoSubmenuProgramacao(0),
       _opcaoConfirmarExclusao(1),
       _cursorDiaProgramacao(0),
@@ -65,6 +66,7 @@ void MenuController::begin()
     _feedbackProgramacao = FeedbackProgramacao::NENHUM;
     _eventoAgendaExcluida = false;
     _agendaProgramacao = 0;
+    _opcaoVoltarProgramacao = false;
     _opcaoSubmenuProgramacao = 0;
     _opcaoConfirmarExclusao = 1;
     _cursorDiaProgramacao = 0;
@@ -126,19 +128,12 @@ void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bo
                 navegarProximo();
             if (direcao == DirecaoEncoder::ANTI_HORARIO)
                 navegarAnterior();
-            if (botaoPressionado || botaoLongoPressionado)
+            if (botaoPressionado)
                 selecionar();
         }
         break;
 
     case EstadoMenu::IRRIGACAO_MANUAL:
-        // Clique longo volta para a tela inicial
-        if (botaoLongoPressionado)
-        {
-            voltar();
-            break;
-        }
-
         // Girar navega entre setores
         if (direcao == DirecaoEncoder::HORARIO)
         {
@@ -164,9 +159,8 @@ void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bo
                     Serial.println(_setorAtual + 1);
             }
         }
-        // Botão: toggle do setor OU sair se pressão longa (futuro)
-        // Por ora: pressão simples = toggle. Voltar pelo item de menu "Voltar"
-        // será adicionado na Fase 5. Por ora pressionar no menu nav volta.
+        // Botão curto: toggle do setor.
+        // Para sair, selecione o item de menu "< Voltar".
         if (botaoPressionado)
         {
             if (_setorAtual == NUM_VALVULAS)
@@ -205,7 +199,7 @@ void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bo
         }
 
         // Tela informativa: qualquer clique retorna ao status.
-        if (botaoPressionado || botaoLongoPressionado)
+        if (botaoPressionado)
         {
             voltar();
         }
@@ -256,6 +250,7 @@ int MenuController::totalItens() const
 
 EtapaProgramacao MenuController::etapaProgramacao() const { return _etapaProgramacao; }
 int MenuController::agendaProgramacao() const { return _agendaProgramacao; }
+bool MenuController::opcaoVoltarProgramacaoSelecionada() const { return _opcaoVoltarProgramacao; }
 int MenuController::opcaoSubmenuProgramacao() const { return _opcaoSubmenuProgramacao; }
 int MenuController::opcaoConfirmarExclusao() const { return _opcaoConfirmarExclusao; }
 int MenuController::cursorDiaProgramacao() const { return _cursorDiaProgramacao; }
@@ -280,6 +275,7 @@ int MenuController::configAno() const { return _configAno; }
 int MenuController::configTimeoutManualMin() const { return _configTimeoutManualMin; }
 int MenuController::configDuracaoPadraoMin() const { return _configDuracaoPadraoMin; }
 int MenuController::configSetorTeste() const { return _configSetorTeste; }
+bool MenuController::opcaoVoltarTesteValvulasSelecionada() const { return _configSetorTeste == NUM_VALVULAS; }
 bool MenuController::feedbackConfiguracaoSalvo() const { return _feedbackConfiguracaoSalvo; }
 void MenuController::limparFeedbackConfiguracaoSalvo() { _feedbackConfiguracaoSalvo = false; }
 bool MenuController::feedbackConfiguracaoLimpo() const { return _feedbackConfiguracaoLimpo; }
@@ -365,6 +361,7 @@ void MenuController::entrarProgramacao()
 {
     _feedbackProgramacao = FeedbackProgramacao::NENHUM;
     _agendaProgramacao = 0;
+    _opcaoVoltarProgramacao = false;
     _opcaoSubmenuProgramacao = 0;
     _opcaoConfirmarExclusao = 1;
     _cursorDiaProgramacao = 0;
@@ -375,48 +372,11 @@ void MenuController::entrarProgramacao()
 
 void MenuController::processarProgramacao(DirecaoEncoder direcao, bool botaoPressionado, bool botaoLongoPressionado)
 {
-    if (botaoLongoPressionado)
+    // Clique longo permanece apenas na edicao de dias para retorno rapido.
+    if (botaoLongoPressionado && _etapaProgramacao == EtapaProgramacao::EDIT_DIAS)
     {
-        if (_etapaProgramacao == EtapaProgramacao::SELECIONAR_AGENDA)
-        {
-            voltar();
-            return;
-        }
-
-        if (_etapaProgramacao == EtapaProgramacao::SUBMENU_AGENDA)
-        {
-            _etapaProgramacao = EtapaProgramacao::SELECIONAR_AGENDA;
-            return;
-        }
-
-        if (_etapaProgramacao == EtapaProgramacao::CONFIRMAR_EXCLUSAO)
-        {
-            _etapaProgramacao = EtapaProgramacao::SUBMENU_AGENDA;
-            return;
-        }
-
-        if (_etapaProgramacao == EtapaProgramacao::EDIT_DIAS)
-        {
-            _etapaProgramacao = EtapaProgramacao::SUBMENU_AGENDA;
-            _feedbackProgramacao = FeedbackProgramacao::NENHUM;
-            return;
-        }
-
-        if (_etapaProgramacao == EtapaProgramacao::EDIT_SETORES)
-        {
-            _etapaProgramacao = EtapaProgramacao::SUBMENU_AGENDA;
-            return;
-        }
-
-        if (_etapaProgramacao == EtapaProgramacao::EDIT_HORA ||
-            _etapaProgramacao == EtapaProgramacao::EDIT_MINUTO ||
-            _etapaProgramacao == EtapaProgramacao::EDIT_DURACAO)
-        {
-            _etapaProgramacao = EtapaProgramacao::SUBMENU_AGENDA;
-            return;
-        }
-
-        _etapaProgramacao = EtapaProgramacao::SELECIONAR_AGENDA;
+        _etapaProgramacao = EtapaProgramacao::SUBMENU_AGENDA;
+        _feedbackProgramacao = FeedbackProgramacao::NENHUM;
         return;
     }
 
@@ -425,22 +385,50 @@ void MenuController::processarProgramacao(DirecaoEncoder direcao, bool botaoPres
     case EtapaProgramacao::SELECIONAR_AGENDA:
         if (direcao == DirecaoEncoder::HORARIO)
         {
-            _agendaProgramacao = (_agendaProgramacao + 1) % MAX_AGENDAS_TOTAIS;
+            if (_opcaoVoltarProgramacao)
+            {
+                _opcaoVoltarProgramacao = false;
+                _agendaProgramacao = 0;
+            }
+            else
+            {
+                _agendaProgramacao = (_agendaProgramacao + 1) % MAX_AGENDAS_TOTAIS;
+            }
             _feedbackProgramacao = FeedbackProgramacao::NENHUM;
             carregarAgendaSelecionada();
         }
         if (direcao == DirecaoEncoder::ANTI_HORARIO)
         {
-            _agendaProgramacao = (_agendaProgramacao - 1 + MAX_AGENDAS_TOTAIS) % MAX_AGENDAS_TOTAIS;
+            if (_opcaoVoltarProgramacao)
+            {
+                _opcaoVoltarProgramacao = false;
+                _agendaProgramacao = MAX_AGENDAS_TOTAIS - 1;
+                carregarAgendaSelecionada();
+            }
+            else if (_agendaProgramacao == 0)
+            {
+                _opcaoVoltarProgramacao = true;
+            }
+            else
+            {
+                _agendaProgramacao = _agendaProgramacao - 1;
+                carregarAgendaSelecionada();
+            }
             _feedbackProgramacao = FeedbackProgramacao::NENHUM;
-            carregarAgendaSelecionada();
         }
         if (botaoPressionado)
         {
+            if (_opcaoVoltarProgramacao)
+            {
+                voltar();
+                return;
+            }
+
             prepararEdicaoDaAgenda();
             _opcaoSubmenuProgramacao = 0;
             _etapaProgramacao = EtapaProgramacao::SUBMENU_AGENDA;
             _feedbackProgramacao = FeedbackProgramacao::NENHUM;
+            _opcaoVoltarProgramacao = false;
         }
         break;
 
@@ -481,11 +469,12 @@ void MenuController::processarProgramacao(DirecaoEncoder direcao, bool botaoPres
                 }
                 break;
             case 6:
-                _opcaoConfirmarExclusao = 1; // 0=SIM, 1=NAO (default seguro)
+                _opcaoConfirmarExclusao = 1; // 0=SIM, 1=NÃO (default seguro)
                 _etapaProgramacao = EtapaProgramacao::CONFIRMAR_EXCLUSAO;
                 break;
             case 7:
                 _etapaProgramacao = EtapaProgramacao::SELECIONAR_AGENDA;
+                _opcaoVoltarProgramacao = false;
                 break;
             }
         }
@@ -640,7 +629,7 @@ void MenuController::ajustarCampoEdicao(DirecaoEncoder direcao)
         break;
     }
     case EtapaProgramacao::EDIT_DIAS:
-        _cursorDiaProgramacao = (_cursorDiaProgramacao + 7 + delta) % 7;
+        _cursorDiaProgramacao = (_cursorDiaProgramacao + 8 + delta) % 8;
         break;
     case EtapaProgramacao::EDIT_SETORES:
         _cursorSetorProgramacao = (_cursorSetorProgramacao + (NUM_VALVULAS + 1) + delta) % (NUM_VALVULAS + 1);
@@ -652,6 +641,12 @@ void MenuController::ajustarCampoEdicao(DirecaoEncoder direcao)
 
 void MenuController::alternarDiaCursor()
 {
+    if (_cursorDiaProgramacao == 7)
+    {
+        _etapaProgramacao = EtapaProgramacao::SUBMENU_AGENDA;
+        return;
+    }
+
     uint8_t bit = (1 << _cursorDiaProgramacao);
     if (_agendaEdicao.diasMask & bit)
     {
@@ -704,48 +699,7 @@ void MenuController::entrarConfiguracoes()
 
 void MenuController::processarConfiguracoes(DirecaoEncoder direcao, bool botaoPressionado, bool botaoLongoPressionado)
 {
-    if (botaoLongoPressionado)
-    {
-        if (_etapaConfiguracao == EtapaConfiguracao::MENU)
-        {
-            voltar();
-            return;
-        }
-
-        if (_etapaConfiguracao == EtapaConfiguracao::SUBMENU_RELOGIO ||
-            _etapaConfiguracao == EtapaConfiguracao::SUBMENU_SISTEMA)
-        {
-            _etapaConfiguracao = EtapaConfiguracao::MENU;
-            _opcaoConfiguracao = 0;
-            return;
-        }
-
-        if (_etapaConfiguracao == EtapaConfiguracao::EDIT_HORA ||
-            _etapaConfiguracao == EtapaConfiguracao::EDIT_MINUTO ||
-            _etapaConfiguracao == EtapaConfiguracao::EDIT_DIA ||
-            _etapaConfiguracao == EtapaConfiguracao::EDIT_MES ||
-            _etapaConfiguracao == EtapaConfiguracao::EDIT_ANO ||
-            _etapaConfiguracao == EtapaConfiguracao::EDIT_TIMEOUT_MANUAL)
-        {
-            _etapaConfiguracao = EtapaConfiguracao::SUBMENU_RELOGIO;
-            return;
-        }
-
-        if (_etapaConfiguracao == EtapaConfiguracao::TESTE_VALVULAS)
-        {
-            _etapaConfiguracao = EtapaConfiguracao::SUBMENU_SISTEMA;
-            return;
-        }
-
-        if (_etapaConfiguracao == EtapaConfiguracao::CONFIRMAR_RESTAURAR_PADRAO)
-        {
-            _etapaConfiguracao = EtapaConfiguracao::SUBMENU_SISTEMA;
-            return;
-        }
-
-        _etapaConfiguracao = EtapaConfiguracao::SUBMENU_SISTEMA;
-        return;
-    }
+    (void)botaoLongoPressionado;
 
     if (_etapaConfiguracao == EtapaConfiguracao::MENU)
     {
@@ -872,11 +826,17 @@ void MenuController::processarConfiguracoes(DirecaoEncoder direcao, bool botaoPr
     {
         if (direcao == DirecaoEncoder::HORARIO)
         {
-            _configSetorTeste = (_configSetorTeste + 1) % NUM_VALVULAS;
+            _configSetorTeste = (_configSetorTeste + 1) % (NUM_VALVULAS + 1);
         }
         else if (direcao == DirecaoEncoder::ANTI_HORARIO)
         {
-            _configSetorTeste = (_configSetorTeste - 1 + NUM_VALVULAS) % NUM_VALVULAS;
+            _configSetorTeste = (_configSetorTeste - 1 + (NUM_VALVULAS + 1)) % (NUM_VALVULAS + 1);
+        }
+
+        if (botaoPressionado && _configSetorTeste == NUM_VALVULAS)
+        {
+            _etapaConfiguracao = EtapaConfiguracao::SUBMENU_SISTEMA;
+            _opcaoConfiguracao = 0;
         }
         return;
     }

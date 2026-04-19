@@ -112,9 +112,10 @@ public:
     // Total de itens no menu principal
     int totalItens() const;
 
-    // Programacao Fase 5
+    // Programação Fase 5
     EtapaProgramacao etapaProgramacao() const;
     int agendaProgramacao() const;
+    bool opcaoVoltarProgramacaoSelecionada() const;
     int opcaoSubmenuProgramacao() const;
     int opcaoConfirmarExclusao() const;
     int cursorDiaProgramacao() const;
@@ -125,7 +126,7 @@ public:
     void limparFeedbackProgramacao();
     bool consumirEventoAgendaExcluida();
 
-    // Configuracoes
+    // Configurações
     EtapaConfiguracao etapaConfiguracao() const;
     int opcaoConfiguracao() const;
     int configHora() const;
@@ -136,6 +137,7 @@ public:
     int configTimeoutManualMin() const;
     int configDuracaoPadraoMin() const;
     int configSetorTeste() const;
+    bool opcaoVoltarTesteValvulasSelecionada() const;
     bool feedbackConfiguracaoSalvo() const;
     void limparFeedbackConfiguracaoSalvo();
     bool feedbackConfiguracaoLimpo() const;
@@ -159,15 +161,16 @@ private:
 
     // Irrigação manual
     int _setorAtual;      // setor em foco no encoder (0 a NUM_VALVULAS-1)
-    int _paginaWebServer; // indice da pagina na tela de WebServer
+    int _paginaWebServer; // índice da página na tela de WebServer
     bool _timeoutOcorreu; // flag para display exibir aviso
     int _setorTimeout;    // qual setor foi fechado por timeout
 
-    // Programacao Fase 5
+    // Programação Fase 5
     EtapaProgramacao _etapaProgramacao;
     FeedbackProgramacao _feedbackProgramacao;
     bool _eventoAgendaExcluida;
     int _agendaProgramacao;
+    bool _opcaoVoltarProgramacao;
     int _opcaoSubmenuProgramacao;
     int _opcaoConfirmarExclusao;
     int _cursorDiaProgramacao;
@@ -175,7 +178,7 @@ private:
     AgendaSetor _agendaEdicao;
     AgendaSetor _agendaSelecionada;
 
-    // Configuracoes
+    // Configurações
     EtapaConfiguracao _etapaConfiguracao;
     int _opcaoConfiguracao;
     uint8_t _configHora;

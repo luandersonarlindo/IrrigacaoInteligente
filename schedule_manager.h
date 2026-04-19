@@ -49,8 +49,8 @@ public:
     int totalAtivas() const;
     uint16_t duracaoPadraoMin() const;
 
-    // Localiza a proxima execucao real considerando dia/horario das agendas.
-    // Retorna false quando nao houver nenhuma agenda ativa valida.
+    // Localiza a próxima execução real considerando dia/horário das agendas.
+    // Retorna false quando não houver nenhuma agenda ativa válida.
     bool obterProximaExecucao(const DateTime &agora, DateTime &proximaDataHora, AgendaSetor &agenda, int &slot) const;
 
     // Preenche duracoesMinPorSetor para disparos do minuto atual.

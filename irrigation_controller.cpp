@@ -77,8 +77,8 @@ void IrrigationController::iniciarAgendamento(int indice, uint16_t duracaoMin)
     }
     else
     {
-        // Se a agenda atingiu uma valvula ja aberta manualmente,
-        // a exibicao deve passar a refletir origem automatica em tempo real.
+        // Se a agenda atingiu uma válvula já aberta manualmente,
+        // a exibição deve passar a refletir origem automática em tempo real.
         bool eraManualAntes = _origemManual[indice];
         _origemManual[indice] = false;
 
@@ -89,7 +89,7 @@ void IrrigationController::iniciarAgendamento(int indice, uint16_t duracaoMin)
             Serial.println(" assumido por agendamento.");
         }
 
-        // Em conflito de horario, conserva o maior tempo restante.
+        // Em conflito de horário, conserva o maior tempo restante.
         if ((long)(novoDeadline - _deadlineFechamento[indice]) > 0)
         {
             atualizarDeadline(indice, novoDeadline, false);

@@ -1,28 +1,28 @@
-# 📜 Fase 5 - Contrato Tecnico de Agendamento
+# 📜 Fase 5 - Contrato Técnico de Agendamento
 
-📅 Data original: 2026-04-10
-🔄 Revisao de alinhamento: 2026-04-17
+📅 Data original: 2026-04-10  
+🔄 Revisão de alinhamento: 2026-04-19  
 ✅ Status: implementado (modelo global de agendas)
 
-## 1. ✅ Decisoes de produto fechadas (revisao atual)
+## 1. ✅ Decisões de produto fechadas (revisão atual)
 
-1. D1: agendas globais com selecao de setores por mascara de bits.
-2. D2: agendamento semanal por dias da semana (nao apenas diario).
-3. D3: persistencia no ESP32 via NVS para agenda e configuracoes runtime.
-4. D4: limite de 4 slots de agenda no sistema.
-5. D5: edicao por encoder com campos hora, minuto, duracao, dias e setores.
-6. D6: execucao automatica sequencial por lotes, com limite de simultaneos e intervalo entre lotes.
-7. D7: dashboard com endpoint de alertas/eventos e historico operacional.
+1. D1: Agendas globais com seleção de setores por máscara de bits.
+2. D2: Agendamento semanal por dias da semana.
+3. D3: Persistência no ESP32 via NVS para agenda e configurações runtime.
+4. D4: Limite de 4 slots de agenda no sistema.
+5. D5: Edição por encoder com campos hora, minuto, duração, dias e setores.
+6. D6: Execução automática sequencial por lotes, com limite de simultâneos e intervalo entre lotes.
+7. D7: Dashboard com endpoint de alertas/eventos e histórico operacional.
 
 ## 2. 🎯 Escopo da Fase 5 (implementado)
 
-Implementar agendamento automatico semanal para ate 8 setores fisicos, com ate 4 agendas globais.
+Implementar agendamento automático semanal para até 8 setores físicos, com até 4 agendas globais.
 
 Capacidade atual:
 
-- 8 setores (reles)
+- 8 setores (relés)
 - 4 agendas totais (slots)
-- cada agenda pode atuar em 1..8 setores via setoresMask
+- Cada agenda pode atuar em 1..8 setores via `setoresMask`
 
 ## 3. 🧾 Modelo de dados (contrato atual)
 
@@ -61,7 +61,7 @@ struct BancoAgendas {
 };
 ```
 
-### 3.3 ⚙️ Configuracao runtime persistida
+### 3.3 ⚙️ Configuração runtime persistida
 
 ```cpp
 struct BancoConfigRuntime {
@@ -72,132 +72,147 @@ struct BancoConfigRuntime {
 };
 ```
 
-## 4. 📏 Regras funcionais obrigatorias
+### 3.4 🗂️ Cache diário de execução
 
-1. Agenda valida: pelo menos 1 dia marcado.
-2. Agenda valida: pelo menos 1 setor marcado.
-3. Horario valido: hora 0..23 e minuto 0..59.
-4. Duracao minima: 1 minuto (UI aplica limite superior de 240).
-5. Nao permitir duplicidade exata entre slots:
-   hora igual + minuto igual + diasMask igual + setoresMask igual.
+```cpp
+struct CacheExecucaoDiaria {
+    uint16_t versao;
+    uint16_t crc;
+    int32_t ultimaExecucaoDiaPorSlot[MAX_AGENDAS_TOTAIS];
+};
+```
+
+Finalidade: impedir repetição indevida do mesmo slot no mesmo dia, inclusive após reboot.
+
+## 4. 📏 Regras funcionais obrigatórias
+
+1. Agenda válida: pelo menos 1 dia marcado.
+2. Agenda válida: pelo menos 1 setor marcado.
+3. Horário válido: hora 0..23 e minuto 0..59.
+4. Duração mínima: 1 minuto (UI limita em 240).
+5. Não permitir duplicidade exata entre slots:
+   hora + minuto + diasMask + setoresMask iguais.
 6. Limite de 4 slots de agenda no sistema.
 7. Em reboot, recarregar dados persistidos automaticamente.
-8. Se versao/CRC estiverem invalidos, resetar banco para padrao seguro.
-9. Timeout manual runtime deve ficar no intervalo de 1..120 min.
-10. Duracao padrao runtime deve ficar no intervalo de 1..240 min.
-11. Slot de agenda nao deve disparar duas vezes no mesmo dia apos execucao confirmada.
+8. Se versão/CRC estiverem inválidos, resetar banco para padrão seguro.
+9. Timeout manual runtime: 1..120 min.
+10. Duração padrão runtime: 1..240 min.
+11. Slot de agenda não deve disparar duas vezes no mesmo dia após execução confirmada.
 
-## 5. 💾 Politica de persistencia
+## 5. 💾 Política de persistência
 
-Meio: ESP32 NVS (Preferences).
+Meio: ESP32 NVS (`Preferences`).
 
 Diretrizes:
 
-1. Persistir apenas quando houver alteracao (salvar/editar/excluir/restaurar).
-2. Escrever bloco completo com versao e CRC.
+1. Persistir apenas quando houver alteração relevante.
+2. Escrever bloco completo com versão e CRC.
 3. Leitura no boot:
-   - se versao e CRC ok: carregar banco;
-   - se invalido: inicializar padrao e salvar.
-4. DS3231 nao guarda agenda; DS3231 apenas fornece horario confiavel.
-5. Runtime config (timeout e duracao padrao) segue politica equivalente em banco proprio.
+   - Se versão e CRC OK: carregar banco.
+   - Se inválido: inicializar padrão e salvar.
+4. DS3231 não guarda agenda; DS3231 apenas fornece horário confiável.
+5. Runtime config segue política equivalente em banco próprio.
+6. Cache diário de execução segue versão e CRC, separado do banco principal de agendas.
 
-## 6. ⚙️ Motor de execucao de agendas
+## 6. ⚙️ Motor de execução de agendas
 
-Avaliacao no loop com gatilho por minuto + execucao sequencial por lotes.
+Avaliação no loop com gatilho por minuto + execução sequencial por lotes.
 
 Regras:
 
 1. Verificar disparo quando o minuto mudar.
-2. Para cada agenda ativa e valida no dia atual:
-   - avaliar janela temporal da agenda;
-   - identificar lote atual e lotes pendentes;
-   - gerar duracoes por setor para enfileiramento.
-3. Se o horario atual cair no meio da janela da agenda, retomar no lote-alvo com duracao remanescente do lote corrente.
-4. Respeitar limite de simultaneos por lote (MAX_SETOR_SIMULTANEOS_AGENDA).
-5. Respeitar intervalo entre lotes (INTERVALO_LOTE_AGENDA_MS).
-6. Em conflito no mesmo setor, manter maior duracao.
-7. Exclusao de agenda durante execucao cancela rotina automatica em andamento.
-8. Se setor manual estiver aberto e chegar comando automatico, manter coerencia por maior deadline.
+2. Para cada agenda ativa e válida no dia atual:
+   - Avaliar janela temporal da agenda.
+   - Identificar lote atual e lotes pendentes.
+   - Gerar durações por setor para enfileiramento.
+3. Se o horário atual cair no meio da janela da agenda, retomar no lote-alvo com duração remanescente do lote corrente.
+4. Respeitar limite de simultâneos por lote (`MAX_SETOR_SIMULTANEOS_AGENDA`).
+5. Respeitar intervalo entre lotes (`INTERVALO_LOTE_AGENDA_MS`).
+6. Em conflito no mesmo setor, manter a maior duração.
+7. Exclusão de agenda durante execução cancela rotina automática em andamento.
+8. Se setor manual estiver aberto e chegar comando automático, manter coerência por maior deadline.
 
-## 7. 🔌 Contrato entre modulos
+## 7. 🔌 Contrato entre módulos
 
-## 7.1 🧩 Modulos envolvidos
+### 7.1 🧩 Módulos envolvidos
 
-- schedule_manager.h/.cpp
-- runtime_config_manager.h/.cpp
-- irrigation_controller.h/.cpp
-- menu_controller.h/.cpp
-- display_manager.h/.cpp
-- web_ap_manager.h/.cpp
+- `schedule_manager.h/.cpp`
+- `runtime_config_manager.h/.cpp`
+- `irrigation_controller.h/.cpp`
+- `menu_controller.h/.cpp`
+- `display_manager.h/.cpp`
+- `web_ap_manager.h/.cpp`
 
 Responsabilidades principais:
 
-1. schedule_manager: CRUD, validacao, persistencia e avaliacao de disparo.
-2. runtime_config_manager: persistencia de timeout e duracao padrao.
-3. irrigation_controller: acionamento de reles e deadlines.
-4. menu_controller/display_manager: UX local no OLED com encoder.
-5. web_ap_manager: dashboard web e API para status/comandos.
+1. `schedule_manager`: CRUD, validação, persistência e avaliação de disparo.
+2. `runtime_config_manager`: persistência de timeout e duração padrão.
+3. `irrigation_controller`: acionamento de relés e deadlines.
+4. `menu_controller`/`display_manager`: UX local no OLED com encoder.
+5. `web_ap_manager`: dashboard web e API para status/comandos.
 
-## 7.2 🔄 Integracao com o loop atual
+### 7.2 🔄 Integração com o loop atual
 
 No loop principal:
 
 1. Ler encoder e processar menu.
-2. Atualizar irrigacao (timeouts/deadlines).
+2. Atualizar irrigação (timeouts/deadlines).
 3. Avaliar disparos por minuto (RTC).
 4. Enfileirar e executar lotes sequenciais.
 5. Atualizar estado visual no display.
 6. Processar servidor web.
 
-## 7.3 🌐 Contrato minimo da API web
+### 7.3 🌐 Contrato mínimo da API web
 
 Rotas principais implementadas:
 
-1. GET /api/status
-2. GET /api/schedules
-3. GET /api/events
-4. POST /api/valve/toggle
-5. POST /api/valve/set
-6. POST /api/valves/off-all
-7. POST /api/schedule/save
-8. POST /api/schedule/delete
-9. POST /api/schedule/clear
-10. POST /api/config/runtime
-11. POST /api/rtc/set
+1. `GET /status`
+2. `GET /api/status`
+3. `GET /api/schedules`
+4. `GET /api/events`
+5. `POST /api/valve/toggle`
+6. `POST /api/valve/set`
+7. `POST /api/valves/off-all`
+8. `POST /api/schedule/save`
+9. `POST /api/schedule/delete`
+10. `POST /api/schedule/clear`
+11. `POST /api/config/runtime`
+12. `POST /api/rtc/set`
 
 Regras:
 
-1. Parametro index (valvula) aceita base 1 e base 0.
-2. Parametro slot (agenda) aceita base 1 e base 0.
-3. Erros em /api/* retornam JSON com ok=false e descricao do erro.
-4. Historico de eventos usa buffer circular de ate 40 registros.
+1. Parâmetro `index` (válvula) aceita base 1 e base 0.
+2. Parâmetro `slot` (agenda) aceita base 1 e base 0.
+3. Em `/api/valve/set`, `state` aceita `1/0`, `true/false`, `on/off`, `ligado/desligado`.
+4. Erros em `/api/*` retornam JSON com `ok=false` e descrição do erro.
+5. Histórico de eventos usa buffer circular de até 40 registros.
 
-## 8. 🖥️ UX da programacao no OLED (implementado)
+## 8. 🖥️ UX da programação no OLED (implementado)
 
-Fluxo de programacao:
+Fluxo de programação:
 
 1. Selecionar slot de agenda (1..4).
 2. Abrir submenu da agenda.
-3. Opcoes do submenu:
+3. Opções do submenu:
    - editar hora
    - editar minuto
-   - editar duracao
+   - editar duração
    - editar dias
    - editar setores
    - salvar
    - excluir
    - voltar
 
-Interacoes:
+Interações:
 
 1. Giro: altera valor do campo ou cursor.
 2. Clique curto:
-   - alterna dia (em EDIT_DIAS)
-   - alterna setor (em EDIT_SETORES)
-   - executa acao no submenu
-3. Clique longo: voltar/cancelar para etapa anterior conforme contexto.
+   - alterna dia (em `EDIT_DIAS`)
+   - alterna setor (em `EDIT_SETORES`)
+   - executa ação no submenu
+3. Clique longo: atalho implementado na etapa `EDIT_DIAS` para retorno ao submenu.
 
-## 9. 🧠 Maquina de estados da programacao (resumo)
+## 9. 🧠 Máquina de estados da programação (resumo)
 
 ```text
 SELECIONAR_AGENDA
@@ -214,32 +229,32 @@ SUBMENU_AGENDA
   -> VOLTAR
 ```
 
-## 10. ✅ Criterios de aceite da Fase 5 (revisados)
+## 10. ✅ Critérios de aceite da Fase 5 (revisados)
 
-1. Usuario consegue criar/editar/excluir ate 4 agendas via encoder.
-2. Usuario consegue marcar/desmarcar dias e setores por agenda.
-3. Agendas persistem apos desligar e ligar novamente.
-4. Agendas disparam no horario correto com base no RTC.
+1. Usuário consegue criar/editar/excluir até 4 agendas via encoder.
+2. Usuário consegue marcar/desmarcar dias e setores por agenda.
+3. Agendas persistem após desligar e ligar novamente.
+4. Agendas disparam no horário correto com base no RTC.
 5. Sistema evita duplicidade exata de agenda.
-6. Execucao por lotes respeita simultaneidade e intervalo.
-7. Nao ha regressao da irrigacao manual existente.
+6. Execução por lotes respeita simultaneidade e intervalo.
+7. Não há regressão da irrigação manual existente.
 8. Dashboard web apresenta status e aplica comandos sem erro.
-9. Endpoint /api/events retorna alertas ativos e historico operacional.
-10. Runtime config respeita limites de timeout e duracao apos salvar.
+9. Endpoint `/api/events` retorna alertas ativos e histórico operacional.
+10. Runtime config respeita limites de timeout e duração após salvar.
 
 ## 11. 🚧 Limites atuais
 
-1. Modelo atual e global por slot (nao por setor).
+1. Modelo atual é global por slot (não por setor).
 2. Limite de 4 agendas totais.
-3. Sem excecoes por data especifica (calendario).
-4. Sem orquestracao avancada multi-zona alem da regra de lotes.
+3. Sem exceções por data específica (calendário).
+4. Sem orquestração avançada multi-zona além da regra de lotes.
 
-## 12. 🛣️ Plano de evolucao sugerido
+## 12. 🛣️ Plano de evolução sugerido
 
-1. Definir formalmente modelo final (global vs por setor) para proxima fase.
-2. Se necessario, migrar estrutura para 16 agendas (4x4) com estrategia de compatibilidade.
+1. Definir formalmente modelo final (global vs por setor) para próxima fase.
+2. Se necessário, migrar estrutura para 16 agendas (4x4) com estratégia de compatibilidade.
 3. Adicionar testes automatizados para motor de lotes e APIs web.
-4. Consolidar criterios de UX para reduzir profundidade de navegacao no OLED.
+4. Consolidar critérios de UX para reduzir profundidade de navegação no OLED.
 
 ---
 

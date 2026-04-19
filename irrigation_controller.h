@@ -31,8 +31,8 @@ public:
     // Retorna o novo estado após o toggle
     EstadoValvula toggleValvula(int indice);
 
-    // Aciona por agendamento por um periodo em minutos.
-    // Se a valvula ja estiver aberta, preserva o maior tempo restante.
+    // Aciona por agendamento por um período em minutos.
+    // Se a válvula já estiver aberta, preserva o maior tempo restante.
     void iniciarAgendamento(int indice, uint16_t duracaoMin);
 
     // Fecha uma válvula específica
@@ -47,11 +47,11 @@ public:
     // Retorna true se alguma válvula está aberta
     bool algumAbertas() const;
 
-    // Origem da valvula aberta: false = manual, true = agendamento automatico.
+    // Origem da válvula aberta: false = manual, true = agendamento automático.
     bool valvulaEmAgendamento(int indice) const;
 
     // Deve ser chamado no loop() — verifica timeout de segurança
-    // Retorna indice da válvula que foi fechada por timeout, -1 se nenhuma
+    // Retorna índice da válvula que foi fechada por timeout, -1 se nenhuma
     int atualizar();
 
 private:

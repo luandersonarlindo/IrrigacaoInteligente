@@ -161,7 +161,7 @@ void enfileirarDisparosAgenda(const uint16_t duracoesMinPorSetor[NUM_VALVULAS]) 
         recebeuNovoDisparo = true;
 
         if (execAgenda.setorNoLote[i] && irrigacao.estadoValvula(i) == EstadoValvula::ABERTA) {
-            // Se o setor ja esta em execucao, estende apenas se necessario.
+            // Se o setor já está em execução, estende apenas se necessário.
             irrigacao.iniciarAgendamento(i, duracao);
             continue;
         }
@@ -288,10 +288,7 @@ void loop() {
     // 3. Processa navegação no menu
     //    Se está na tela de irrigação e botão pressionado → toggle do setor
     if (menu.estadoAtual() == EstadoMenu::IRRIGACAO_MANUAL) {
-        if (botaoLongo) {
-            // Clique longo: voltar para tela inicial
-            menu.processar(direcao, false, true);
-        } else if (botaoCurto) {
+        if (botaoCurto) {
             if (menu.opcaoVoltarIrrigacaoSelecionada()) {
                 // Clique curto no item Voltar: deixa o MenuController retornar ao status
                 menu.processar(direcao, true, false);
@@ -307,11 +304,13 @@ void loop() {
         }
     } else if (menu.estadoAtual() == EstadoMenu::CONFIGURACOES &&
                menu.etapaConfiguracao() == EtapaConfiguracao::TESTE_VALVULAS) {
-        if (botaoLongo) {
-            menu.processar(direcao, false, true);
-        } else if (botaoCurto) {
-            irrigacao.toggleValvula(menu.configSetorTeste());
-            menu.processar(direcao, false, false);
+        if (botaoCurto) {
+            if (menu.opcaoVoltarTesteValvulasSelecionada()) {
+                menu.processar(direcao, true, false);
+            } else {
+                irrigacao.toggleValvula(menu.configSetorTeste());
+                menu.processar(direcao, false, false);
+            }
         } else {
             menu.processar(direcao, false, false);
         }
@@ -319,7 +318,7 @@ void loop() {
         menu.processar(direcao, botaoCurto, botaoLongo);
     }
 
-    // Exclusao de agenda interrompe imediatamente a execucao automatica em andamento.
+    // Exclusão de agenda interrompe imediatamente a execução automática em andamento.
     if (menu.consumirEventoAgendaExcluida()) {
         cancelarExecucaoAgendaAutomatica();
     }
@@ -339,7 +338,7 @@ void loop() {
         menu.notificarTimeout(setorFechado);
     }
 
-    // 5. Avalia disparos de agendamento por minuto e enfileira execucao sequencial
+    // 5. Avalia disparos de agendamento por minuto e enfileira execução sequencial
     if (rtcDisponivel) {
         DateTime agora = rtc.agora();
         uint16_t duracoesMinPorSetor[NUM_VALVULAS] = {0};
@@ -347,7 +346,7 @@ void loop() {
         enfileirarDisparosAgenda(duracoesMinPorSetor);
     }
 
-    // 6. Processa lotes da agenda (max simultaneos + intervalo entre lotes)
+    // 6. Processa lotes da agenda (máx. simultâneos + intervalo entre lotes)
     atualizarExecucaoAgendaSequencial();
 
     // 6.1 Publica estado da agenda sequencial para o dashboard de status

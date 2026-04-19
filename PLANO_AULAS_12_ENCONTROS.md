@@ -1,274 +1,237 @@
-# Plano de Aula - Irrigacao Inteligente com ESP32 (12 encontros)
+# Plano de Aula - Irrigação Inteligente com ESP32 (12 encontros)
 
-Publico: adolescentes de 14 a 17 anos
-Duracao sugerida por aula: 80 a 100 minutos
-Objetivo geral: sair do basico de Arduino/ESP32 e chegar ao entendimento completo do projeto IrrigacaoInteligente.
+Público: adolescentes de 14 a 17 anos  
+Duração sugerida por aula: 80 a 100 minutos  
+Objetivo geral: sair do básico de Arduino/ESP32 e chegar ao entendimento completo do projeto IrrigacaoInteligente.
 
 ## Como usar este plano
 
-- Cada aula abaixo ja vem com roteiro de slides.
+- Cada aula já vem com roteiro de slides.
 - Cada slide foi pensado para ter pouco texto.
-- Use no maximo 3 bullets por slide.
-- Priorize demonstracao real e pratica curta em toda aula.
+- Use, no máximo, 3 bullets por slide.
+- Priorize demonstração real e prática curta em toda aula.
 
-## Padrao visual sugerido para todos os slides
+## Padrão visual sugerido para todos os slides
 
-- 1 titulo curto por slide.
+- 1 título curto por slide.
 - 1 ideia principal por slide.
 - 1 imagem forte ocupando boa parte da tela.
-- Texto grande (facil leitura no fundo da sala).
-- Evite paragrafos longos.
+- Texto grande (leitura fácil no fundo da sala).
+- Evite parágrafos longos.
 
-## Aula 1 - O que e Arduino e por que ESP32?
+## Aula 1 - O que é Arduino e por que ESP32?
 
 Objetivo:
-- Entender o que e microcontrolador e para que serve no mundo real.
+- Entender o que é microcontrolador e para que serve no mundo real.
 
 Slides (6):
-1. Titulo: Bem-vindos ao projeto de irrigacao inteligente
-- Problema real: regar no horario certo
-- Solucao: automacao com ESP32
-Imagem sugerida: foto de horta + sistema simples de irrigacao.
+1. Título: Bem-vindos ao projeto de irrigação inteligente
+- Problema real: regar no horário certo
+- Solução: automação com ESP32
 
-2. Titulo: O que e um microcontrolador?
-- Um mini computador para tarefas especificas
-- Le sensores e controla saidas
-Imagem sugerida: diagrama simples entrada -> processamento -> saida.
+2. Título: O que é um microcontrolador?
+- Um mini computador para tarefas específicas
+- Lê sensores e controla saídas
 
-3. Titulo: Arduino x ESP32
-- Arduino UNO: bom para comecar
+3. Título: Arduino x ESP32
+- Arduino UNO: bom para começar
 - ESP32: mais poder e Wi-Fi
-Imagem sugerida: ESP32 e Arduino lado a lado com legenda.
 
-4. Titulo: O que nosso projeto faz
-- Controle manual de 8 valvulas
-- Agenda semanal automatica
+4. Título: O que nosso projeto faz
+- Controle manual de 8 válvulas
+- Agenda semanal automática
 - Dashboard web local
-Imagem sugerida: print da tela OLED + print do dashboard.
 
-5. Titulo: Visao geral da arquitetura
+5. Título: Visão geral da arquitetura
 - Hardware + firmware + interface web
 - Tudo conectado em um loop principal
-Imagem sugerida: diagrama de blocos simplificado do projeto.
 
-6. Titulo: Combinados do curso
+6. Título: Combinados do curso
 - Aprender fazendo
 - Errar faz parte
-- Seguranca sempre
-Imagem sugerida: turma em laboratorio maker.
+- Segurança sempre
 
-Atividade pratica (15 min):
+Atividade prática (15 min):
 - Mostrar a placa ESP32 real e identificar pinos de energia, GPIO e USB.
 
-## Aula 2 - Eletricidade basica e seguranca
+## Aula 2 - Eletricidade básica e segurança
 
 Objetivo:
-- Compreender tensao, corrente e cuidados ao ligar rele e valvulas.
+- Compreender tensão, corrente e cuidados ao ligar relés e válvulas.
 
 Slides (6):
-1. Titulo: Conceitos basicos
-- Tensao (V), corrente (A), potencia (W)
-- Formula chave: P = V x I
-Imagem sugerida: infografico simples com unidades.
+1. Título: Conceitos básicos
+- Tensão (V), corrente (A), potência (W)
+- Fórmula-chave: P = V x I
 
-2. Titulo: Sinal logico e mundo fisico
+2. Título: Sinal lógico e mundo físico
 - ESP32 trabalha com sinal digital
-- Rele conecta carga maior
-Imagem sugerida: diagrama GPIO controlando rele.
+- Relé conecta carga maior
 
-3. Titulo: O que e um rele
+3. Título: O que é um relé
 - Interruptor controlado eletronicamente
 - Isolamento entre controle e carga
-Imagem sugerida: foto de modulo rele 4 canais.
 
-4. Titulo: Cuidados importantes
+4. Título: Cuidados importantes
 - Fonte correta
-- GND comum quando necessario
-- Nao tocar em ligacao energizada
-Imagem sugerida: checklist visual de seguranca.
+- GND comum quando necessário
+- Não tocar em ligação energizada
 
-5. Titulo: Erros comuns em bancada
+5. Título: Erros comuns em bancada
 - Cabo invertido
-- Falta de alimentacao
+- Falta de alimentação
 - Mau contato no protoboard
-Imagem sugerida: foto de protoboard com destaques.
 
-6. Titulo: Mini roteiro de teste seguro
-- Conferir ligacoes
+6. Título: Mini roteiro de teste seguro
+- Conferir ligações
 - Energizar
 - Testar um canal por vez
-Imagem sugerida: fluxograma de 3 passos.
 
-Atividade pratica (20 min):
-- Simular no quadro o caminho da energia ate uma valvula.
+Atividade prática (20 min):
+- Simular no quadro o caminho da energia até uma válvula.
 
-## Aula 3 - Componentes do projeto na pratica
+## Aula 3 - Componentes do projeto na prática
 
 Objetivo:
-- Entender papel de OLED, encoder, RTC DS3231 e reles.
+- Entender o papel de OLED, encoder, RTC DS3231 e relés.
 
 Slides (6):
-1. Titulo: Componentes principais
+1. Título: Componentes principais
 - ESP32
-- Encoder com botao
-- OLED, RTC e reles
-Imagem sugerida: foto com todos componentes identificados.
+- Encoder com botão
+- OLED, RTC e relés
 
-2. Titulo: OLED SSD1306
+2. Título: OLED SSD1306
 - Mostra menu e estados
 - Usa barramento I2C
-Imagem sugerida: esquema I2C com SDA/SCL.
 
-3. Titulo: RTC DS3231
-- Mantem hora precisa
+3. Título: RTC DS3231
+- Mantém hora precisa
 - Base para agendamento
-Imagem sugerida: RTC com bateria destacada.
 
-4. Titulo: Encoder rotativo
+4. Título: Encoder rotativo
 - Giro navega
 - Clique seleciona
-- Clique longo volta
-Imagem sugerida: sequencia de uso do encoder.
+- Clique curto é o comando principal no menu
 
-5. Titulo: Rele e valvula
-- Rele liga/desliga setor
-- Projeto controla ate 8 setores
-Imagem sugerida: 8 canais numerados 1..8.
+5. Título: Relé e válvula
+- Relé liga/desliga setor
+- Projeto controla até 8 setores
 
-6. Titulo: Mapa de pinos
+6. Título: Mapa de pinos
 - Tudo centralizado em Config.h
-- Facil de manter e evoluir
-Imagem sugerida: tabela de pinos em estilo visual.
+- Fácil de manter e evoluir
 
-Atividade pratica (20 min):
-- Alunos montam um mapa de conexoes em papel A4.
+Atividade prática (20 min):
+- Alunos montam um mapa de conexões em papel A4.
 
-## Aula 4 - Primeiros passos no codigo
+## Aula 4 - Primeiros passos no código
 
 Objetivo:
-- Ler o projeto sem medo e entender modularizacao.
+- Ler o projeto sem medo e entender modularização.
 
 Slides (7):
-1. Titulo: Estrutura de pastas e arquivos
-- Arquivo principal .ino
-- Modulos .h e .cpp
-Imagem sugerida: print da arvore de arquivos.
+1. Título: Estrutura de pastas e arquivos
+- Arquivo principal `.ino`
+- Módulos `.h` e `.cpp`
 
-2. Titulo: O papel do arquivo .ino
+2. Título: O papel do arquivo `.ino`
 - Setup inicializa tudo
 - Loop roda para sempre
-Imagem sugerida: ciclo setup -> loop.
 
-3. Titulo: Driver vs Manager
+3. Título: Driver vs Manager
 - Driver fala com hardware
-- Manager decide regra de negocio
-Imagem sugerida: comparativo em duas colunas.
+- Manager decide regra de negócio
 
-4. Titulo: Modulos do projeto
+4. Título: Módulos do projeto
 - menu_controller
 - schedule_manager
 - irrigation_controller
-Imagem sugerida: cards com cada modulo.
 
-5. Titulo: Config.h e parametros globais
+5. Título: Config.h e parâmetros globais
 - Pinos e limites
 - Wi-Fi e regras de runtime
-Imagem sugerida: trecho curto de Config.h em destaque.
 
-6. Titulo: Leitura de codigo para iniciantes
-- Primeiro nomes de funcoes
+6. Título: Leitura de código para iniciantes
+- Primeiro nomes de funções
 - Depois fluxo de chamadas
-Imagem sugerida: marca-texto em codigo curto.
 
-7. Titulo: Dica de estudo
+7. Título: Dica de estudo
 - Entenda primeiro o fluxo
-- Depois detalhe modulo por modulo
-Imagem sugerida: escada de aprendizado.
+- Depois detalhe módulo por módulo
 
-Atividade pratica (20 min):
-- Em dupla, cada grupo explica 1 modulo em 1 minuto.
+Atividade prática (20 min):
+- Em dupla, cada grupo explica 1 módulo em 1 minuto.
 
-## Aula 5 - Entrada do usuario (encoder + menu)
+## Aula 5 - Entrada do usuário (encoder + menu)
 
 Objetivo:
-- Entender como o usuario controla o sistema localmente.
+- Entender como o usuário controla o sistema localmente.
 
 Slides (6):
-1. Titulo: Jornada do usuario
+1. Título: Jornada do usuário
 - Gira encoder
 - Menu muda
-- Acao executa
-Imagem sugerida: setas de interacao usuario -> sistema.
+- Ação executa
 
-2. Titulo: Estados de menu
+2. Título: Estados de menu
 - STATUS
 - IRRIGACAO_MANUAL
 - PROGRAMAR / WEBSERVER / CONFIGURACOES
-Imagem sugerida: maquina de estados simples.
 
-3. Titulo: Clique curto e clique longo
-- Curto: selecionar
-- Longo: voltar/cancelar
-Imagem sugerida: icones de botao curto e longo.
+3. Título: Clique curto e clique longo
+- Curto: selecionar/alternar
+- Longo: atalho em contextos específicos
 
-4. Titulo: UX no OLED
+4. Título: UX no OLED
 - Texto curto
 - Cursor claro
 - Feedback imediato
-Imagem sugerida: mock de tela com cursor.
 
-5. Titulo: Erros de navegacao comuns
+5. Título: Erros de navegação comuns
 - Pular item sem querer
 - Entrar em tela errada
-Imagem sugerida: meme visual leve de erro de menu.
 
-6. Titulo: Boas praticas de interface embarcada
+6. Título: Boas práticas de interface embarcada
 - Simples
-- Rapida
-- Previsivel
-Imagem sugerida: semaforo verde com 3 criterios.
+- Rápida
+- Previsível
 
-Atividade pratica (20 min):
-- Simular navegacao de menu sem hardware (jogo de papeis em sala).
+Atividade prática (20 min):
+- Simular navegação de menu sem hardware (jogo de papéis em sala).
 
-## Aula 6 - Controle manual de irrigacao
+## Aula 6 - Controle manual de irrigação
 
 Objetivo:
-- Entender como uma valvula abre, fecha e respeita timeout de seguranca.
+- Entender como uma válvula abre, fecha e respeita timeout de segurança.
 
 Slides (6):
-1. Titulo: Modo manual
+1. Título: Modo manual
 - Escolher setor
 - Ligar/desligar com clique
-Imagem sugerida: lista de setores 1..8 em mock OLED.
 
-2. Titulo: Estado da valvula
+2. Título: Estado da válvula
 - ABERTA
 - FECHADA
 - Origem manual ou agenda
-Imagem sugerida: diagrama de estados simples.
 
-3. Titulo: Timeout manual
-- Evita valvula esquecida aberta
-- Valor configuravel em runtime
-Imagem sugerida: relogio regressivo.
+3. Título: Timeout manual
+- Evita válvula esquecida aberta
+- Valor configurável em runtime
 
-4. Titulo: Seguranca ao sair do teste
-- Fechamento automatico de valvulas
+4. Título: Segurança ao sair do teste
+- Fechamento automático de válvulas
 - Evita consumo indevido
-Imagem sugerida: icone de escudo + torneira fechando.
 
-5. Titulo: Conflito manual x automatico
-- Sistema busca coerencia por deadline
-- Mantem operacao segura
-Imagem sugerida: balanca com manual e agenda.
+5. Título: Conflito manual x automático
+- Sistema usa o maior deadline
+- Mantém operação segura
 
-6. Titulo: Resultado esperado
-- Controle confiavel e previsivel
-Imagem sugerida: checklist de sucesso.
+6. Título: Resultado esperado
+- Controle confiável e previsível
 
-Atividade pratica (25 min):
-- Teste guiado: abrir setor, aguardar timeout, verificar fechamento.
+Atividade prática (25 min):
+- Teste guiado: abrir setor, aguardar timeout e verificar fechamento.
 
 ## Aula 7 - Tempo real e loop principal
 
@@ -276,132 +239,112 @@ Objetivo:
 - Entender o ciclo do firmware e o papel do RTC.
 
 Slides (7):
-1. Titulo: Por que o relogio importa?
+1. Título: Por que o relógio importa?
 - Agenda depende de hora correta
-- RTC garante referencia estavel
-Imagem sugerida: relogio analogico + DS3231.
+- RTC garante referência estável
 
-2. Titulo: RTC DS3231 no projeto
-- Le data e hora
+2. Título: RTC DS3231 no projeto
+- Lê data e hora
 - Pode ajustar pela interface
-Imagem sugerida: print de ajuste de RTC.
 
-3. Titulo: Loop principal explicado
+3. Título: Loop principal explicado
 - Ler entrada
-- Processar logica
-- Atualizar saidas
-Imagem sugerida: ciclo circular com 3 blocos.
+- Processar lógica
+- Atualizar saídas
 
-4. Titulo: Ordem de execucao
+4. Título: Ordem de execução
 - Menu
-- Irrigacao
+- Irrigação
 - Agenda
 - Web server
 - Display
-Imagem sugerida: linha do tempo horizontal.
 
-5. Titulo: Execucao por minuto
+5. Título: Execução por minuto
 - Scheduler avalia quando minuto muda
 - Evita disparo repetido
-Imagem sugerida: relogio marcando virada de minuto.
 
-6. Titulo: Sem travar o sistema
+6. Título: Sem travar o sistema
 - Sem delays longos no loop
 - Servidor web continua responsivo
-Imagem sugerida: comparativo travado x fluido.
 
-7. Titulo: Diagnostico por log
+7. Título: Diagnóstico por log
 - Monitor serial ajuda muito
-Imagem sugerida: print de logs limpos.
 
-Atividade pratica (20 min):
+Atividade prática (20 min):
 - Desenhar no caderno a ordem do loop em 8 passos.
 
 ## Aula 8 - Agendamento semanal
 
 Objetivo:
-- Dominar o modelo de agenda global com dias e setores por mascara de bits.
+- Dominar o modelo de agenda global com dias e setores por máscara de bits.
 
 Slides (8):
-1. Titulo: Modelo de agenda do projeto
-- Ate 4 agendas globais
+1. Título: Modelo de agenda do projeto
+- Até 4 agendas globais
 - Cada agenda controla 1..8 setores
-Imagem sugerida: grade com 4 slots.
 
-2. Titulo: Campos de uma agenda
-- hora, minuto, duracao
+2. Título: Campos de uma agenda
+- hora, minuto, duracaoMin
 - diasMask, setoresMask
-Imagem sugerida: card com campos e exemplo.
 
-3. Titulo: Dias da semana em bits
+3. Título: Dias da semana em bits
 - Cada bit representa um dia
-- Combinacoes formam agenda semanal
-Imagem sugerida: tabela DOM..SAB com bits 1/0.
+- Combinações formam agenda semanal
 
-4. Titulo: Setores em bits
-- Setor 1..8 em mascara
-- Facil salvar e ler
-Imagem sugerida: 8 lampadas com bits.
+4. Título: Setores em bits
+- Setor 1..8 em máscara
+- Fácil de salvar e ler
 
-5. Titulo: Regras de validacao
-- Minimo 1 dia
-- Minimo 1 setor
+5. Título: Regras de validação
+- Mínimo 1 dia
+- Mínimo 1 setor
 - Sem duplicata exata
-Imagem sugerida: selo "valido" x "invalido".
 
-6. Titulo: Execucao por lotes
-- Limite de simultaneos
+6. Título: Execução por lotes
+- Limite de simultâneos
 - Intervalo entre lotes
-Imagem sugerida: fila de setores por lote.
 
-7. Titulo: Retomada em janela ativa
+7. Título: Retomada em janela ativa
 - Se cair no meio da janela, calcula remanescente
-Imagem sugerida: linha do tempo com trecho restante.
 
-8. Titulo: Evitar repeticao no mesmo dia
-- Slot nao dispara duas vezes apos execucao confirmada
-Imagem sugerida: calendario com check unico.
+8. Título: Evitar repetição no mesmo dia
+- Slot não dispara duas vezes após execução confirmada
 
-Atividade pratica (25 min):
-- Exercicio: converter uma agenda de texto para diasMask e setoresMask.
+Atividade prática (25 min):
+- Converter uma agenda em texto para diasMask e setoresMask.
 
-## Aula 9 - Persistencia na NVS e integridade de dados
+## Aula 9 - Persistência na NVS e integridade de dados
 
 Objetivo:
-- Entender como salvar configuracoes e agendas apos reboot.
+- Entender como salvar configurações e agendas após reboot.
 
 Slides (6):
-1. Titulo: O que e NVS
-- Memoria nao volatil do ESP32
+1. Título: O que é NVS
+- Memória não volátil do ESP32
 - Dados sobrevivem ao desligar
-Imagem sugerida: icone de chip + cadeado.
 
-2. Titulo: O que o projeto salva
+2. Título: O que o projeto salva
 - Banco de agendas
 - Config runtime
-Imagem sugerida: duas caixas de dados.
+- Cache diário de execução
 
-3. Titulo: Versao e CRC
+3. Título: Versão e CRC
 - Detecta dados corrompidos
 - Garante leitura segura
-Imagem sugerida: etiqueta "ok" e "erro".
 
-4. Titulo: Politica de boot
-- Se invalido: reset para padrao seguro
+4. Título: Política de boot
+- Se inválido: reset para padrão seguro
 - Depois salva novamente
-Imagem sugerida: fluxograma de inicializacao.
 
-5. Titulo: Persistir so quando mudar
+5. Título: Persistir só quando mudar
 - Menos desgaste de escrita
 - Melhor confiabilidade
-Imagem sugerida: contador de escritas.
 
-6. Titulo: Beneficio para usuario
-- Nao perde agenda ao reiniciar
-Imagem sugerida: antes/depois reboot.
+6. Título: Benefício para usuário
+- Não perde agenda ao reiniciar
 
-Atividade pratica (20 min):
-- Simular cenario: dado invalido no boot, qual caminho o sistema segue?
+Atividade prática (20 min):
+- Simular cenário: dado inválido no boot, qual caminho o sistema segue?
 
 ## Aula 10 - Dashboard web e API
 
@@ -409,160 +352,140 @@ Objetivo:
 - Entender o controle remoto via AP Wi-Fi e endpoints.
 
 Slides (7):
-1. Titulo: AP local do sistema
-- ESP32 cria rede Wi-Fi propria
+1. Título: AP local do sistema
+- ESP32 cria rede Wi-Fi própria
 - Celular acessa dashboard
-Imagem sugerida: celular conectado ao AP do ESP32.
 
-2. Titulo: O que aparece no dashboard
-- Estado das valvulas
+2. Título: O que aparece no dashboard
+- Estado das válvulas
 - Agendas
-- Alertas e historico
-Imagem sugerida: print da pagina principal.
+- Alertas e histórico
 
-3. Titulo: API em linguagem simples
+3. Título: API em linguagem simples
 - Rotas GET para consultar
 - Rotas POST para acionar
-Imagem sugerida: diagrama cliente -> API -> firmware.
 
-4. Titulo: Endpoints principais
+4. Título: Endpoints principais
 - /api/status
 - /api/schedules
 - /api/events
-Imagem sugerida: tabela curta de rotas.
 
-5. Titulo: Comandos de acao
+5. Título: Comandos de ação
 - /api/valve/toggle
 - /api/schedule/save
 - /api/config/runtime
-Imagem sugerida: seta de ida e volta com JSON.
 
-6. Titulo: Tratamento de erro
-- Em /api/* erro volta em JSON com ok=false
-Imagem sugerida: exemplo visual de resposta de erro.
+6. Título: Tratamento de erro
+- Em /api/*, erro volta em JSON com ok=false
 
-7. Titulo: Historico de eventos
-- Buffer circular de ate 40 registros
-Imagem sugerida: timeline de eventos.
+7. Título: Histórico de eventos
+- Buffer circular de até 40 registros
 
-Atividade pratica (25 min):
+Atividade prática (25 min):
 - Fazer chamada simulada de endpoint e interpretar resposta JSON.
 
-## Aula 11 - Integracao completa e depuracao
+## Aula 11 - Integração completa e depuração
 
 Objetivo:
 - Juntar tudo e aprender a diagnosticar problemas reais.
 
 Slides (7):
-1. Titulo: Fluxo completo ponta a ponta
-- Usuario local ou web
+1. Título: Fluxo completo ponta a ponta
+- Usuário local ou web
 - Regras
-- Rele
-Imagem sugerida: diagrama completo simplificado.
+- Relé
 
-2. Titulo: Cenario de teste real
+2. Título: Cenário de teste real
 - Criar agenda
-- Aguardar horario
+- Aguardar horário
 - Verificar acionamento
-Imagem sugerida: checklist de teste.
 
-3. Titulo: Onde olhar quando falha
+3. Título: Onde olhar quando falha
 - Cabos e energia
-- Configuracao
+- Configuração
 - Logs
-Imagem sugerida: lupa sobre placa e serial.
 
-4. Titulo: Problemas comuns
+4. Título: Problemas comuns
 - RTC sem hora
-- Agenda invalida
-- Rede nao conecta
-Imagem sugerida: 3 cards de erro.
+- Agenda inválida
+- Rede não conecta
 
-5. Titulo: Estrategia de depuracao
-- Isolar modulo
+5. Título: Estratégia de depuração
+- Isolar módulo
 - Testar pequeno
 - Confirmar resultado
-Imagem sugerida: funil de diagnostico.
 
-6. Titulo: Qualidade de software embarcado
-- Reproducibilidade
-- Seguranca
-- Clareza de codigo
-Imagem sugerida: triangulo de qualidade.
+6. Título: Qualidade de software embarcado
+- Reprodutibilidade
+- Segurança
+- Clareza de código
 
-7. Titulo: Preparacao para projeto final
+7. Título: Preparação para projeto final
 - Definir objetivo
 - Planejar demo
-Imagem sugerida: quadro kanban simples.
 
-Atividade pratica (30 min):
+Atividade prática (30 min):
 - Cada grupo recebe um "bug" e apresenta como resolveu.
 
-## Aula 12 - Projeto final e apresentacao
+## Aula 12 - Projeto final e apresentação
 
 Objetivo:
-- Consolidar aprendizado com mini projeto e demonstracao.
+- Consolidar aprendizado com mini projeto e demonstração.
 
 Slides (6):
-1. Titulo: Missao da aula final
+1. Título: Missão da aula final
 - Entregar demo funcional
 - Explicar como funciona
-Imagem sugerida: palco de apresentacao escolar.
 
-2. Titulo: Sugestoes de mini projeto
+2. Título: Sugestões de mini projeto
 - Nova tela no OLED
 - Novo alerta no dashboard
-- Novo teste de seguranca
-Imagem sugerida: 3 opcoes em cards.
+- Novo teste de segurança
 
-3. Titulo: Rubrica de avaliacao
-- Tecnica (40%)
-- Organizacao (30%)
-- Comunicacao (30%)
-Imagem sugerida: barra de avaliacao.
+3. Título: Rubrica de avaliação
+- Técnica (40%)
+- Organização (30%)
+- Comunicação (30%)
 
-4. Titulo: Como apresentar bem
+4. Título: Como apresentar bem
 - Problema
-- Solucao
+- Solução
 - Demo ao vivo
-Imagem sugerida: roteiro em 3 blocos.
 
-5. Titulo: Reflexao final
-- O que aprendemos do basico ao avancado
-Imagem sugerida: escada de evolucao.
+5. Título: Reflexão final
+- O que aprendemos do básico ao avançado
 
-6. Titulo: Proximo nivel
+6. Título: Próximo nível
 - Sensores reais de umidade
 - Controle por app
 - Dados em nuvem
-Imagem sugerida: roadmap visual.
 
-Atividade pratica (40 min):
-- Apresentacao em grupos com demo e feedback da turma.
+Atividade prática (40 min):
+- Apresentação em grupos com demo e feedback da turma.
 
-## Avaliacao geral do curso (simples e didatica)
+## Avaliação geral do curso (simples e didática)
 
-- Participacao em aula: 20%
-- Praticas curtas: 30%
+- Participação em aula: 20%
+- Práticas curtas: 30%
 - Mini desafios (aulas 8, 10, 11): 20%
 - Projeto final: 30%
 
-## Checklist rapido para montar os slides
+## Checklist rápido para montar os slides
 
-- Use no maximo 6 slides por aula (7 ou 8 apenas em aulas tecnicas).
+- Use no máximo 6 slides por aula (7 ou 8 apenas em aulas técnicas).
 - Limite a 3 bullets por slide.
 - Fonte grande e alto contraste.
 - Sempre incluir 1 imagem por slide.
-- Fechar cada aula com atividade pratica curta.
+- Fechar cada aula com atividade prática curta.
 
 ## Banco de imagens sugerido (uso educacional)
 
-- Fotos proprias da bancada e do hardware do projeto.
+- Fotos próprias da bancada e do hardware do projeto.
 - Diagramas feitos no draw.io ou Canva.
-- Icones livres (Flaticon com creditos, Icons8, Noun Project).
-- Fotos livres (Unsplash, Pexels, Pixabay) verificando licenca.
+- Ícones livres (Flaticon com créditos, Icons8, Noun Project).
+- Fotos livres (Unsplash, Pexels, Pixabay), sempre verificando licença.
 
-## Sugestao de expansao (opcional: aulas 13 e 14)
+## Sugestão de expansão (opcional: aulas 13 e 14)
 
-Aula 13 (opcional): sensores de umidade do solo e tomada de decisao automatica.
-Aula 14 (opcional): melhoria de UX no dashboard e alertas inteligentes.
+- Aula 13: sensores de umidade do solo e tomada de decisão automática.
+- Aula 14: melhoria de UX no dashboard e alertas inteligentes.

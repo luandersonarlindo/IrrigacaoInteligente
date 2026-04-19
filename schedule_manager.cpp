@@ -31,7 +31,7 @@ bool ScheduleManager::begin()
 
     if (bancoReiniciado)
     {
-        // Evita reaproveitar cache de execucao diaria quando o banco foi recriado.
+        // Evita reaproveitar cache de execução diária quando o banco foi recriado.
         limparCacheExecucaoDiaMemoria();
         salvarCacheExecucaoDia();
     }
@@ -87,9 +87,9 @@ bool ScheduleManager::salvarAgenda(int slot, const AgendaSetor &agenda, String &
         return false;
     }
 
-    // Forca nova avaliacao no loop mesmo dentro do mesmo minuto.
+    // Força nova avaliação no loop mesmo dentro do mesmo minuto.
     _ultimaChaveMinuto = -1;
-    // Permite novo disparo do slot no mesmo dia apos edicao/salvamento.
+    // Permite novo disparo do slot no mesmo dia após edição/salvamento.
     _ultimaExecucaoDiaPorSlot[slot] = -1;
     salvarCacheExecucaoDia();
 
@@ -116,9 +116,9 @@ bool ScheduleManager::removerAgenda(int slot)
     bool ok = salvarBanco();
     if (ok)
     {
-        // Evita cache do minuto anterior apos alteracao de agenda.
+        // Evita cache do minuto anterior após alteração de agenda.
         _ultimaChaveMinuto = -1;
-        // Libera o slot para nova execucao no dia atual.
+        // Libera o slot para nova execução no dia atual.
         _ultimaExecucaoDiaPorSlot[slot] = -1;
         salvarCacheExecucaoDia();
     }
@@ -268,7 +268,7 @@ void ScheduleManager::avaliarDisparos(const DateTime &agora, uint16_t duracoesMi
         DateTime inicioHoje(agora.year(), agora.month(), agora.day(), agenda.hora, agenda.minuto, 0);
         uint32_t inicioEpoch = inicioHoje.unixtime();
 
-        // Ainda nao chegou no horario da agenda de hoje.
+        // Ainda não chegou no horário da agenda de hoje.
         if (agoraEpoch < inicioEpoch)
         {
             continue;

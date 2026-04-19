@@ -140,7 +140,7 @@ namespace
         }
     }
 
-    // Icones simples em linha para OLED monocromatico.
+    // Ícones simples em linha para OLED monocromático.
     void desenharIconeMenuPrincipal(DisplayDriverOled &d, int x, int y, int tipo)
     {
         // Moldura base 32x32
@@ -148,7 +148,7 @@ namespace
 
         if (tipo == 0)
         {
-            // Irrigar agora: aspersor com gotas e jatos (estilo tecnico mono)
+            // Irrigar agora: aspersor com gotas e jatos (estilo técnico mono)
             d.desenharRetanguloPreenchido(x + 11, y + 4, 10, 4); // topo do bico
             d.desenharRetanguloPreenchido(x + 13, y + 9, 6, 11); // corpo central
 
@@ -158,7 +158,7 @@ namespace
             d.desenharRetanguloPreenchido(x + 24, y + 11, 2, 2);
             d.desenharRetanguloPreenchido(x + 29, y + 8, 2, 2);
 
-            // jatos inferiores em triangulo
+            // jatos inferiores em triângulo
             d.desenharLinha(x + 6, y + 28, x + 9, y + 22);
             d.desenharLinha(x + 9, y + 22, x + 12, y + 28);
 
@@ -173,7 +173,7 @@ namespace
         }
         else if (tipo == 1)
         {
-            // Programar: calculadora/teclado numerico
+            // Programar: calculadora/teclado numérico
             d.desenharRetangulo(x + 5, y + 4, 22, 24);
             d.desenharRetangulo(x + 8, y + 7, 16, 4); // display superior
 
@@ -188,7 +188,7 @@ namespace
                 }
             }
 
-            // tecla lateral (estilo funcao)
+            // tecla lateral (estilo função)
             d.desenharRetanguloPreenchido(x + 24, y + 14, 2, 10);
         }
         else if (tipo == (int)ItemMenu::WEBSERVER)
@@ -198,7 +198,7 @@ namespace
         }
         else
         {
-            // Configuracoes: sliders
+            // Configurações: sliders
             d.desenharLinha(x + 6, y + 10, x + 26, y + 10);
             d.desenharLinha(x + 6, y + 16, x + 26, y + 16);
             d.desenharLinha(x + 6, y + 22, x + 26, y + 22);
@@ -210,30 +210,30 @@ namespace
 
     void desenharIconeSubmenu(DisplayDriverOled &d, int x, int y, int opcao)
     {
-        // area util: 8x8
+        // área útil: 8x8
         if (opcao == 0)
         {
-            // Hora: relogio
+            // Hora: relógio
             d.desenharRetangulo(x, y, 8, 8);
             d.desenharLinha(x + 4, y + 4, x + 4, y + 2);
             d.desenharLinha(x + 4, y + 4, x + 6, y + 5);
         }
         else if (opcao == 1)
         {
-            // Minuto: cronometro
+            // Minuto: cronômetro
             d.desenharRetangulo(x + 1, y + 1, 6, 6);
             d.desenharRetanguloPreenchido(x + 3, y, 2, 1);
             d.desenharLinha(x + 4, y + 4, x + 5, y + 3);
         }
         else if (opcao == 2)
         {
-            // Duracao: barra
+            // Duração: barra
             d.desenharRetangulo(x, y + 2, 8, 4);
             d.desenharRetanguloPreenchido(x + 1, y + 3, 5, 2);
         }
         else if (opcao == 3)
         {
-            // Dias: calendario mini
+            // Dias: calendário mini
             d.desenharRetangulo(x, y + 1, 8, 7);
             d.desenharLinha(x, y + 3, x + 7, y + 3);
             d.desenharRetanguloPreenchido(x + 2, y, 1, 2);
@@ -271,7 +271,7 @@ namespace
 
         if (ativa)
         {
-            // Relogio pequeno (agenda ativa)
+            // Relógio pequeno (agenda ativa)
             d.desenharRetangulo(x + 4, y + 8, 8, 6);
             d.desenharLinha(x + 8, y + 11, x + 8, y + 9);
             d.desenharLinha(x + 8, y + 11, x + 10, y + 12);
@@ -820,9 +820,25 @@ void DisplayManager::desenharTelaProgramar()
 
         desenharCabecalho("PROGRAMAR");
 
+        bool opcaoVoltar = _menu.opcaoVoltarProgramacaoSelecionada();
         char linhaAgenda[24];
-        snprintf(linhaAgenda, sizeof(linhaAgenda), "Agenda %d de %d", agenda, MAX_AGENDAS_TOTAIS);
+        if (opcaoVoltar)
+            snprintf(linhaAgenda, sizeof(linhaAgenda), "Opcao: Voltar");
+        else
+            snprintf(linhaAgenda, sizeof(linhaAgenda), "Agenda %d de %d", agenda, MAX_AGENDAS_TOTAIS);
         _display.desenharTexto(0, 16, linhaAgenda);
+
+        if (opcaoVoltar)
+        {
+            _display.desenharRetangulo(0, 27, OLED_LARGURA, 22);
+            _display.desenharLinha(10, 38, 28, 38);
+            _display.desenharLinha(10, 38, 15, 33);
+            _display.desenharLinha(10, 38, 15, 43);
+            _display.desenharTexto(34, 34, "< Voltar");
+            _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
+            _display.desenharTextoMini(0, 56, "OK sair da programacao");
+            return;
+        }
 
         AgendaSetor ag = _menu.agendaSelecionada();
         desenharIconeAgendaSlot(_display, 0, 27, ag.ativa);
@@ -864,7 +880,7 @@ void DisplayManager::desenharTelaProgramar()
             _display.desenharTexto(0, 48, "Erro ao salvar");
 
         _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        _display.desenharTextoMini(0, 56, "Segure: sair");
+        _display.desenharTextoMini(0, 56, "Gire agenda | OK editar");
         return;
     }
 
@@ -930,7 +946,7 @@ void DisplayManager::desenharTelaProgramar()
         }
 
         _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        _display.desenharTextoMini(0, 56, "OK: entrar  Segure: voltar");
+        _display.desenharTextoMini(0, 56, "OK: entrar");
         return;
     }
 
@@ -940,7 +956,7 @@ void DisplayManager::desenharTelaProgramar()
         _display.desenharTexto(0, 20, "Confirma exclusao?");
         _display.desenharTextoMini(0, 30, "Gire: SIM/NAO | OK confirma");
 
-        int opc = _menu.opcaoConfirmarExclusao(); // 0=SIM, 1=NAO
+        int opc = _menu.opcaoConfirmarExclusao(); // 0=SIM, 1=NÃO
 
         if (opc == 0)
         {
@@ -963,7 +979,7 @@ void DisplayManager::desenharTelaProgramar()
             _display.setCorDesenho(1);
         }
 
-        _display.desenharTextoMini(0, 56, "Segure: cancelar");
+        _display.desenharTextoMini(0, 56, "Gire para NAO");
         return;
     }
 
@@ -974,7 +990,7 @@ void DisplayManager::desenharTelaProgramar()
         snprintf(valor, sizeof(valor), "%02dh", ag.hora);
         _display.desenharTextoGrande(44, 16, valor);
         desenharBarra(8, 38, 112, 10, ag.hora, 23);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta | Segure");
+        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
         return;
     }
 
@@ -985,7 +1001,7 @@ void DisplayManager::desenharTelaProgramar()
         snprintf(valor, sizeof(valor), "%02dmin", ag.minuto);
         _display.desenharTextoGrande(32, 16, valor);
         desenharBarra(8, 38, 112, 10, ag.minuto, 59);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta | Segure");
+        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
         return;
     }
 
@@ -996,7 +1012,7 @@ void DisplayManager::desenharTelaProgramar()
         snprintf(valor, sizeof(valor), "%umin", ag.duracaoMin);
         _display.desenharTextoGrande(30, 16, valor);
         desenharBarra(8, 38, 112, 10, ag.duracaoMin, 240);
-        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta | Segure");
+        _display.desenharTextoMini(0, 56, "Gire ajusta | OK volta");
         return;
     }
 
@@ -1023,7 +1039,20 @@ void DisplayManager::desenharTelaProgramar()
                 _display.desenharRetangulo(x + 2, 32, 10, 10);
             }
         }
-        _display.desenharTextoMini(0, 50, "Gire: cursor | OK: marca");
+
+        bool voltarSelecionado = (_menu.cursorDiaProgramacao() == 7);
+        if (voltarSelecionado)
+        {
+            _display.desenharRetanguloPreenchido(0, 43, OLED_LARGURA, 10);
+            _display.setCorDesenho(0);
+        }
+        _display.desenharTexto(2, 44, "< Voltar");
+        if (voltarSelecionado)
+        {
+            _display.setCorDesenho(1);
+        }
+
+        _display.desenharTextoMini(0, 50, "Gire cursor | OK marca");
         _display.desenharTextoMini(0, 56, "Segure: voltar submenu");
         return;
     }
@@ -1218,7 +1247,7 @@ void DisplayManager::desenharTelaConfig()
         }
 
         _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        _display.desenharTextoMini(0, 56, "OK entra | Segure sair");
+        _display.desenharTextoMini(0, 56, "OK entra");
         return;
     }
 
@@ -1287,7 +1316,7 @@ void DisplayManager::desenharTelaConfig()
         }
 
         _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        _display.desenharTextoMini(0, 56, "OK entra | Segure menu");
+        _display.desenharTextoMini(0, 56, "OK entra");
         return;
     }
 
@@ -1352,7 +1381,7 @@ void DisplayManager::desenharTelaConfig()
         }
 
         _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        _display.desenharTextoMini(0, 56, "OK entra | Segure menu");
+        _display.desenharTextoMini(0, 56, "OK entra");
         return;
     }
 
@@ -1362,16 +1391,22 @@ void DisplayManager::desenharTelaConfig()
 
         int setorAtual = _menu.configSetorTeste();
         const int linhasVisiveis = 3;
+        const int totalItens = NUM_VALVULAS + 1;
         int inicio = (setorAtual / linhasVisiveis) * linhasVisiveis;
         int fim = inicio + linhasVisiveis;
-        if (fim > NUM_VALVULAS)
-            fim = NUM_VALVULAS;
+        if (fim > totalItens)
+            fim = totalItens;
 
         for (int i = inicio; i < fim; i++)
         {
             int linhaIdx = i - inicio;
             int y = 16 + (linhaIdx * 11);
-            bool aberta = (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA);
+            bool itemVoltar = (i == NUM_VALVULAS);
+            bool aberta = false;
+            if (!itemVoltar)
+            {
+                aberta = (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA);
+            }
 
             if (i == setorAtual)
             {
@@ -1380,7 +1415,10 @@ void DisplayManager::desenharTelaConfig()
             }
 
             char linha[24];
-            snprintf(linha, sizeof(linha), "Setor %d   [%c]", i + 1, aberta ? 'X' : ' ');
+            if (itemVoltar)
+                snprintf(linha, sizeof(linha), "< Voltar");
+            else
+                snprintf(linha, sizeof(linha), "Setor %d   [%c]", i + 1, aberta ? 'X' : ' ');
             _display.desenharTexto(2, y, linha);
 
             if (i == setorAtual)
@@ -1390,8 +1428,12 @@ void DisplayManager::desenharTelaConfig()
         }
 
         char rodape[28];
-        snprintf(rodape, sizeof(rodape), "OK toggle | Pg %d/%d", (inicio / linhasVisiveis) + 1,
-                 (NUM_VALVULAS + linhasVisiveis - 1) / linhasVisiveis);
+        if (_menu.opcaoVoltarTesteValvulasSelecionada())
+            snprintf(rodape, sizeof(rodape), "OK voltar | Pg %d/%d", (inicio / linhasVisiveis) + 1,
+                     (totalItens + linhasVisiveis - 1) / linhasVisiveis);
+        else
+            snprintf(rodape, sizeof(rodape), "OK toggle | Pg %d/%d", (inicio / linhasVisiveis) + 1,
+                     (totalItens + linhasVisiveis - 1) / linhasVisiveis);
         _display.desenharLinha(0, 50, OLED_LARGURA - 1, 50);
         _display.desenharTextoMini(0, 52, "MODO MANUTENCAO");
         _display.desenharTextoMini(0, 56, rodape);
@@ -1549,7 +1591,7 @@ void DisplayManager::desenharTelaConfig()
         snprintf(linha4, sizeof(linha4), "Dur.Pad: %dmin", _menu.configDuracaoPadraoMin());
         _display.desenharTextoMini(0, 48, linha4);
 
-        _display.desenharTextoMini(0, 56, "OK/Segure para voltar");
+        _display.desenharTextoMini(0, 56, "OK para voltar");
         return;
     }
 }
@@ -1626,12 +1668,12 @@ void DisplayManager::desenharTelaWebServer()
     if (totalPaginas > 1)
     {
         char rodape[26];
-        snprintf(rodape, sizeof(rodape), "Pag %d/%d Gire OK/Seg", paginaAtual + 1, totalPaginas);
+        snprintf(rodape, sizeof(rodape), "Pag %d/%d Gire OK volta", paginaAtual + 1, totalPaginas);
         _display.desenharTextoMini(0, 56, rodape);
     }
     else
     {
-        _display.desenharTextoMini(0, 56, "OK/Segure: voltar");
+        _display.desenharTextoMini(0, 56, "OK: voltar");
     }
 }
 
