@@ -18,8 +18,8 @@ DisplayManager::DisplayManager(DisplayDriverLcd16x2 &display,
       _rtc(rtc),
       _irrigacao(irrigacao),
       _ultimaAtualizacao(0),
-    _ultimaInteracaoMs(0),
-    _dormindo(false),
+      _ultimaInteracaoMs(0),
+      _dormindo(false),
       _agendaExecucaoAtiva(false),
       _agendaAguardandoIntervalo(false),
       _agendaSetoresEmLote(0),
@@ -91,6 +91,11 @@ void DisplayManager::atualizar()
         if (!_dormindo && (unsigned long)(agora - _ultimaInteracaoMs) >= LCD_SLEEP_TIMEOUT_MS)
         {
             _dormindo = true;
+            if (LCD_SLEEP_CLEAR_ON_SLEEP)
+            {
+                _display.limpar();
+                _display.renderizar();
+            }
             _display.setBacklight(false);
             return;
         }

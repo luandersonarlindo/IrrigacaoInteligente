@@ -48,6 +48,8 @@
 // --- Economizador do LCD ---
 // 0 = desativado
 #define LCD_SLEEP_TIMEOUT_MS 30000
+// 1 = limpa caracteres ao dormir, 0 = mantem ultimo texto
+#define LCD_SLEEP_CLEAR_ON_SLEEP 1
 
 // --- Menu ---
 #define MENU_ITENS_MAX 4      // Número máximo de itens no menu principal

@@ -6,8 +6,8 @@
 
 DisplayDriverLcd16x2::DisplayDriverLcd16x2()
     : _lcd(LCD_I2C_ENDERECO, LCD_COLUNAS, LCD_LINHAS),
-    _precisaRender(true),
-    _backlightOn(true)
+      _precisaRender(true),
+      _backlightOn(true)
 {
     for (int linha = 0; linha < LCD_LINHAS; linha++)
     {
