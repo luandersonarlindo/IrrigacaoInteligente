@@ -161,8 +161,8 @@ void MenuController::processar(DirecaoNavegacao direcao, bool botaoPressionado, 
                     Serial.println(_setorAtual + 1);
             }
         }
-        // Botão selecionar faz toggle do setor atual.
-        // O retorno é tratado pelo botão voltar (evento de botaoLongoPressionado).
+        // Botao selecionar faz toggle do setor atual.
+        // O retorno e tratado por clique longo no Selecionar.
         if (botaoPressionado)
         {
             if (_setorAtual == NUM_VALVULAS)

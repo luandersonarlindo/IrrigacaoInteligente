@@ -270,7 +270,7 @@ void setup() {
 
 // ============================================================
 void loop() {
-    // 1. Atualiza estado da entrada local (4 botoes)
+    // 1. Atualiza estado da entrada local (3 botoes)
     inputDriver.atualizar();
 
     // 2. Lê eventos de direção/seleção/voltar

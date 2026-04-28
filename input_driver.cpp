@@ -1,5 +1,5 @@
 // ============================================================
-//  input_driver.cpp — Implementação do driver de 4 botões
+//  input_driver.cpp — Implementação do driver de 3 botões
 // ============================================================
 
 #include "input_driver.h"
@@ -10,8 +10,7 @@ InputDriver::InputDriver()
       _botaoLongoEvento(false),
       _btnUp{HIGH, 0, 0},
       _btnDown{HIGH, 0, 0},
-      _btnSelect{HIGH, 0, 0},
-      _btnBack{HIGH, 0, 0}
+      _btnSelect{HIGH, 0, 0}
 {
 }
 
@@ -20,16 +19,14 @@ void InputDriver::begin()
     pinMode(PIN_BTN_UP, INPUT_PULLUP);
     pinMode(PIN_BTN_DOWN, INPUT_PULLUP);
     pinMode(PIN_BTN_SELECT, INPUT_PULLUP);
-    pinMode(PIN_BTN_BACK, INPUT_PULLUP);
 
     _btnUp.estadoAnterior = digitalRead(PIN_BTN_UP);
     _btnDown.estadoAnterior = digitalRead(PIN_BTN_DOWN);
     _btnSelect.estadoAnterior = digitalRead(PIN_BTN_SELECT);
-    _btnBack.estadoAnterior = digitalRead(PIN_BTN_BACK);
 
     if (DEBUG_SERIAL)
     {
-        Serial.println("[Input] Driver de 4 botoes inicializado.");
+        Serial.println("[Input] Driver de 3 botoes inicializado.");
     }
 }
 
@@ -37,8 +34,7 @@ void InputDriver::atualizar()
 {
     atualizarBotaoDirecao(PIN_BTN_UP, _btnUp, DirecaoNavegacao::ANTI_HORARIO);
     atualizarBotaoDirecao(PIN_BTN_DOWN, _btnDown, DirecaoNavegacao::HORARIO);
-    atualizarBotaoAcao(PIN_BTN_SELECT, _btnSelect, false);
-    atualizarBotaoAcao(PIN_BTN_BACK, _btnBack, true);
+    atualizarBotaoAcao(PIN_BTN_SELECT, _btnSelect);
 }
 
 DirecaoNavegacao InputDriver::lerDirecao()
@@ -88,7 +84,7 @@ void InputDriver::atualizarBotaoDirecao(uint8_t pin, EstadoBotao &estado, Direca
     }
 }
 
-void InputDriver::atualizarBotaoAcao(uint8_t pin, EstadoBotao &estado, bool emitirComoVoltar)
+void InputDriver::atualizarBotaoAcao(uint8_t pin, EstadoBotao &estado)
 {
     bool estadoAtual = digitalRead(pin);
     unsigned long agora = millis();
@@ -108,7 +104,7 @@ void InputDriver::atualizarBotaoAcao(uint8_t pin, EstadoBotao &estado, bool emit
         {
             unsigned long duracao = agora - estado.tempoPressionadoMs;
 
-            if (emitirComoVoltar || duracao >= LONG_PRESS_MS)
+            if (duracao >= LONG_PRESS_MS)
             {
                 _botaoLongoEvento = true;
             }

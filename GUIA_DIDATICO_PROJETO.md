@@ -5,7 +5,7 @@ Este documento explica o projeto de forma simples, para ensino de alunos de 15 a
 ## 👀 Visao rapida
 
 - ✅ Projeto com ESP32 para irrigacao manual e automatica.
-- 🖥️ Interface local com LCD 16x2 I2C e 4 botoes.
+- 🖥️ Interface local com LCD 16x2 I2C e 3 botoes.
 - 🧭 Menu com acesso a Irrigar Agora, Programar e Configuracoes.
 - 💧 Controle fisico de 8 valvulas por rele.
 - 💾 Agendas salvas na memoria flash (NVS).
@@ -39,7 +39,7 @@ Este projeto entrega:
 Componentes principais:
 
 - ESP32
-- 4 botoes (Cima, Baixo, Selecionar, Voltar)
+- 3 botoes (Cima, Baixo, Selecionar)
 - LCD 16x2 com modulo I2C (PCF8574)
 - RTC DS3231 (I2C)
 - 2 modulos de rele 4 canais (8 canais no total)
@@ -49,7 +49,6 @@ Pinos importantes (Config.h):
 - Botao Cima: 19
 - Botao Baixo: 18
 - Botao Selecionar: 4
-- Botao Voltar: 16
 - I2C SDA/SCL (LCD + RTC): 21/22
 
 Observacao importante:
@@ -82,7 +81,7 @@ Regra de organizacao:
 
 ### Modulos e papeis
 
-- input_driver.*: leitura dos 4 botoes de navegacao.
+- input_driver.*: leitura dos 3 botoes de navegacao.
 - display_driver_lcd16x2.*: escrita de linhas no display.
 - rtc_driver_ds3231.*: hora e data.
 - runtime_config_manager.*: salva timeout e duracao padrao em NVS.
@@ -121,8 +120,7 @@ Comandos dos botoes:
 - Botao Cima: navega para cima/anterior.
 - Botao Baixo: navega para baixo/proximo.
 - Botao Selecionar: seleciona ou altera.
-- Botao Voltar: retorna/cancela dependendo da tela.
-- Atalho: clique longo no Selecionar tambem aciona voltar.
+- Clique longo no Selecionar: retorna/cancela dependendo da tela.
 
 Na irrigacao manual:
 
@@ -156,7 +154,7 @@ Modelo atual:
 
 Nesta branch simplificada, o sistema funciona somente com interface local.
 
-- Controle e navegacao por 4 botoes.
+- Controle e navegacao por 3 botoes.
 - Visualizacao e configuracao no LCD 16x2.
 - Sem rede/AP e sem API remota.
 

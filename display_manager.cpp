@@ -526,7 +526,7 @@ void DisplayManager::desenharTelaProgramar()
     if (etapa == EtapaProgramacao::EDIT_HORA)
     {
         char linha2[24];
-        snprintf(linha2, sizeof(linha2), "Valor: %02dh", agenda.hora);
+        snprintf(linha2, sizeof(linha2), "%02dh Seg volta", agenda.hora);
         escreverTela("Editar hora", linha2);
         return;
     }
@@ -534,7 +534,7 @@ void DisplayManager::desenharTelaProgramar()
     if (etapa == EtapaProgramacao::EDIT_MINUTO)
     {
         char linha2[24];
-        snprintf(linha2, sizeof(linha2), "Valor: %02d", agenda.minuto);
+        snprintf(linha2, sizeof(linha2), "%02d Seg volta", agenda.minuto);
         escreverTela("Editar minuto", linha2);
         return;
     }
@@ -542,7 +542,7 @@ void DisplayManager::desenharTelaProgramar()
     if (etapa == EtapaProgramacao::EDIT_DURACAO)
     {
         char linha2[24];
-        snprintf(linha2, sizeof(linha2), "Duracao: %umin", agenda.duracaoMin);
+        snprintf(linha2, sizeof(linha2), "%umin Seg volta", agenda.duracaoMin);
         escreverTela("Editar duracao", linha2);
         return;
     }
@@ -553,7 +553,7 @@ void DisplayManager::desenharTelaProgramar()
         bool marcado = (agenda.diasMask & (1 << cursor)) != 0;
 
         String linha1 = "Dia " + diaSigla((uint8_t)cursor) + (marcado ? " [X]" : " [ ]");
-        escreverTela(linha1, "Gire OK marca");
+        escreverTela(linha1, "OK marca Seg vl");
         return;
     }
 
@@ -569,7 +569,7 @@ void DisplayManager::desenharTelaProgramar()
         bool marcado = (agenda.setoresMask & (1 << cursor)) != 0;
         char linha1[24];
         snprintf(linha1, sizeof(linha1), "Setor %d [%c]", cursor + 1, marcado ? 'X' : ' ');
-        escreverTela(linha1, "Gire OK marca");
+        escreverTela(linha1, "OK marca Seg vl");
         return;
     }
 
@@ -718,7 +718,7 @@ void DisplayManager::desenharTelaConfig()
     if (etapa == EtapaConfiguracao::EDIT_HORA)
     {
         char linha2[24];
-        snprintf(linha2, sizeof(linha2), "Valor: %02d", _menu.configHora());
+        snprintf(linha2, sizeof(linha2), "%02d Seg volta", _menu.configHora());
         escreverTela("Ajustar hora", linha2);
         return;
     }
@@ -726,7 +726,7 @@ void DisplayManager::desenharTelaConfig()
     if (etapa == EtapaConfiguracao::EDIT_MINUTO)
     {
         char linha2[24];
-        snprintf(linha2, sizeof(linha2), "Valor: %02d", _menu.configMinuto());
+        snprintf(linha2, sizeof(linha2), "%02d Seg volta", _menu.configMinuto());
         escreverTela("Ajustar minuto", linha2);
         return;
     }
@@ -734,7 +734,7 @@ void DisplayManager::desenharTelaConfig()
     if (etapa == EtapaConfiguracao::EDIT_DIA)
     {
         char linha2[24];
-        snprintf(linha2, sizeof(linha2), "Valor: %02d", _menu.configDia());
+        snprintf(linha2, sizeof(linha2), "%02d Seg volta", _menu.configDia());
         escreverTela("Ajustar dia", linha2);
         return;
     }
@@ -742,7 +742,7 @@ void DisplayManager::desenharTelaConfig()
     if (etapa == EtapaConfiguracao::EDIT_MES)
     {
         char linha2[24];
-        snprintf(linha2, sizeof(linha2), "Valor: %02d", _menu.configMes());
+        snprintf(linha2, sizeof(linha2), "%02d Seg volta", _menu.configMes());
         escreverTela("Ajustar mes", linha2);
         return;
     }
@@ -750,7 +750,7 @@ void DisplayManager::desenharTelaConfig()
     if (etapa == EtapaConfiguracao::EDIT_ANO)
     {
         char linha2[24];
-        snprintf(linha2, sizeof(linha2), "Valor: %04d", _menu.configAno());
+        snprintf(linha2, sizeof(linha2), "%04d Seg volta", _menu.configAno());
         escreverTela("Ajustar ano", linha2);
         return;
     }
@@ -758,7 +758,7 @@ void DisplayManager::desenharTelaConfig()
     if (etapa == EtapaConfiguracao::EDIT_TIMEOUT_MANUAL)
     {
         char linha2[24];
-        snprintf(linha2, sizeof(linha2), "Timeout: %dmin", _menu.configTimeoutManualMin());
+        snprintf(linha2, sizeof(linha2), "%dmin Seg volta", _menu.configTimeoutManualMin());
         escreverTela("Timeout manual", linha2);
         return;
     }
@@ -766,7 +766,7 @@ void DisplayManager::desenharTelaConfig()
     if (etapa == EtapaConfiguracao::EDIT_DURACAO_PADRAO)
     {
         char linha2[24];
-        snprintf(linha2, sizeof(linha2), "Duracao: %dmin", _menu.configDuracaoPadraoMin());
+        snprintf(linha2, sizeof(linha2), "%dmin Seg volta", _menu.configDuracaoPadraoMin());
         escreverTela("Duracao padrao", linha2);
         return;
     }

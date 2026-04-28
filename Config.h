@@ -5,12 +5,11 @@
 //  Altere aqui sem precisar tocar nos outros arquivos
 // ============================================================
 
-// --- Pinos: Navegação local (4 botões) ---
+// --- Pinos: Navegação local (3 botões) ---
 // Botões em INPUT_PULLUP: pressionado = LOW
 #define PIN_BTN_UP 19
 #define PIN_BTN_DOWN 18
 #define PIN_BTN_SELECT 4
-#define PIN_BTN_BACK 16
 
 // Compatibilidade com codigo legado que ainda referencia encoder rotativo.
 // Mapeia os sinais antigos para a navegacao atual por botoes.

@@ -1,6 +1,6 @@
 # 🌱 IrrigacaoInteligente
 
-Sistema de irrigacao inteligente com ESP32, display LCD 16x2 I2C, 4 botoes de navegacao, RTC DS3231 e controle de ate 8 valvulas por rele.
+Sistema de irrigacao inteligente com ESP32, display LCD 16x2 I2C, 3 botoes de navegacao, RTC DS3231 e controle de ate 8 valvulas por rele.
 
 Este README descreve o estado atual implementado no firmware.
 
@@ -50,7 +50,7 @@ Documentos complementares:
 Plataforma:
 
 - ESP32
-- 4 botoes de navegacao (Cima, Baixo, Selecionar, Voltar)
+- 3 botoes de navegacao (Cima, Baixo, Selecionar)
 - LCD 16x2 com modulo I2C (PCF8574)
 - RTC DS3231 I2C
 - 2 modulos de rele 4 canais (8 canais no total)
@@ -62,7 +62,6 @@ Mapeamento de pinos (Config.h):
 | Botao Cima        | 19   |
 | Botao Baixo       | 18   |
 | Botao Selecionar  | 4    |
-| Botao Voltar      | 16   |
 | I2C SDA (LCD/RTC) | 21   |
 | I2C SCL (LCD/RTC) | 22   |
 | Rele 1            | 23   |
@@ -116,7 +115,7 @@ Separacao adotada:
 
 Modulos:
 
-- input_driver.*: leitura dos 4 botoes, debounce, clique curto e evento de voltar.
+- input_driver.*: leitura dos 3 botoes, debounce, clique curto e clique longo para voltar.
 - display_driver_lcd16x2.*: escrita de linhas no LCD 16x2.
 - rtc_driver_ds3231.*: leitura/ajuste de data e hora.
 - runtime_config_manager.*: configuracoes runtime (timeout manual e duracao padrao) persistidas em NVS.
@@ -132,15 +131,15 @@ Modulos:
 
 1. Inicializa Serial (se debug ativo).
 2. Inicializa I2C (Wire.begin).
-3. Inicializa entrada local (4 botoes) e display.
+3. Inicializa entrada local (3 botoes) e display.
 4. Inicializa RTC (se indisponivel, continua sem hora real).
 5. Inicializa runtime config e schedule manager.
 6. Inicializa irrigacao e display manager.
 
 ### 6.2 🔁 Loop
 
-1. Atualiza leitura dos 4 botoes.
-2. Le direcao, selecionar e voltar.
+1. Atualiza leitura dos 3 botoes.
+2. Le direcao, selecionar e voltar (clique longo no Selecionar).
 3. Processa menu.
 4. Em irrigacao manual, clique curto faz toggle do setor selecionado.
 5. Em teste de valvulas (Configuracoes), clique curto faz toggle do setor em teste.
@@ -159,13 +158,12 @@ Menu principal:
 - Programar
 - Configuracoes
 
-Controles (4 botoes):
+Controles (3 botoes):
 
 - Botao Cima: navega para cima/anterior.
 - Botao Baixo: navega para baixo/proximo.
 - Botao Selecionar: seleciona/edita (clique curto).
-- Botao Voltar: retorna/cancela conforme a tela.
-- Atalho adicional: clique longo no botao Selecionar tambem atua como voltar.
+- Clique longo no botao Selecionar: retorna/cancela conforme a tela.
 
 Irrigacao manual:
 
@@ -177,7 +175,7 @@ Irrigacao manual:
 Programar:
 
 - 4 slots globais de agenda.
-- Submenu com editar hora/minuto/duracao/dias/setores, salvar, excluir e voltar.
+- Submenu com editar hora/minuto/duracao/dias/setores, salvar, excluir e opcao de voltar.
 
 Configuracoes:
 
@@ -213,7 +211,7 @@ Motor de execucao:
 
 Nesta branch simplificada, o firmware opera somente com interface local:
 
-- Navegacao via 4 botoes.
+- Navegacao via 3 botoes.
 - Feedback e configuracao pelo LCD 16x2.
 - Sem rede/AP e sem API remota.
 
@@ -238,7 +236,7 @@ No boot:
 
 - IrrigacaoInteligente.ino - entrada do firmware
 - Config.h - configuracoes globais
-- input_driver.h/.cpp - leitura dos 4 botoes de navegacao
+- input_driver.h/.cpp - leitura dos 3 botoes de navegacao
 - display_driver_lcd16x2.h/.cpp - driver LCD 16x2 I2C
 - display_manager.h/.cpp - renderizacao de telas
 - rtc_driver_ds3231.h/.cpp - RTC DS3231
