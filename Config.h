@@ -21,6 +21,10 @@
 #define PIN_I2C_SDA 21
 #define PIN_I2C_SCL 22
 
+// --- Sensor DHT11 (temperatura e umidade) ---
+#define PIN_DHT11 15
+#define DHT11_INTERVALO_MS 2000
+
 // --- Pinos: RTC DS3231 (I2C — mesmo barramento do LCD) ---
 // DS3231 compartilha SDA/SCL com o LCD
 // Endereco I2C padrao do LCD: 0x27 (pode variar para 0x3F)

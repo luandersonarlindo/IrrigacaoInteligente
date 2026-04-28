@@ -11,6 +11,7 @@
 #include "Config.h"
 #include "input_driver.h"
 #include "display_driver_lcd16x2.h"
+#include "dht11_driver.h"
 #include "rtc_driver_ds3231.h"
 #include "menu_controller.h"
 #include "display_manager.h"
@@ -21,6 +22,7 @@
 // --- Instâncias globais ---
 InputDriver           inputDriver;
 DisplayDriverLcd16x2  lcd;
+Dht11Driver           dht11;
 RtcDriverDs3231       rtc;
 RuntimeConfigManager  runtimeConfig;
 ScheduleManager       scheduleManager(runtimeConfig);
@@ -234,6 +236,7 @@ void setup() {
 
     inputDriver.begin();
     lcd.begin();
+    dht11.begin();
 
     rtcDisponivel = rtc.begin();
     if (!rtcDisponivel) {
@@ -355,6 +358,15 @@ void loop() {
         (uint8_t)contarSetoresPendentesAgenda(),
         maskSetoresNoLoteAgenda(),
         maskSetoresPendentesAgenda());
+
+    // 6.2 Atualiza leitura do DHT11
+    if (dht11.atualizar())
+    {
+        float temperaturaC = 0.0f;
+        float umidade = 0.0f;
+        bool ok = dht11.ultimaLeitura(temperaturaC, umidade);
+        displayManager.atualizarLeituraDht(ok, temperaturaC, umidade);
+    }
 
     // 7. Renderiza display
     displayManager.atualizar();

@@ -40,6 +40,9 @@ public:
     // Deve ser chamado no loop() — renderiza a tela correta
     void atualizar();
 
+    // Atualiza ultima leitura do sensor DHT11
+    void atualizarLeituraDht(bool ok, float temperaturaC, float umidade);
+
 private:
     DisplayDriverLcd16x2 &_display;
     MenuController &_menu;
@@ -75,4 +78,9 @@ private:
     uint8_t _agendaSetoresPendentes;
     uint16_t _agendaSetoresLoteMask;
     uint16_t _agendaSetoresPendentesMask;
+
+    bool _dhtTemLeitura;
+    bool _dhtOk;
+    float _dhtTempC;
+    float _dhtUmidade;
 };

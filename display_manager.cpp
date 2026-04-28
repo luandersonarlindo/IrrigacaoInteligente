@@ -23,7 +23,11 @@ DisplayManager::DisplayManager(DisplayDriverLcd16x2 &display,
       _agendaSetoresEmLote(0),
       _agendaSetoresPendentes(0),
       _agendaSetoresLoteMask(0),
-      _agendaSetoresPendentesMask(0)
+      _agendaSetoresPendentesMask(0),
+      _dhtTemLeitura(false),
+      _dhtOk(false),
+      _dhtTempC(0.0f),
+      _dhtUmidade(0.0f)
 {
 }
 
@@ -40,6 +44,17 @@ void DisplayManager::atualizarEstadoAgendaSequencial(bool ativa,
     _agendaSetoresPendentes = setoresPendentes;
     _agendaSetoresLoteMask = setoresLoteMask;
     _agendaSetoresPendentesMask = setoresPendentesMask;
+}
+
+void DisplayManager::atualizarLeituraDht(bool ok, float temperaturaC, float umidade)
+{
+    _dhtTemLeitura = true;
+    _dhtOk = ok;
+    if (ok)
+    {
+        _dhtTempC = temperaturaC;
+        _dhtUmidade = umidade;
+    }
 }
 
 void DisplayManager::begin()
@@ -321,7 +336,7 @@ void DisplayManager::desenharTelaStatus()
              totalAbertas,
              NUM_VALVULAS);
 
-    String linha2;
+    String linha2Base;
     if (totalAbertas > 0)
     {
         char tmp[24];
@@ -337,19 +352,19 @@ void DisplayManager::desenharTelaStatus()
         {
             snprintf(tmp, sizeof(tmp), "Auto ativo %d", totalAutoAbertas);
         }
-        linha2 = tmp;
+        linha2Base = tmp;
     }
     else if (_agendaExecucaoAtiva)
     {
         if (_agendaAguardandoIntervalo)
         {
-            linha2 = "Agenda: intervalo";
+            linha2Base = "Agenda: intervalo";
         }
         else
         {
             char tmp[24];
             snprintf(tmp, sizeof(tmp), "Lote %d Pend %d", _agendaSetoresEmLote, _agendaSetoresPendentes);
-            linha2 = tmp;
+            linha2Base = tmp;
         }
     }
     else
@@ -365,11 +380,29 @@ void DisplayManager::desenharTelaStatus()
                      sigla.c_str(),
                      proximaDataHora.hour(),
                      proximaDataHora.minute());
+            linha2Base = tmp;
+        }
+        else
+        {
+            linha2Base = "Sem agenda ativa";
+        }
+    }
+
+    String linha2 = linha2Base;
+    bool mostrarDht = _dhtTemLeitura && ((millis() / INTERVALO_PAGINA_INFO_MS) % 2 == 1);
+    if (mostrarDht)
+    {
+        if (_dhtOk)
+        {
+            int temp = (int)(_dhtTempC + (_dhtTempC >= 0.0f ? 0.5f : -0.5f));
+            int umid = (int)(_dhtUmidade + 0.5f);
+            char tmp[24];
+            snprintf(tmp, sizeof(tmp), "T:%dC U:%d%%", temp, umid);
             linha2 = tmp;
         }
         else
         {
-            linha2 = "Sem agenda ativa";
+            linha2 = "DHT11 erro";
         }
     }
 
