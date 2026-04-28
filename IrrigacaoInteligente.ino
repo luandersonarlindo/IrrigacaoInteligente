@@ -17,7 +17,6 @@
 #include "irrigation_controller.h"
 #include "schedule_manager.h"
 #include "runtime_config_manager.h"
-#include "web_ap_manager.h"
 
 // --- Instâncias globais ---
 InputDriver           inputDriver;
@@ -27,8 +26,7 @@ RuntimeConfigManager  runtimeConfig;
 ScheduleManager       scheduleManager(runtimeConfig);
 MenuController        menu(scheduleManager, rtc, runtimeConfig);
 IrrigationController  irrigacao(runtimeConfig);
-WebApManager          webApManager(irrigacao, scheduleManager, runtimeConfig, rtc);
-DisplayManager        displayManager(oled, menu, rtc, irrigacao, webApManager);
+DisplayManager        displayManager(oled, menu, rtc, irrigacao);
 bool                  rtcDisponivel = false;
 
 struct ExecucaoAgendaSequencial {
@@ -253,7 +251,6 @@ void setup() {
     runtimeConfig.begin();
     scheduleManager.begin();
     irrigacao.begin();     // configura GPIOs e garante relés desligados
-    webApManager.begin();
     displayManager.begin();
 
     execAgenda.ativa = false;
@@ -273,10 +270,10 @@ void setup() {
 
 // ============================================================
 void loop() {
-    // 1. Atualiza estado da entrada local (4 botoes)
+    // 1. Atualiza estado da entrada local (3 botoes)
     inputDriver.atualizar();
 
-    // 2. Lê eventos de direção/seleção/voltar
+    // 2. Lê eventos de direção/seleção (clique longo = voltar)
     DirecaoNavegacao direcao = inputDriver.lerDirecao();
     bool             botaoCurto = inputDriver.botaoPressionado();
     bool             botaoLongo = inputDriver.botaoLongoPressionado();
@@ -310,8 +307,12 @@ void loop() {
         if (botaoLongo) {
             menu.processar(direcao, false, true);
         } else if (botaoCurto) {
-            irrigacao.toggleValvula(menu.configSetorTeste());
-            menu.processar(direcao, false, false);
+            if (menu.configSetorTeste() == NUM_VALVULAS) {
+                menu.processar(direcao, true, false);
+            } else {
+                irrigacao.toggleValvula(menu.configSetorTeste());
+                menu.processar(direcao, false, false);
+            }
         } else {
             menu.processar(direcao, false, false);
         }
@@ -359,9 +360,6 @@ void loop() {
         maskSetoresNoLoteAgenda(),
         maskSetoresPendentesAgenda());
 
-    // 6.2 Mantem o servidor HTTP responsivo durante o modo AP
-    webApManager.atualizar();
-
-    // 7. Renderiza display
+    // 6.2 Renderiza display
     displayManager.atualizar();
 }

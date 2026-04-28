@@ -1,9 +1,9 @@
 #pragma once
 
 // ============================================================
-//  input_driver.h — Driver de navegação local (4 botões)
+//  input_driver.h — Driver de navegação local (3 botões)
 //
-//  Responsabilidade: ler direção, seleção e voltar.
+//  Responsabilidade: ler direção e seleção (clique longo = voltar).
 //  NÃO conhece menu, NÃO conhece display.
 //  Só reporta o que o hardware fez.
 // ============================================================
@@ -54,7 +54,6 @@ private:
     EstadoBotao _btnUp;
     EstadoBotao _btnDown;
     EstadoBotao _btnSelect;
-    EstadoBotao _btnBack;
 
     static const unsigned long DEBOUNCE_MS = BUTTON_DEBOUNCE_MS;
     static const unsigned long LONG_PRESS_MS = BUTTON_LONG_PRESS_MS;

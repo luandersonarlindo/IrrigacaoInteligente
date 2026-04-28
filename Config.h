@@ -5,12 +5,12 @@
 //  Altere aqui sem precisar tocar nos outros arquivos
 // ============================================================
 
-// --- Pinos: Navegação local (4 botões) ---
+// --- Pinos: Navegação local (3 botões) ---
 // Botões em INPUT_PULLUP: pressionado = LOW
+// Voltar: clique longo no botao Selecionar.
 #define PIN_BTN_UP 19
 #define PIN_BTN_DOWN 18
 #define PIN_BTN_SELECT 4
-#define PIN_BTN_BACK 16
 
 // --- Compatibilidade legada: aliases de navegacao ---
 // Mantem o projeto compilando caso exista codigo antigo de entrada local.
@@ -66,22 +66,6 @@
 #define TIMEOUT_MANUAL_MS 600000       // 10 min — desliga válvula esquecida (modo manual)
 #define MAX_SETOR_SIMULTANEOS_AGENDA 2 // Limite de setores simultaneos em agenda
 #define INTERVALO_LOTE_AGENDA_MS 10000 // Intervalo entre lotes da agenda (ms)
-
-// --- Wi-Fi AP + WebServer ---
-#define WIFI_AP_SSID "IrrigacaoESP32"
-#define WIFI_AP_PASSWORD "12345678"
-#define WIFI_AP_CHANNEL 6
-#define WIFI_AP_MAX_CONNECTIONS 4
-#define WIFI_STA_ENABLED true
-#define WIFI_STA_SSID "Conexao_Social"
-#define WIFI_STA_PASSWORD "000000789!@#$"
-#define WIFI_STA_RETRY_MS 15000
-
-// --- Web Dashboard (valores padrao enquanto sensores externos nao forem ligados) ---
-#define WEB_FORCE_DEFAULT_SECONDS 20
-#define WEB_TEMP_DEFAULT_C 28.4f
-#define WEB_HUMIDADE_AR_DEFAULT_PCT 72.0f
-#define WEB_CHUVA_1H_DEFAULT_MM 0.0f
 
 // --- Debug ---
 #define DEBUG_SERIAL false // false = silencia mensagens no monitor serial

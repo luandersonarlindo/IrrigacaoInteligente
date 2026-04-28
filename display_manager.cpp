@@ -6,147 +6,13 @@
 
 namespace
 {
-    constexpr int WEBSERVER_MAX_LINHAS = 24;
-    constexpr int WEBSERVER_LINHAS_POR_PAGINA = 4;
-    constexpr int WEBSERVER_Y_INICIAL = 14;
-    constexpr int WEBSERVER_ALTURA_LINHA = 10;
-    constexpr int WEBSERVER_LARGURA_MAX_PX = OLED_LARGURA - 2;
-    int adicionarTextoQuebrado(DisplayDriverOled &display,
-                               const String &textoOriginal,
-                               String linhas[WEBSERVER_MAX_LINHAS],
-                               int totalAtual)
-    {
-        if (totalAtual >= WEBSERVER_MAX_LINHAS)
-        {
-            return totalAtual;
-        }
-
-        String restante = textoOriginal;
-        restante.trim();
-        if (restante.length() == 0)
-        {
-            return totalAtual;
-        }
-
-        while (restante.length() > 0 && totalAtual < WEBSERVER_MAX_LINHAS)
-        {
-            int tamanho = (int)restante.length();
-            int corte = tamanho;
-
-            while (corte > 0)
-            {
-                String candidata = restante.substring(0, corte);
-                candidata.trim();
-
-                if (candidata.length() == 0)
-                {
-                    corte--;
-                    continue;
-                }
-
-                if (display.larguraTexto(candidata.c_str()) <= WEBSERVER_LARGURA_MAX_PX)
-                {
-                    break;
-                }
-
-                int ultimoEspaco = candidata.lastIndexOf(' ');
-                if (ultimoEspaco > 0)
-                {
-                    corte = ultimoEspaco;
-                }
-                else
-                {
-                    corte--;
-                }
-            }
-
-            if (corte <= 0)
-            {
-                corte = 1;
-                while (corte < tamanho)
-                {
-                    String candidata = restante.substring(0, corte + 1);
-                    if (display.larguraTexto(candidata.c_str()) > WEBSERVER_LARGURA_MAX_PX)
-                    {
-                        break;
-                    }
-                    corte++;
-                }
-            }
-
-            String linha = restante.substring(0, corte);
-            linha.trim();
-            if (linha.length() == 0)
-            {
-                linha = restante.substring(0, 1);
-                corte = 1;
-            }
-
-            linhas[totalAtual++] = linha;
-
-            if (corte >= tamanho)
-            {
-                break;
-            }
-
-            restante = restante.substring(corte);
-            restante.trim();
-        }
-
-        return totalAtual;
-    }
-
-    // Wi-Fi icon derived from the provided icons8 image (id 9922), converted to 1-bit 24x18.
-    const uint8_t WIFI_ICON_9922_24X18[] = {
-        0x00, 0xFF, 0x00, 0xE0, 0xFF, 0x07, 0xF8, 0xFF, 0x1F, 0xFC, 0xFF, 0x3F,
-        0xFE, 0x00, 0x7F, 0x3F, 0x00, 0xFC, 0x0E, 0x7E, 0x70, 0xC4, 0xFF, 0x23,
-        0xE0, 0xFF, 0x07, 0xF0, 0xFF, 0x0F, 0xE0, 0x81, 0x07, 0xC0, 0x00, 0x03,
-        0x00, 0x3C, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x7E, 0x00, 0x00, 0x3C, 0x00,
-        0x00, 0x18, 0x00, 0x00, 0x00, 0x00};
-
-    void desenharBitmap1Bpp(DisplayDriverOled &d,
-                            int x,
-                            int y,
-                            int largura,
-                            int altura,
-                            const uint8_t *dados)
-    {
-        int bytesPorLinha = (largura + 7) / 8;
-
-        for (int linha = 0; linha < altura; linha++)
-        {
-            int inicioSegmento = -1;
-
-            for (int coluna = 0; coluna <= largura; coluna++)
-            {
-                bool aceso = false;
-                if (coluna < largura)
-                {
-                    int indiceByte = (linha * bytesPorLinha) + (coluna / 8);
-                    uint8_t mascara = (uint8_t)(1U << (coluna % 8));
-                    aceso = (dados[indiceByte] & mascara) != 0;
-                }
-
-                if (aceso && inicioSegmento < 0)
-                {
-                    inicioSegmento = coluna;
-                }
-                else if (!aceso && inicioSegmento >= 0)
-                {
-                    d.desenharLinha(x + inicioSegmento, y + linha, x + coluna - 1, y + linha);
-                    inicioSegmento = -1;
-                }
-            }
-        }
-    }
-
     // Icones simples em linha para OLED monocromatico.
     void desenharIconeMenuPrincipal(DisplayDriverOled &d, int x, int y, int tipo)
     {
         // Moldura base 32x32
         d.desenharRetangulo(x, y, 32, 32);
 
-        if (tipo == 0)
+        if (tipo == (int)ItemMenu::IRRIGACAO_MANUAL)
         {
             // Irrigar agora: aspersor com gotas e jatos (estilo tecnico mono)
             d.desenharRetanguloPreenchido(x + 11, y + 4, 10, 4); // topo do bico
@@ -171,7 +37,7 @@ namespace
             d.desenharLinha(x + 24, y + 28, x + 27, y + 22);
             d.desenharLinha(x + 27, y + 22, x + 30, y + 28);
         }
-        else if (tipo == 1)
+        else if (tipo == (int)ItemMenu::PROGRAMAR)
         {
             // Programar: calculadora/teclado numerico
             d.desenharRetangulo(x + 5, y + 4, 22, 24);
@@ -190,11 +56,6 @@ namespace
 
             // tecla lateral (estilo funcao)
             d.desenharRetanguloPreenchido(x + 24, y + 14, 2, 10);
-        }
-        else if (tipo == (int)ItemMenu::WEBSERVER)
-        {
-            // WebServer: Wi-Fi icon based on the image provided by the user.
-            desenharBitmap1Bpp(d, x + 4, y + 7, 24, 18, WIFI_ICON_9922_24X18);
         }
         else
         {
@@ -437,15 +298,13 @@ namespace
 }
 
 DisplayManager::DisplayManager(DisplayDriverOled &display,
-                               MenuController &menu,
-                               RtcDriverDs3231 &rtc,
-                               IrrigationController &irrigacao,
-                               WebApManager &webAp)
+                                                             MenuController &menu,
+                                                             RtcDriverDs3231 &rtc,
+                                                             IrrigationController &irrigacao)
     : _display(display),
       _menu(menu),
       _rtc(rtc),
-      _irrigacao(irrigacao),
-      _webAp(webAp),
+            _irrigacao(irrigacao),
       _ultimaAtualizacao(0),
       _agendaExecucaoAtiva(false),
       _agendaAguardandoIntervalo(false),
@@ -510,9 +369,6 @@ void DisplayManager::atualizar()
         break;
     case EstadoMenu::CONFIGURACOES:
         desenharTelaConfig();
-        break;
-    case EstadoMenu::WEBSERVER:
-        desenharTelaWebServer();
         break;
     }
 
@@ -756,7 +612,7 @@ void DisplayManager::desenharTelaIrrigacao()
 void DisplayManager::desenharTelaProgramar()
 {
     EtapaProgramacao etapa = _menu.etapaProgramacao();
-    int agenda = _menu.agendaProgramacao() + 1;
+    int agendaIndex = _menu.agendaProgramacao();
 
     auto desenharBarra = [&](int x, int y, int largura, int altura, int valor, int maximo)
     {
@@ -820,6 +676,16 @@ void DisplayManager::desenharTelaProgramar()
 
         desenharCabecalho("PROGRAMAR");
 
+        if (agendaIndex >= MAX_AGENDAS_TOTAIS)
+        {
+            _display.desenharTexto(0, 24, "< Voltar");
+            _display.desenharTextoMini(0, 40, "Retorna ao menu principal");
+            _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
+            _display.desenharTextoMini(0, 56, "OK: voltar | Segure: sair");
+            return;
+        }
+
+        int agenda = agendaIndex + 1;
         char linhaAgenda[24];
         snprintf(linhaAgenda, sizeof(linhaAgenda), "Agenda %d de %d", agenda, MAX_AGENDAS_TOTAIS);
         _display.desenharTexto(0, 16, linhaAgenda);
@@ -864,7 +730,7 @@ void DisplayManager::desenharTelaProgramar()
             _display.desenharTexto(0, 48, "Erro ao salvar");
 
         _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        _display.desenharTextoMini(0, 56, "Segure: sair");
+        _display.desenharTextoMini(0, 56, "OK: editar | Segure: sair");
         return;
     }
 
@@ -1362,16 +1228,22 @@ void DisplayManager::desenharTelaConfig()
 
         int setorAtual = _menu.configSetorTeste();
         const int linhasVisiveis = 3;
+        int totalItens = NUM_VALVULAS + 1; // setores + voltar
         int inicio = (setorAtual / linhasVisiveis) * linhasVisiveis;
         int fim = inicio + linhasVisiveis;
-        if (fim > NUM_VALVULAS)
-            fim = NUM_VALVULAS;
+        if (fim > totalItens)
+            fim = totalItens;
 
         for (int i = inicio; i < fim; i++)
         {
             int linhaIdx = i - inicio;
             int y = 16 + (linhaIdx * 11);
-            bool aberta = (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA);
+            bool itemVoltar = (i == NUM_VALVULAS);
+            bool aberta = false;
+            if (!itemVoltar)
+            {
+                aberta = (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA);
+            }
 
             if (i == setorAtual)
             {
@@ -1380,7 +1252,14 @@ void DisplayManager::desenharTelaConfig()
             }
 
             char linha[24];
-            snprintf(linha, sizeof(linha), "Setor %d   [%c]", i + 1, aberta ? 'X' : ' ');
+            if (itemVoltar)
+            {
+                snprintf(linha, sizeof(linha), "< Voltar");
+            }
+            else
+            {
+                snprintf(linha, sizeof(linha), "Setor %d   [%c]", i + 1, aberta ? 'X' : ' ');
+            }
             _display.desenharTexto(2, y, linha);
 
             if (i == setorAtual)
@@ -1390,8 +1269,16 @@ void DisplayManager::desenharTelaConfig()
         }
 
         char rodape[28];
-        snprintf(rodape, sizeof(rodape), "OK toggle | Pg %d/%d", (inicio / linhasVisiveis) + 1,
-                 (NUM_VALVULAS + linhasVisiveis - 1) / linhasVisiveis);
+        if (setorAtual == NUM_VALVULAS)
+        {
+            snprintf(rodape, sizeof(rodape), "OK voltar | Pg %d/%d", (inicio / linhasVisiveis) + 1,
+                     (totalItens + linhasVisiveis - 1) / linhasVisiveis);
+        }
+        else
+        {
+            snprintf(rodape, sizeof(rodape), "OK toggle | Pg %d/%d", (inicio / linhasVisiveis) + 1,
+                     (totalItens + linhasVisiveis - 1) / linhasVisiveis);
+        }
         _display.desenharLinha(0, 50, OLED_LARGURA - 1, 50);
         _display.desenharTextoMini(0, 52, "MODO MANUTENCAO");
         _display.desenharTextoMini(0, 56, rodape);
@@ -1551,87 +1438,6 @@ void DisplayManager::desenharTelaConfig()
 
         _display.desenharTextoMini(0, 56, "OK/Segure para voltar");
         return;
-    }
-}
-
-void DisplayManager::desenharTelaWebServer()
-{
-    desenharCabecalho("WEBSERVER");
-
-    String linhas[WEBSERVER_MAX_LINHAS];
-    int totalLinhas = 0;
-
-    if (!_webAp.ativo())
-    {
-        totalLinhas = adicionarTextoQuebrado(_display, "Falha ao iniciar AP", linhas, totalLinhas);
-        totalLinhas = adicionarTextoQuebrado(_display, "Tente voltar e entrar novamente", linhas, totalLinhas);
-    }
-    else
-    {
-        totalLinhas = adicionarTextoQuebrado(_display, "Conecte no Wi-Fi do ESP32", linhas, totalLinhas);
-        totalLinhas = adicionarTextoQuebrado(_display, String("SSID: ") + _webAp.ssid(), linhas, totalLinhas);
-        totalLinhas = adicionarTextoQuebrado(_display, String("Senha: ") + _webAp.senha(), linhas, totalLinhas);
-        totalLinhas = adicionarTextoQuebrado(_display, String("IP AP: ") + _webAp.ipTexto(), linhas, totalLinhas);
-
-        String urlAp = _webAp.urlAcessoAp();
-        if (urlAp.length() > 0)
-        {
-            totalLinhas = adicionarTextoQuebrado(_display, String("URL AP: ") + urlAp, linhas, totalLinhas);
-        }
-
-        if (_webAp.staConectada())
-        {
-            totalLinhas = adicionarTextoQuebrado(_display, String("IP STA: ") + _webAp.ipStaTexto(), linhas, totalLinhas);
-
-            String urlSta = _webAp.urlAcessoSta();
-            if (urlSta.length() > 0)
-            {
-                totalLinhas = adicionarTextoQuebrado(_display, String("URL STA: ") + urlSta, linhas, totalLinhas);
-            }
-        }
-        else
-        {
-            totalLinhas = adicionarTextoQuebrado(_display, "STA: sem conexao", linhas, totalLinhas);
-        }
-    }
-
-    if (totalLinhas <= 0)
-    {
-        linhas[0] = "Sem informacoes";
-        totalLinhas = 1;
-    }
-
-    int totalPaginas = (totalLinhas + WEBSERVER_LINHAS_POR_PAGINA - 1) / WEBSERVER_LINHAS_POR_PAGINA;
-    int paginaAtual = 0;
-    if (totalPaginas > 1)
-    {
-        paginaAtual = _menu.paginaWebServer() % totalPaginas;
-    }
-
-    int inicio = paginaAtual * WEBSERVER_LINHAS_POR_PAGINA;
-    for (int i = 0; i < WEBSERVER_LINHAS_POR_PAGINA; i++)
-    {
-        int indiceLinha = inicio + i;
-        if (indiceLinha >= totalLinhas)
-        {
-            break;
-        }
-
-        int y = WEBSERVER_Y_INICIAL + (i * WEBSERVER_ALTURA_LINHA);
-        _display.desenharTexto(0, y, linhas[indiceLinha].c_str());
-    }
-
-    _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-
-    if (totalPaginas > 1)
-    {
-        char rodape[26];
-        snprintf(rodape, sizeof(rodape), "Pag %d/%d Cima/Baixo OK/Seg", paginaAtual + 1, totalPaginas);
-        _display.desenharTextoMini(0, 56, rodape);
-    }
-    else
-    {
-        _display.desenharTextoMini(0, 56, "OK/Segure: voltar");
     }
 }
 

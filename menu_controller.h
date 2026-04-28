@@ -4,7 +4,7 @@
 //  menu_controller.h — Controlador de Menu
 //
 //  Responsabilidade: gerenciar navegação e estado do menu.
-//  Recebe eventos de entrada (direção, selecionar, voltar).
+//  Recebe eventos de entrada (direção, selecionar, clique longo = voltar).
 //  NÃO desenha nada — avisa o display_manager o que mostrar.
 // ============================================================
 
@@ -20,7 +20,6 @@ enum class ItemMenu
 {
     IRRIGACAO_MANUAL = 0,
     PROGRAMAR,
-    WEBSERVER,
     CONFIGURACOES,
     TOTAL // sentinela — mantém a contagem automática
 };
@@ -31,7 +30,6 @@ enum class EstadoMenu
     STATUS, // tela padrão — não é item de menu
     IRRIGACAO_MANUAL,
     PROGRAMAR,
-    WEBSERVER,
     CONFIGURACOES
 };
 
@@ -96,8 +94,6 @@ public:
     int setorAtual() const;
     bool opcaoVoltarIrrigacaoSelecionada() const;
 
-    // Tela WebServer — paginação manual de conteúdo
-    int paginaWebServer() const;
 
     // Notificação de timeout — display_manager consulta para exibir aviso
     bool timeoutOcorreu() const;
@@ -159,7 +155,6 @@ private:
 
     // Irrigação manual
     int _setorAtual;      // setor em foco na navegacao (0 a NUM_VALVULAS-1)
-    int _paginaWebServer; // indice da pagina na tela de WebServer
     bool _timeoutOcorreu; // flag para display exibir aviso
     int _setorTimeout;    // qual setor foi fechado por timeout
 

@@ -8,7 +8,6 @@
 const char *MenuController::_nomesItens[] = {
     "Irrigar Agora",
     "Programar",
-    "WEBSERVER",
     "Configuracoes"};
 
 MenuController::MenuController(ScheduleManager &schedule, RtcDriverDs3231 &rtc, RuntimeConfigManager &config)
@@ -20,7 +19,6 @@ MenuController::MenuController(ScheduleManager &schedule, RtcDriverDs3231 &rtc, 
       _menuAtivo(false),
       _ultimoEventoMenuMs(0),
       _setorAtual(0),
-      _paginaWebServer(0),
       _timeoutOcorreu(false),
       _setorTimeout(-1),
       _etapaProgramacao(EtapaProgramacao::SELECIONAR_AGENDA),
@@ -58,7 +56,6 @@ void MenuController::begin()
     _menuAtivo = false;
     _ultimoEventoMenuMs = millis();
     _setorAtual = 0;
-    _paginaWebServer = 0;
     _timeoutOcorreu = false;
     _setorTimeout = -1;
     _etapaProgramacao = EtapaProgramacao::SELECIONAR_AGENDA;
@@ -192,23 +189,6 @@ void MenuController::processar(DirecaoNavegacao direcao, bool botaoPressionado, 
     case EstadoMenu::CONFIGURACOES:
         processarConfiguracoes(direcao, botaoPressionado, botaoLongoPressionado);
         break;
-
-    case EstadoMenu::WEBSERVER:
-        if (direcao == DirecaoNavegacao::HORARIO)
-        {
-            _paginaWebServer = (_paginaWebServer + 1) % 100;
-        }
-        else if (direcao == DirecaoNavegacao::ANTI_HORARIO)
-        {
-            _paginaWebServer = (_paginaWebServer + 99) % 100;
-        }
-
-        // Tela informativa: qualquer clique retorna ao status.
-        if (botaoPressionado || botaoLongoPressionado)
-        {
-            voltar();
-        }
-        break;
     }
 }
 
@@ -219,7 +199,6 @@ int MenuController::itemSelecionado() const { return _itemAtual; }
 bool MenuController::menuAtivo() const { return _menuAtivo; }
 int MenuController::setorAtual() const { return _setorAtual; }
 bool MenuController::opcaoVoltarIrrigacaoSelecionada() const { return _setorAtual == NUM_VALVULAS; }
-int MenuController::paginaWebServer() const { return _paginaWebServer; }
 bool MenuController::timeoutOcorreu() const { return _timeoutOcorreu; }
 
 void MenuController::limparTimeout()
@@ -333,10 +312,6 @@ void MenuController::selecionar()
         _estado = EstadoMenu::PROGRAMAR;
         entrarProgramacao();
         break;
-    case ItemMenu::WEBSERVER:
-        _estado = EstadoMenu::WEBSERVER;
-        _paginaWebServer = 0;
-        break;
     case ItemMenu::CONFIGURACOES:
         _estado = EstadoMenu::CONFIGURACOES;
         entrarConfiguracoes();
@@ -352,7 +327,6 @@ void MenuController::voltar()
     _itemAtual = 0;
     _menuAtivo = false;
     _setorAtual = 0;
-    _paginaWebServer = 0;
 
     if (DEBUG_SERIAL)
     {
@@ -422,26 +396,40 @@ void MenuController::processarProgramacao(DirecaoNavegacao direcao, bool botaoPr
     switch (_etapaProgramacao)
     {
     case EtapaProgramacao::SELECIONAR_AGENDA:
+    {
+        int totalOpcoesAgenda = MAX_AGENDAS_TOTAIS + 1; // +1 = Voltar
         if (direcao == DirecaoNavegacao::HORARIO)
         {
-            _agendaProgramacao = (_agendaProgramacao + 1) % MAX_AGENDAS_TOTAIS;
+            _agendaProgramacao = (_agendaProgramacao + 1) % totalOpcoesAgenda;
             _feedbackProgramacao = FeedbackProgramacao::NENHUM;
-            carregarAgendaSelecionada();
+            if (_agendaProgramacao < MAX_AGENDAS_TOTAIS)
+            {
+                carregarAgendaSelecionada();
+            }
         }
         if (direcao == DirecaoNavegacao::ANTI_HORARIO)
         {
-            _agendaProgramacao = (_agendaProgramacao - 1 + MAX_AGENDAS_TOTAIS) % MAX_AGENDAS_TOTAIS;
+            _agendaProgramacao = (_agendaProgramacao - 1 + totalOpcoesAgenda) % totalOpcoesAgenda;
             _feedbackProgramacao = FeedbackProgramacao::NENHUM;
-            carregarAgendaSelecionada();
+            if (_agendaProgramacao < MAX_AGENDAS_TOTAIS)
+            {
+                carregarAgendaSelecionada();
+            }
         }
         if (botaoPressionado)
         {
+            if (_agendaProgramacao >= MAX_AGENDAS_TOTAIS)
+            {
+                voltar();
+                break;
+            }
             prepararEdicaoDaAgenda();
             _opcaoSubmenuProgramacao = 0;
             _etapaProgramacao = EtapaProgramacao::SUBMENU_AGENDA;
             _feedbackProgramacao = FeedbackProgramacao::NENHUM;
         }
         break;
+    }
 
     case EtapaProgramacao::SUBMENU_AGENDA:
         if (direcao == DirecaoNavegacao::HORARIO)
@@ -541,6 +529,10 @@ void MenuController::processarProgramacao(DirecaoNavegacao direcao, bool botaoPr
 
 void MenuController::carregarAgendaSelecionada()
 {
+    if (_agendaProgramacao < 0 || _agendaProgramacao >= MAX_AGENDAS_TOTAIS)
+    {
+        return;
+    }
     AgendaSetor agenda;
     if (_schedule.obterAgenda(_agendaProgramacao, agenda))
     {
@@ -869,13 +861,19 @@ void MenuController::processarConfiguracoes(DirecaoNavegacao direcao, bool botao
 
     if (_etapaConfiguracao == EtapaConfiguracao::TESTE_VALVULAS)
     {
+        int totalItens = NUM_VALVULAS + 1; // +1 = Voltar
         if (direcao == DirecaoNavegacao::HORARIO)
         {
-            _configSetorTeste = (_configSetorTeste + 1) % NUM_VALVULAS;
+            _configSetorTeste = (_configSetorTeste + 1) % totalItens;
         }
         else if (direcao == DirecaoNavegacao::ANTI_HORARIO)
         {
-            _configSetorTeste = (_configSetorTeste - 1 + NUM_VALVULAS) % NUM_VALVULAS;
+            _configSetorTeste = (_configSetorTeste - 1 + totalItens) % totalItens;
+        }
+        if (botaoPressionado && _configSetorTeste == NUM_VALVULAS)
+        {
+            _etapaConfiguracao = EtapaConfiguracao::SUBMENU_SISTEMA;
+            _opcaoConfiguracao = 0;
         }
         return;
     }
