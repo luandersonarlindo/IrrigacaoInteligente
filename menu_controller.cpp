@@ -100,7 +100,7 @@ void MenuController::processar(DirecaoNavegacao direcao, bool botaoPressionado, 
 
     if (_menuAtivo && !houveInteracao)
     {
-        if ((unsigned long)(millis() - _ultimoEventoMenuMs) >= _config.timeoutManualMs())
+        if ((unsigned long)(millis() - _ultimoEventoMenuMs) >= MENU_TIMEOUT_MS)
         {
             if (DEBUG_SERIAL)
             {

@@ -18,6 +18,8 @@ DisplayManager::DisplayManager(DisplayDriverLcd16x2 &display,
       _rtc(rtc),
       _irrigacao(irrigacao),
       _ultimaAtualizacao(0),
+    _ultimaInteracaoMs(0),
+    _dormindo(false),
       _agendaExecucaoAtiva(false),
       _agendaAguardandoIntervalo(false),
       _agendaSetoresEmLote(0),
@@ -59,15 +61,46 @@ void DisplayManager::atualizarLeituraDht(bool ok, float temperaturaC, float umid
 
 void DisplayManager::begin()
 {
+    _ultimaInteracaoMs = millis();
+    _dormindo = false;
+    _display.setBacklight(true);
+
     if (DEBUG_SERIAL)
     {
         Serial.println("[DisplayManager] LCD 16x2 inicializado.");
     }
 }
 
+void DisplayManager::notificarInteracao()
+{
+    _ultimaInteracaoMs = millis();
+    if (_dormindo)
+    {
+        _dormindo = false;
+        _display.setBacklight(true);
+        _ultimaAtualizacao = 0;
+    }
+}
+
 void DisplayManager::atualizar()
 {
     unsigned long agora = millis();
+
+    if (LCD_SLEEP_TIMEOUT_MS > 0)
+    {
+        if (!_dormindo && (unsigned long)(agora - _ultimaInteracaoMs) >= LCD_SLEEP_TIMEOUT_MS)
+        {
+            _dormindo = true;
+            _display.setBacklight(false);
+            return;
+        }
+
+        if (_dormindo)
+        {
+            return;
+        }
+    }
+
     unsigned long intervalo = _menu.menuAtivo() ? 130 : INTERVALO_ATUALIZACAO_MS;
 
     if ((agora - _ultimaAtualizacao) < intervalo)

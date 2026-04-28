@@ -6,7 +6,8 @@
 
 DisplayDriverLcd16x2::DisplayDriverLcd16x2()
     : _lcd(LCD_I2C_ENDERECO, LCD_COLUNAS, LCD_LINHAS),
-      _precisaRender(true)
+    _precisaRender(true),
+    _backlightOn(true)
 {
     for (int linha = 0; linha < LCD_LINHAS; linha++)
     {
@@ -26,6 +27,7 @@ void DisplayDriverLcd16x2::begin()
     _lcd.backlight();
     _lcd.clear();
     _precisaRender = true;
+    _backlightOn = true;
 
     if (DEBUG_SERIAL)
     {
@@ -159,4 +161,27 @@ void DisplayDriverLcd16x2::renderizar()
     }
 
     _precisaRender = false;
+}
+
+void DisplayDriverLcd16x2::setBacklight(bool ligado)
+{
+    if (_backlightOn == ligado)
+    {
+        return;
+    }
+
+    _backlightOn = ligado;
+    if (ligado)
+    {
+        _lcd.backlight();
+    }
+    else
+    {
+        _lcd.noBacklight();
+    }
+}
+
+bool DisplayDriverLcd16x2::backlightOn() const
+{
+    return _backlightOn;
 }

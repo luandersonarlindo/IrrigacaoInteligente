@@ -24,12 +24,15 @@ public:
     void escreverLinha(uint8_t linha, const String &texto);
     void escreverTexto(uint8_t linha, uint8_t coluna, const char *texto);
     void renderizar();
+    void setBacklight(bool ligado);
+    bool backlightOn() const;
 
 private:
     LiquidCrystal_I2C _lcd;
     char _buffer[LCD_LINHAS][LCD_COLUNAS + 1];
     char _ultimoRender[LCD_LINHAS][LCD_COLUNAS + 1];
     bool _precisaRender;
+    bool _backlightOn;
 
     static void normalizarLinha(const String &origem, char destino[LCD_COLUNAS + 1]);
 };

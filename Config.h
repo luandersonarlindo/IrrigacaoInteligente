@@ -45,6 +45,10 @@
 #define LCD_COLUNAS 16
 #define LCD_LINHAS 2
 
+// --- Economizador do LCD ---
+// 0 = desativado
+#define LCD_SLEEP_TIMEOUT_MS 30000
+
 // --- Menu ---
 #define MENU_ITENS_MAX 4      // Número máximo de itens no menu principal
 #define MENU_TIMEOUT_MS 30000 // Tempo sem interação para voltar ao início (ms)
@@ -58,7 +62,7 @@
 #define MAX_AGENDAS_POR_SETOR 4        // Fase 5: limite de agendas por setor
 #define MAX_AGENDAS_TOTAIS 4           // Fase 5 (refino): agendas globais com seleção de setores
 #define DURACAO_PADRAO_MIN 10          // Duração padrão de irrigação em minutos
-#define TIMEOUT_MANUAL_MS 600000       // 10 min — desliga válvula esquecida (modo manual)
+#define TIMEOUT_MANUAL_MS 1800000      // 30 min — desliga válvula esquecida (modo manual)
 #define MAX_SETOR_SIMULTANEOS_AGENDA 2 // Limite de setores simultaneos em agenda
 #define INTERVALO_LOTE_AGENDA_MS 10000 // Intervalo entre lotes da agenda (ms)
 

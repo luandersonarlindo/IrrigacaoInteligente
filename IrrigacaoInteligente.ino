@@ -281,6 +281,12 @@ void loop() {
     bool             botaoCurto = inputDriver.botaoPressionado();
     bool             botaoLongo = inputDriver.botaoLongoPressionado();
 
+    bool houveInteracao = (direcao != DirecaoNavegacao::NENHUMA) || botaoCurto || botaoLongo;
+    if (houveInteracao)
+    {
+        displayManager.notificarInteracao();
+    }
+
     bool emTesteValvulasAntes =
         (menu.estadoAtual() == EstadoMenu::CONFIGURACOES &&
          menu.etapaConfiguracao() == EtapaConfiguracao::TESTE_VALVULAS);

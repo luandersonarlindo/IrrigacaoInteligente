@@ -29,6 +29,9 @@ public:
 
     void begin();
 
+    // Notifica interacao do usuario para reativar a tela
+    void notificarInteracao();
+
     // Estado da execucao sequencial de agenda (lotes + intervalo).
     void atualizarEstadoAgendaSequencial(bool ativa,
                                          bool aguardandoIntervalo,
@@ -69,6 +72,8 @@ private:
 
     // Controle de atualização (evita redesenho desnecessário)
     unsigned long _ultimaAtualizacao;
+    unsigned long _ultimaInteracaoMs;
+    bool _dormindo;
     static const unsigned long INTERVALO_ATUALIZACAO_MS = 250;
 
     // Estado operacional da agenda automatica sequencial
