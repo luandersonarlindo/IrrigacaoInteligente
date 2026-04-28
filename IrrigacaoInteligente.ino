@@ -17,7 +17,6 @@
 #include "irrigation_controller.h"
 #include "schedule_manager.h"
 #include "runtime_config_manager.h"
-#include "web_ap_manager.h"
 
 // --- Instâncias globais ---
 InputDriver           inputDriver;
@@ -27,8 +26,7 @@ RuntimeConfigManager  runtimeConfig;
 ScheduleManager       scheduleManager(runtimeConfig);
 MenuController        menu(scheduleManager, rtc, runtimeConfig);
 IrrigationController  irrigacao(runtimeConfig);
-WebApManager          webApManager(irrigacao, scheduleManager, runtimeConfig, rtc);
-DisplayManager        displayManager(lcd, menu, rtc, irrigacao, webApManager);
+DisplayManager        displayManager(lcd, menu, rtc, irrigacao);
 bool                  rtcDisponivel = false;
 
 struct ExecucaoAgendaSequencial {
@@ -253,7 +251,6 @@ void setup() {
     runtimeConfig.begin();
     scheduleManager.begin();
     irrigacao.begin();     // configura GPIOs e garante relés desligados
-    webApManager.begin();
     displayManager.begin();
 
     execAgenda.ativa = false;
@@ -350,7 +347,7 @@ void loop() {
     // 6. Processa lotes da agenda (max simultaneos + intervalo entre lotes)
     atualizarExecucaoAgendaSequencial();
 
-    // 6.1 Publica estado da agenda sequencial para o dashboard de status
+    // 6.1 Publica estado da agenda sequencial para o display de status
     displayManager.atualizarEstadoAgendaSequencial(
         execAgenda.ativa,
         execAgenda.aguardandoIntervalo,
@@ -358,9 +355,6 @@ void loop() {
         (uint8_t)contarSetoresPendentesAgenda(),
         maskSetoresNoLoteAgenda(),
         maskSetoresPendentesAgenda());
-
-    // 6.2 Mantem o servidor HTTP responsivo durante o modo AP
-    webApManager.atualizar();
 
     // 7. Renderiza display
     displayManager.atualizar();

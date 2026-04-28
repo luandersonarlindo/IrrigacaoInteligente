@@ -6,10 +6,9 @@ Este documento explica o projeto de forma simples, para ensino de alunos de 15 a
 
 - ✅ Projeto com ESP32 para irrigacao manual e automatica.
 - 🖥️ Interface local com LCD 16x2 I2C e 4 botoes.
-- 🧭 Menu com acesso a Irrigar Agora, Programar, WEBSERVER e Configuracoes.
+- 🧭 Menu com acesso a Irrigar Agora, Programar e Configuracoes.
 - 💧 Controle fisico de 8 valvulas por rele.
 - 💾 Agendas salvas na memoria flash (NVS).
-- 🌐 Dashboard web no celular/computador via Wi-Fi AP.
 
 ## 🧭 Sumario
 
@@ -20,7 +19,7 @@ Este documento explica o projeto de forma simples, para ensino de alunos de 15 a
 5. 🔄 Fluxo do firmware
 6. 🕹️ Operacao da interface
 7. 📅 Agendamento
-8. 🌐 Dashboard web
+8. 🔒 Operacao local
 9. 💾 Persistencia
 10. 🗂️ Estrutura do projeto
 11. 🎓 Resumo pedagogico
@@ -91,7 +90,6 @@ Regra de organizacao:
 - display_manager.*: o que mostrar na tela.
 - irrigation_controller.*: abrir/fechar valvulas e controlar tempo.
 - schedule_manager.*: salvar, validar e disparar agendas.
-- web_ap_manager.*: cria AP Wi-Fi e dashboard web.
 - IrrigacaoInteligente.ino: setup e loop.
 
 ## 5. 🔄 Fluxo do firmware
@@ -104,12 +102,11 @@ No loop principal:
 4. Atualiza irrigacao (timeout e deadlines).
 5. Verifica disparos de agenda por minuto (RTC).
 6. Processa lotes da agenda (simultaneos + intervalo).
-7. Atualiza servidor web.
-8. Atualiza display.
+7. Atualiza display.
 
 Resumo:
 
-- entrada do usuario -> decisao da logica -> acao nos reles -> atualizacao da tela e da web
+- entrada do usuario -> decisao da logica -> acao nos reles -> atualizacao da tela
 
 ## 6. 🕹️ Operacao da interface
 
@@ -117,7 +114,6 @@ Menu principal:
 
 - Irrigar Agora
 - Programar
-- WEBSERVER
 - Configuracoes
 
 Comandos dos botoes:
@@ -156,18 +152,13 @@ Modelo atual:
 - Cada agenda pode controlar varios setores por mascara de bits.
 - A execucao e sequencial por lotes quando ha muitos setores.
 
-## 8. 🌐 Dashboard web
+## 8. 🔒 Operacao local
 
-O modulo web_ap_manager faz:
+Nesta branch simplificada, o sistema funciona somente com interface local.
 
-- Criar rede Wi-Fi AP do sistema.
-- Exibir dashboard com status de valvulas e agendas.
-- Permitir comandos web para valvulas e agendas.
-- Permitir ajuste de runtime e RTC por API.
-
-Uso didatico:
-
-- Alunos podem comparar controle local (botoes) com controle remoto (web).
+- Controle e navegacao por 4 botoes.
+- Visualizacao e configuracao no LCD 16x2.
+- Sem rede/AP e sem API remota.
 
 ## 9. 💾 Persistencia
 
@@ -188,7 +179,6 @@ As agendas e configuracoes runtime sao salvas na NVS (flash do ESP32).
 - menu_controller.h/.cpp
 - schedule_manager.h/.cpp
 - irrigation_controller.h/.cpp
-- web_ap_manager.h/.cpp
 - README.md
 - GUIA_DIDATICO_PROJETO.md
 - FASE5_CONTRATO_TECNICO.md
@@ -203,7 +193,6 @@ Correcoes importantes deste guia (alinhadas ao codigo atual):
 
 - Nao e simulacao: os reles sao acionados de verdade.
 - Ja existe modulo de agenda com persistencia (schedule_manager).
-- Ja existe dashboard web com AP dedicado (web_ap_manager).
 - O loop principal inclui disparo automatico por minuto e execucao por lotes.
 
 ## 12. 🚀 Proximos passos didaticos
@@ -212,7 +201,7 @@ Correcoes importantes deste guia (alinhadas ao codigo atual):
 - Atividade 2: criar nova opcao de menu (ex.: Manutencao).
 - Atividade 3: mostrar no display o tempo restante de cada setor.
 - Atividade 4: comparar modelo de agenda global vs por setor.
-- Atividade 5: criar testes de API para validar rotas do dashboard.
+- Atividade 5: criar roteiro de testes manuais para menu e configuracoes.
 
 ---
 

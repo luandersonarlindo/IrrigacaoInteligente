@@ -123,7 +123,6 @@ Regras:
 - irrigation_controller.h/.cpp
 - menu_controller.h/.cpp
 - display_manager.h/.cpp
-- web_ap_manager.h/.cpp
 
 Responsabilidades principais:
 
@@ -131,7 +130,6 @@ Responsabilidades principais:
 2. runtime_config_manager: persistencia de timeout e duracao padrao.
 3. irrigation_controller: acionamento de reles e deadlines.
 4. menu_controller/display_manager: UX local no LCD 16x2 com 4 botoes.
-5. web_ap_manager: dashboard web e API para status/comandos.
 
 ## 7.2 🔄 Integracao com o loop atual
 
@@ -142,7 +140,6 @@ No loop principal:
 3. Avaliar disparos por minuto (RTC).
 4. Enfileirar e executar lotes sequenciais.
 5. Atualizar estado visual no display.
-6. Processar servidor web.
 
 ## 8. 🖥️ UX da programacao no LCD 16x2 (implementado)
 
@@ -195,7 +192,7 @@ SUBMENU_AGENDA
 5. Sistema evita duplicidade exata de agenda.
 6. Execucao por lotes respeita simultaneidade e intervalo.
 7. Nao ha regressao da irrigacao manual existente.
-8. Dashboard web apresenta status e aplica comandos sem erro.
+8. Interface local permanece estavel sem modulo de rede remota.
 
 ## 11. 🚧 Limites atuais
 
@@ -208,7 +205,7 @@ SUBMENU_AGENDA
 
 1. Definir formalmente modelo final (global vs por setor) para proxima fase.
 2. Se necessario, migrar estrutura para 16 agendas (4x4) com estrategia de compatibilidade.
-3. Adicionar testes automatizados para motor de lotes e APIs web.
+3. Adicionar testes automatizados para motor de lotes e persistencia.
 4. Consolidar criterios de UX para reduzir profundidade de navegacao no LCD 16x2.
 
 ---

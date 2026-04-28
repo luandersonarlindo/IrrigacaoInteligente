@@ -12,13 +12,11 @@ namespace
 DisplayManager::DisplayManager(DisplayDriverLcd16x2 &display,
                                MenuController &menu,
                                RtcDriverDs3231 &rtc,
-                               IrrigationController &irrigacao,
-                               WebApManager &webAp)
+                               IrrigationController &irrigacao)
     : _display(display),
       _menu(menu),
       _rtc(rtc),
       _irrigacao(irrigacao),
-      _webAp(webAp),
       _ultimaAtualizacao(0),
       _agendaExecucaoAtiva(false),
       _agendaAguardandoIntervalo(false),
@@ -85,10 +83,6 @@ void DisplayManager::atualizar()
     case EstadoMenu::CONFIGURACOES:
         desenharTelaConfig();
         break;
-
-    case EstadoMenu::WEBSERVER:
-        desenharTelaWebServer();
-        break;
     }
 
     _display.renderizar();
@@ -134,8 +128,6 @@ String DisplayManager::nomeItemPrincipalCurto(int indice) const
     case 1:
         return "Programar";
     case 2:
-        return "WebServer";
-    case 3:
         return "Config";
     default:
         return "Menu";
@@ -821,55 +813,4 @@ void DisplayManager::desenharTelaConfig()
     }
 
     escreverTela("Configuracoes", "Estado invalido");
-}
-
-void DisplayManager::desenharTelaWebServer()
-{
-    String linhas[8];
-    int totalLinhas = 0;
-
-    if (!_webAp.ativo())
-    {
-        linhas[totalLinhas++] = "AP nao iniciou";
-        linhas[totalLinhas++] = "Verifique Config";
-    }
-    else
-    {
-        linhas[totalLinhas++] = "AP:" + cortar(String(_webAp.ssid()), 13);
-        linhas[totalLinhas++] = "IP AP:" + _webAp.ipTexto();
-
-        if (_webAp.staConectada())
-            linhas[totalLinhas++] = "IP STA:" + _webAp.ipStaTexto();
-        else
-            linhas[totalLinhas++] = "STA: desconectado";
-
-        String url = _webAp.urlAcesso();
-        if (url.length() > 0)
-        {
-            linhas[totalLinhas++] = "URL:" + url;
-        }
-    }
-
-    if (totalLinhas <= 0)
-    {
-        linhas[totalLinhas++] = "Sem informacao";
-    }
-
-    int paginaAtual = _menu.paginaWebServer() % totalLinhas;
-
-    String linha1 = linhas[paginaAtual];
-    String linha2;
-
-    if (totalLinhas > 1)
-    {
-        char rodape[24];
-        snprintf(rodape, sizeof(rodape), "Pag %d/%d OK sair", paginaAtual + 1, totalLinhas);
-        linha2 = rodape;
-    }
-    else
-    {
-        linha2 = "OK/Seg para sair";
-    }
-
-    escreverTela(linha1, linha2);
 }

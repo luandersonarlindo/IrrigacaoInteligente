@@ -8,7 +8,6 @@ Este README descreve o estado atual implementado no firmware.
 
 - ✅ Controle manual de setores no menu.
 - 🗓️ Agendamento automatico semanal com execucao sequencial por lotes.
-- 🌐 Dashboard web local (AP Wi-Fi) para monitorar e controlar o sistema.
 - 💾 Persistencia de agendas e configuracoes runtime na flash (NVS), com versao e CRC.
 - 🕒 Operacao mesmo sem RTC (sem hora real).
 - 🛡️ Timeout de seguranca no modo manual.
@@ -23,7 +22,7 @@ Este README descreve o estado atual implementado no firmware.
 6. 🔄 Fluxo do firmware
 7. 🕹️ Operacao da interface
 8. 📅 Agendamento
-9. 🌐 Dashboard web
+9. 🔒 Interface local
 10. 💾 Persistencia
 11. 🗂️ Estrutura do projeto
 12. 🛠️ Build e gravacao
@@ -38,7 +37,6 @@ O firmware entrega:
 - Irrigacao manual por setor com feedback no LCD 16x2.
 - Irrigacao automatica por agenda semanal.
 - Controle fisico de reles (trigger HIGH).
-- Dashboard web com AP dedicado e tentativas de conexao STA.
 - Persistencia de agendas e configuracoes runtime apos reboot.
 - Regras de seguranca e validacao para evitar configuracoes invalidas.
 
@@ -90,7 +88,7 @@ Passo a passo curto para colocar o sistema para rodar:
 4. Compile e grave o firmware.
 5. Abra o monitor serial em 115200 para acompanhar logs.
 6. Use os botoes para abrir o menu e testar irrigacao manual.
-7. Se quiser usar dashboard web, conecte no AP e abra a URL exibida na tela WEBSERVER.
+7. Ajuste agendas e configuracoes diretamente pela interface local (LCD + botoes).
 
 ## 4. ⚙️ Configuracoes principais
 
@@ -108,12 +106,6 @@ Constantes relevantes em Config.h:
 - BAUD_RATE = 115200
 - DEBUG_SERIAL = false
 
-Rede/AP:
-
-- WIFI_AP_SSID, WIFI_AP_PASSWORD
-- WIFI_STA_ENABLED, WIFI_STA_SSID, WIFI_STA_PASSWORD
-- WIFI_STA_RETRY_MS
-
 ## 5. 🧱 Arquitetura
 
 Separacao adotada:
@@ -129,10 +121,9 @@ Modulos:
 - rtc_driver_ds3231.*: leitura/ajuste de data e hora.
 - runtime_config_manager.*: configuracoes runtime (timeout manual e duracao padrao) persistidas em NVS.
 - menu_controller.*: maquina de estados do menu, programacao e configuracoes.
-- display_manager.*: composicao das telas, incluindo status de agenda sequencial e tela WEBSERVER.
+- display_manager.*: composicao das telas, incluindo status de agenda sequencial.
 - irrigation_controller.*: acionamento de reles, origem manual/agenda e deadlines.
 - schedule_manager.*: CRUD de agenda, validacao, NVS, proxima execucao e disparo por janela de lote.
-- web_ap_manager.*: AP Wi-Fi, servidor HTTP e API do dashboard.
 - IrrigacaoInteligente.ino: setup e loop.
 
 ## 6. 🔄 Fluxo do firmware
@@ -144,7 +135,7 @@ Modulos:
 3. Inicializa entrada local (4 botoes) e display.
 4. Inicializa RTC (se indisponivel, continua sem hora real).
 5. Inicializa runtime config e schedule manager.
-6. Inicializa irrigacao, web AP manager e display manager.
+6. Inicializa irrigacao e display manager.
 
 ### 6.2 🔁 Loop
 
@@ -158,8 +149,7 @@ Modulos:
 8. Se RTC ativo, avalia disparos de agenda do minuto atual e enfileira setores.
 9. Processa execucao sequencial por lotes (limite de simultaneos + intervalo entre lotes).
 10. Publica estado da agenda sequencial para o display.
-11. Mantem servidor HTTP responsivo.
-12. Atualiza display.
+11. Atualiza display.
 
 ## 7. 🕹️ Operacao da interface
 
@@ -167,7 +157,6 @@ Menu principal:
 
 - Irrigar Agora
 - Programar
-- WEBSERVER
 - Configuracoes
 
 Controles (4 botoes):
@@ -220,22 +209,13 @@ Motor de execucao:
 - Em conflito no mesmo setor/minuto, aplica maior duracao.
 - Exclusao de agenda cancela execucao automatica em andamento.
 
-## 9. 🌐 Dashboard web
+## 9. 🔒 Interface local apenas
 
-Comportamento:
+Nesta branch simplificada, o firmware opera somente com interface local:
 
-- Inicializa AP Wi-Fi no boot.
-- Se STA estiver habilitada, tenta conexao periodicamente sem bloquear AP.
-- Exibe pagina web local para status, valvulas, agendas e configuracoes runtime.
-
-Rotas principais:
-
-- GET /, GET /status
-- GET /api/status, GET /api/schedules
-- POST /api/valve/toggle, /api/valve/set, /api/valves/off-all
-- POST /api/schedule/save, /api/schedule/delete, /api/schedule/clear
-- POST /api/config/runtime
-- POST /api/rtc/set
+- Navegacao via 4 botoes.
+- Feedback e configuracao pelo LCD 16x2.
+- Sem rede/AP e sem API remota.
 
 ## 10. 💾 Persistencia
 
@@ -266,7 +246,6 @@ No boot:
 - schedule_manager.h/.cpp - agenda e persistencia de agenda
 - runtime_config_manager.h/.cpp - persistencia de configuracoes runtime
 - irrigation_controller.h/.cpp - controle de valvulas/reles
-- web_ap_manager.h/.cpp - AP Wi-Fi e dashboard web
 - GUIA_DIDATICO_PROJETO.md - guia pedagogico
 - FASE5_CONTRATO_TECNICO.md - contrato tecnico
 
@@ -296,9 +275,6 @@ Problemas comuns e verificacoes:
   - confirme se o RTC esta ativo
   - confirme se o dia atual esta marcado
   - confirme hora/minuto e setoresMask da agenda
-- Dashboard nao abre:
-  - confira SSID/senha do AP em Config.h
-  - confirme IP mostrado na tela WEBSERVER
 
 ## 14. ✅ Validacao recomendada
 
@@ -311,7 +287,6 @@ Teste funcional minimo:
 5. Simular horario e validar disparo automatico.
 6. Tentar criar duplicata e confirmar bloqueio.
 7. Testar comportamento com RTC ausente.
-8. Validar dashboard web (status, toggle de valvula, salvar agenda).
 
 Checklist de aceite rapido:
 
@@ -319,7 +294,6 @@ Checklist de aceite rapido:
 - Setor acionado corresponde ao selecionado.
 - Dados permanecem apos reboot.
 - Disparo ocorre apenas no minuto esperado.
-- Dashboard responde sem erro nas rotas principais.
 
 ## 15. 🛣️ Limites atuais e roadmap
 
@@ -337,7 +311,7 @@ Proximos passos sugeridos:
 
 - Definir oficialmente o modelo final de agenda.
 - Evoluir UX de configuracoes para reduzir profundidade de navegacao.
-- Adicionar testes automatizados para agenda, persistencia e API web.
+- Adicionar testes automatizados para agenda e persistencia.
 - Criar checklist de homologacao em campo (eletrica, rede e UX).
 
 ---

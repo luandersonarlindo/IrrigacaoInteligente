@@ -18,7 +18,6 @@
 #include "menu_controller.h"
 #include "rtc_driver_ds3231.h"
 #include "irrigation_controller.h"
-#include "web_ap_manager.h"
 
 class DisplayManager
 {
@@ -26,8 +25,7 @@ public:
     DisplayManager(DisplayDriverLcd16x2 &display,
                    MenuController &menu,
                    RtcDriverDs3231 &rtc,
-                   IrrigationController &irrigacao,
-                   WebApManager &webAp);
+                   IrrigationController &irrigacao);
 
     void begin();
 
@@ -47,7 +45,6 @@ private:
     MenuController &_menu;
     RtcDriverDs3231 &_rtc;
     IrrigationController &_irrigacao;
-    WebApManager &_webAp;
 
     // Telas
     void desenharMenuPrincipal();
@@ -55,7 +52,6 @@ private:
     void desenharTelaIrrigacao();
     void desenharTelaProgramar();
     void desenharTelaConfig();
-    void desenharTelaWebServer();
 
     // Helpers de texto para LCD 16x2
     void escreverTela(const String &linha1, const String &linha2);

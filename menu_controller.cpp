@@ -8,7 +8,6 @@
 const char *MenuController::_nomesItens[] = {
     "Irrigar Agora",
     "Programar",
-    "WEBSERVER",
     "Configuracoes"};
 
 MenuController::MenuController(ScheduleManager &schedule, RtcDriverDs3231 &rtc, RuntimeConfigManager &config)
@@ -20,7 +19,6 @@ MenuController::MenuController(ScheduleManager &schedule, RtcDriverDs3231 &rtc, 
       _menuAtivo(false),
       _ultimoEventoMenuMs(0),
       _setorAtual(0),
-      _paginaWebServer(0),
       _timeoutOcorreu(false),
       _setorTimeout(-1),
       _etapaProgramacao(EtapaProgramacao::SELECIONAR_AGENDA),
@@ -58,7 +56,6 @@ void MenuController::begin()
     _menuAtivo = false;
     _ultimoEventoMenuMs = millis();
     _setorAtual = 0;
-    _paginaWebServer = 0;
     _timeoutOcorreu = false;
     _setorTimeout = -1;
     _etapaProgramacao = EtapaProgramacao::SELECIONAR_AGENDA;
@@ -192,23 +189,6 @@ void MenuController::processar(DirecaoNavegacao direcao, bool botaoPressionado, 
     case EstadoMenu::CONFIGURACOES:
         processarConfiguracoes(direcao, botaoPressionado, botaoLongoPressionado);
         break;
-
-    case EstadoMenu::WEBSERVER:
-        if (direcao == DirecaoNavegacao::HORARIO)
-        {
-            _paginaWebServer = (_paginaWebServer + 1) % 100;
-        }
-        else if (direcao == DirecaoNavegacao::ANTI_HORARIO)
-        {
-            _paginaWebServer = (_paginaWebServer + 99) % 100;
-        }
-
-        // Tela informativa: qualquer clique retorna ao status.
-        if (botaoPressionado || botaoLongoPressionado)
-        {
-            voltar();
-        }
-        break;
     }
 }
 
@@ -219,7 +199,6 @@ int MenuController::itemSelecionado() const { return _itemAtual; }
 bool MenuController::menuAtivo() const { return _menuAtivo; }
 int MenuController::setorAtual() const { return _setorAtual; }
 bool MenuController::opcaoVoltarIrrigacaoSelecionada() const { return _setorAtual == NUM_VALVULAS; }
-int MenuController::paginaWebServer() const { return _paginaWebServer; }
 bool MenuController::timeoutOcorreu() const { return _timeoutOcorreu; }
 
 void MenuController::limparTimeout()
@@ -333,10 +312,6 @@ void MenuController::selecionar()
         _estado = EstadoMenu::PROGRAMAR;
         entrarProgramacao();
         break;
-    case ItemMenu::WEBSERVER:
-        _estado = EstadoMenu::WEBSERVER;
-        _paginaWebServer = 0;
-        break;
     case ItemMenu::CONFIGURACOES:
         _estado = EstadoMenu::CONFIGURACOES;
         entrarConfiguracoes();
@@ -352,7 +327,6 @@ void MenuController::voltar()
     _itemAtual = 0;
     _menuAtivo = false;
     _setorAtual = 0;
-    _paginaWebServer = 0;
 
     if (DEBUG_SERIAL)
     {
