@@ -21,6 +21,7 @@ enum class ItemMenu
     IRRIGACAO_MANUAL = 0,
     PROGRAMAR,
     WEBSERVER,
+    SENSORES,
     CONFIGURACOES,
     TOTAL // sentinela — mantém a contagem automática
 };
@@ -32,6 +33,7 @@ enum class EstadoMenu
     IRRIGACAO_MANUAL,
     PROGRAMAR,
     WEBSERVER,
+    SENSORES,
     CONFIGURACOES
 };
 

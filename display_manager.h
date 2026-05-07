@@ -17,6 +17,7 @@
 #include "display_driver_oled.h"
 #include "menu_controller.h"
 #include "rtc_driver_ds3231.h"
+#include "dht11_driver.h"
 #include "irrigation_controller.h"
 #include "web_ap_manager.h"
 
@@ -27,7 +28,8 @@ public:
                    MenuController &menu,
                    RtcDriverDs3231 &rtc,
                    IrrigationController &irrigacao,
-                   WebApManager &webAp);
+                   WebApManager &webAp,
+                   Dht11Driver &dht11);
 
     void begin();
 
@@ -46,12 +48,14 @@ private:
     DisplayDriverOled &_display;
     MenuController &_menu;
     RtcDriverDs3231 &_rtc;
+    Dht11Driver &_dht11;
     IrrigationController &_irrigacao;
     WebApManager &_webAp;
 
     // Telas
     void desenharMenuPrincipal();
     void desenharTelaStatus();
+    void desenharTelaSensores();
     void desenharTelaIrrigacao();
     void desenharTelaProgramar();
     void desenharTelaConfig();

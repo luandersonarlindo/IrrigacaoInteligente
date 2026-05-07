@@ -196,6 +196,18 @@ namespace
             // WebServer: Wi-Fi icon based on the image provided by the user.
             desenharBitmap1Bpp(d, x + 4, y + 7, 24, 18, WIFI_ICON_9922_24X18);
         }
+        else if (tipo == (int)ItemMenu::SENSORES)
+        {
+            // Sensores: termometro + gota (icone simples)
+            d.desenharRetangulo(x + 7, y + 6, 6, 18);
+            d.desenharRetanguloPreenchido(x + 9, y + 14, 2, 8);
+            d.desenharRetanguloPreenchido(x + 6, y + 22, 8, 8);
+
+            d.desenharLinha(x + 22, y + 10, x + 24, y + 14);
+            d.desenharLinha(x + 24, y + 14, x + 26, y + 10);
+            d.desenharLinha(x + 22, y + 10, x + 24, y + 6);
+            d.desenharLinha(x + 24, y + 6, x + 26, y + 10);
+        }
         else
         {
             // Configurações: sliders
@@ -440,10 +452,12 @@ DisplayManager::DisplayManager(DisplayDriverOled &display,
                                MenuController &menu,
                                RtcDriverDs3231 &rtc,
                                IrrigationController &irrigacao,
-                               WebApManager &webAp)
+                               WebApManager &webAp,
+                               Dht11Driver &dht11)
     : _display(display),
       _menu(menu),
       _rtc(rtc),
+      _dht11(dht11),
       _irrigacao(irrigacao),
       _webAp(webAp),
       _ultimaAtualizacao(0),
@@ -513,6 +527,9 @@ void DisplayManager::atualizar()
         break;
     case EstadoMenu::WEBSERVER:
         desenharTelaWebServer();
+        break;
+    case EstadoMenu::SENSORES:
+        desenharTelaSensores();
         break;
     }
 
@@ -678,6 +695,52 @@ void DisplayManager::desenharTelaStatus()
 
     _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
     _display.desenharTextoMini(0, 56, "Gire para abrir menu");
+}
+
+void DisplayManager::desenharTelaSensores()
+{
+    desenharCabecalho("SENSOR DHT11");
+
+    float tempC = _dht11.temperaturaC();
+    float umidade = _dht11.umidadePct();
+    bool sensorOk = _dht11.leituraValida();
+    const char *statusTxt = _dht11.statusTexto();
+    const char *backend = _dht11.backendNome();
+
+    char linha1[24];
+    char linha2[24];
+    char linha3[24];
+    char linha4[24];
+
+    if (sensorOk)
+    {
+        snprintf(linha1, sizeof(linha1), "Temp: %.1f C", tempC);
+        snprintf(linha2, sizeof(linha2), "Umidade: %.0f%%", umidade);
+        snprintf(linha3, sizeof(linha3), "Atual: 2s");
+    }
+    else
+    {
+        snprintf(linha1, sizeof(linha1), "Temp: --.- C");
+        snprintf(linha2, sizeof(linha2), "Umidade: --%%");
+        if (statusTxt == nullptr || statusTxt[0] == '\0')
+        {
+            snprintf(linha3, sizeof(linha3), "Sem leitura valida");
+        }
+        else
+        {
+            snprintf(linha3, sizeof(linha3), "Status: %s", statusTxt);
+        }
+    }
+
+    snprintf(linha4, sizeof(linha4), "GPIO %d %s", PIN_DHT11, backend);
+
+    _display.desenharTexto(0, 16, linha1);
+    _display.desenharTexto(0, 28, linha2);
+    _display.desenharTextoMini(0, 42, linha3);
+    _display.desenharTextoMini(0, 48, linha4);
+
+    _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
+    _display.desenharTextoMini(0, 56, "OK: voltar");
 }
 
 void DisplayManager::desenharTelaIrrigacao()

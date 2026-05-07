@@ -51,6 +51,12 @@ public:
     String urlAcessoSta() const;
     String urlAcesso() const;
 
+    void atualizarLeituraClima(float temperaturaC, float umidadePct, bool leituraValida);
+    bool sensorClimaValido() const;
+    float temperaturaC() const;
+    float umidadeArPct() const;
+    unsigned long idadeLeituraClimaMs() const;
+
 private:
     static const uint8_t MAX_HISTORICO_EVENTOS = 40;
 
@@ -92,6 +98,10 @@ private:
     bool _ultimaOrigemAgenda[NUM_VALVULAS];
     bool _ultimaStaConectada;
     int _ultimoTotalAgendasAtivas;
+    float _sensorTempC;
+    float _sensorUmidadePct;
+    bool _sensorLeituraValida;
+    unsigned long _sensorUltimoOkMs;
 
     void configurarRotas();
     void tentarConexaoSta();

@@ -764,6 +764,22 @@ namespace
 </div>
 
 <div class="wrap">
+  <div class="section-label">Sensores</div>
+  <div class="sensor-grid">
+    <div class="sensor-card">
+      <span class="sensor-icon">T</span>
+      <div class="sensor-label">Temperatura</div>
+      <div class="sensor-value" id="sensorTempValue">--</div>
+      <div class="sensor-unit">°C</div>
+    </div>
+    <div class="sensor-card">
+      <span class="sensor-icon">U</span>
+      <div class="sensor-label">Umidade do ar</div>
+      <div class="sensor-value" id="sensorHumValue">--</div>
+      <div class="sensor-unit">%</div>
+    </div>
+  </div>
+
   <div class="section-label">Controle de Válvulas</div>
   <div class="valve-grid" id="valveGrid"></div>
 
@@ -790,6 +806,8 @@ const notifTabContentAlertasEl = document.getElementById('notifTabContentAlertas
 const notifTabContentHistoricoEl = document.getElementById('notifTabContentHistorico');
 const wsBadgeEl = document.getElementById('wsBadge');
 const wsBadgeTextEl = document.getElementById('wsBadgeText');
+const sensorTempValueEl = document.getElementById('sensorTempValue');
+const sensorHumValueEl = document.getElementById('sensorHumValue');
 
 const BELL_ICON_INACTIVE = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWJlbGwtaWNvbiBsdWNpZGUtYmVsbCI+PHBhdGggZD0iTTEwLjI2OCAyMWEyIDIgMCAwIDAgMy40NjQgMCIvPjxwYXRoIGQ9Ik0zLjI2MiAxNS4zMjZBMSAxIDAgMCAwIDQgMTdoMTZhMSAxIDAgMCAwIC43NC0xLjY3M0MxOS40MSAxMy45NTYgMTggMTIuNDk5IDE4IDhBNiA2IDAgMCAwIDYgOGMwIDQuNDk5LTEuNDExIDUuOTU2LTIuNzM4IDcuMzI2Ii8+PC9zdmc+';
 const BELL_ICON_ACTIVE = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWJlbGwtZG90LWljb24gbHVjaWRlLWJlbGwtZG90Ij48cGF0aCBkPSJNMTAuMjY4IDIxYTIgMiAwIDAgMCAzLjQ2NCAwIi8+PHBhdGggZD0iTTExLjY4IDIuMDA5QTYgNiAwIDAgMCA2IDhjMCA0LjQ5OS0xLjQxMSA1Ljk1Ni0yLjczOCA3LjMyNkExIDEgMCAwIDAgNCAxN2gxNmExIDEgMCAwIDAgLjc0LTEuNjczYy0uODI0LS44NS0xLjY3OC0xLjczMS0yLjIxLTMuMzQ4Ii8+PGNpcmNsZSBjeD0iMTgiIGN5PSI1IiByPSIzIi8+PC9zdmc+';
@@ -944,6 +962,20 @@ function renderValvulas(valvulas) {
       </div>
     `;
   }).join('');
+}
+
+function renderSensores(sensores) {
+  const ok = Boolean(sensores?.ok);
+  const temp = Number(sensores?.temperatura_c);
+  const hum = Number(sensores?.umidade_ar_pct);
+
+  if (sensorTempValueEl) {
+    sensorTempValueEl.textContent = (ok && Number.isFinite(temp)) ? temp.toFixed(1) : '--';
+  }
+
+  if (sensorHumValueEl) {
+    sensorHumValueEl.textContent = (ok && Number.isFinite(hum)) ? String(Math.round(hum)) : '--';
+  }
 }
 
 function atualizarRede(rede) {
@@ -1342,6 +1374,7 @@ async function limparAgendasVisual() {
 }
 
 function aplicarStatusSistema(dados) {
+  renderSensores(dados.sensores || {});
   renderValvulas(dados.valvulas || []);
   estadoRedeAtual = dados.rede || { ap: {}, sta: {}, websocket: {} };
 
@@ -1539,7 +1572,11 @@ WebApManager::WebApManager(IrrigationController &irrigacao,
       _proximoEventoId(1),
       _monitoramentoInicializado(false),
       _ultimaStaConectada(false),
-      _ultimoTotalAgendasAtivas(0)
+      _ultimoTotalAgendasAtivas(0),
+      _sensorTempC(WEB_TEMP_DEFAULT_C),
+      _sensorUmidadePct(WEB_HUMIDADE_AR_DEFAULT_PCT),
+      _sensorLeituraValida(false),
+      _sensorUltimoOkMs(0)
 {
   for (int i = 0; i < NUM_VALVULAS; i++)
   {
@@ -1710,6 +1747,45 @@ String WebApManager::urlAcesso() const
   }
 
   return urlAcessoAp();
+}
+
+void WebApManager::atualizarLeituraClima(float temperaturaC, float umidadePct, bool leituraValida)
+{
+  if (leituraValida)
+  {
+    _sensorTempC = temperaturaC;
+    _sensorUmidadePct = umidadePct;
+    _sensorLeituraValida = true;
+    _sensorUltimoOkMs = millis();
+    return;
+  }
+
+  _sensorLeituraValida = false;
+}
+
+bool WebApManager::sensorClimaValido() const
+{
+  return _sensorLeituraValida;
+}
+
+float WebApManager::temperaturaC() const
+{
+  return _sensorTempC;
+}
+
+float WebApManager::umidadeArPct() const
+{
+  return _sensorUmidadePct;
+}
+
+unsigned long WebApManager::idadeLeituraClimaMs() const
+{
+  if (!_sensorLeituraValida)
+  {
+    return 0;
+  }
+
+  return (unsigned long)(millis() - _sensorUltimoOkMs);
 }
 
 void WebApManager::configurarRotas()
@@ -2463,7 +2539,7 @@ String WebApManager::montarJsonStatusSistema()
   String mdnsUrl = _mdnsAtivo ? (String("http://") + mdnsHost + "/") : String("");
 
   String json;
-  json.reserve(2200);
+  json.reserve(2500);
   json += "{";
   json += "\"ok\":true,";
   json += "\"data\":\"" + String(data) + "\",";
@@ -2510,6 +2586,13 @@ String WebApManager::montarJsonStatusSistema()
   json += "},";
 
   json += "\"agendas_ativas\":" + String(_schedule.totalAtivas()) + ",";
+
+  json += "\"sensores\":{";
+  json += "\"temperatura_c\":" + String(_sensorTempC, 1) + ",";
+  json += "\"umidade_ar_pct\":" + String(_sensorUmidadePct, 0) + ",";
+  json += "\"ok\":" + String(sensorClimaValido() ? "true" : "false") + ",";
+  json += "\"idade_ms\":" + String(idadeLeituraClimaMs());
+  json += "},";
 
   json += "\"valvulas\":[";
   for (int i = 0; i < NUM_VALVULAS; i++)

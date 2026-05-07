@@ -12,6 +12,7 @@
 #include "encoder_driver.h"
 #include "display_driver_oled.h"
 #include "rtc_driver_ds3231.h"
+#include "dht11_driver.h"
 #include "menu_controller.h"
 #include "display_manager.h"
 #include "irrigation_controller.h"
@@ -23,12 +24,13 @@
 EncoderDriver         encoder;
 DisplayDriverOled     oled;
 RtcDriverDs3231       rtc;
+Dht11Driver           dht11;
 RuntimeConfigManager  runtimeConfig;
 ScheduleManager       scheduleManager(runtimeConfig);
 MenuController        menu(scheduleManager, rtc, runtimeConfig);
 IrrigationController  irrigacao(runtimeConfig);
 WebApManager          webApManager(irrigacao, scheduleManager, runtimeConfig, rtc);
-DisplayManager        displayManager(oled, menu, rtc, irrigacao, webApManager);
+DisplayManager        displayManager(oled, menu, rtc, irrigacao, webApManager, dht11);
 bool                  rtcDisponivel = false;
 
 struct ExecucaoAgendaSequencial {
@@ -236,6 +238,7 @@ void setup() {
 
     encoder.begin();
     oled.begin();
+    dht11.begin();
 
     rtcDisponivel = rtc.begin();
     if (!rtcDisponivel) {
@@ -358,7 +361,11 @@ void loop() {
         maskSetoresNoLoteAgenda(),
         maskSetoresPendentesAgenda());
 
-    // 6.2 Mantem o servidor HTTP responsivo durante o modo AP
+    // 6.2 Atualiza leitura do DHT11 e publica no dashboard
+    dht11.atualizar();
+    webApManager.atualizarLeituraClima(dht11.temperaturaC(), dht11.umidadePct(), dht11.leituraValida());
+
+    // 6.3 Mantem o servidor HTTP responsivo durante o modo AP
     webApManager.atualizar();
 
     // 7. Renderiza display

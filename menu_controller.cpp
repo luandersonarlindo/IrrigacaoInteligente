@@ -9,6 +9,7 @@ const char *MenuController::_nomesItens[] = {
     "Irrigar Agora",
     "Programar",
     "WEBSERVER",
+    "Sensores",
     "Configuracoes"};
 
 MenuController::MenuController(ScheduleManager &schedule, RtcDriverDs3231 &rtc, RuntimeConfigManager &config)
@@ -204,6 +205,13 @@ void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bo
             voltar();
         }
         break;
+
+    case EstadoMenu::SENSORES:
+        if (botaoPressionado)
+        {
+            voltar();
+        }
+        break;
     }
 }
 
@@ -333,6 +341,9 @@ void MenuController::selecionar()
     case ItemMenu::WEBSERVER:
         _estado = EstadoMenu::WEBSERVER;
         _paginaWebServer = 0;
+        break;
+    case ItemMenu::SENSORES:
+        _estado = EstadoMenu::SENSORES;
         break;
     case ItemMenu::CONFIGURACOES:
         _estado = EstadoMenu::CONFIGURACOES;

@@ -21,6 +21,9 @@
 #define PIN_OLED_SDA 21
 #define PIN_OLED_SCL 22
 
+// --- Pinos: Sensor DHT11 (temperatura/umidade) ---
+#define PIN_DHT11 15
+
 // --- Pinos: RTC DS3231 (I2C — mesmo barramento do OLED) ---
 // DS3231 compartilha SDA/SCL com o OLED
 // Endereço I2C do OLED:  0x3C
@@ -35,6 +38,19 @@
 #define PIN_RELAY_6 33
 #define PIN_RELAY_7 13
 #define PIN_RELAY_8 14
+
+// --- DHT11 ---
+#define DHT11_READ_INTERVAL_MS 2000
+#define DHT11_MAX_STALE_MS 10000
+
+// --- DHT11 (biblioteca) ---
+// Selecione apenas um backend: DHTesp (recomendado no ESP32) ou DHT (Adafruit).
+#ifndef DHT11_USE_DHTESP
+#define DHT11_USE_DHTESP 1
+#endif
+#ifndef DHT11_USE_DHT
+#define DHT11_USE_DHT 0
+#endif
 
 // --- Display OLED ---
 #define OLED_LARGURA 128
