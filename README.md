@@ -242,6 +242,11 @@ Comportamento:
 - Com STA conectada, ativa mDNS para acesso por `http://<hostname>.local/`.
 - Publica status em tempo real por WebSocket (porta 81) com fallback para polling HTTP no dashboard.
 - Exibe dashboard para status, válvulas, agendas e runtime.
+- Faixa de resumo com válvulas abertas (origem manual/agenda), contagem regressiva da próxima agenda e botão de emergência "desligar todas" com confirmação.
+- Cards de válvula mostram tempo restante até o fechamento e setores na fila de lotes da agenda.
+- Editor de agendas em acordeão com aviso de execução em lotes e confirmação antes de excluir.
+- Seção Sistema permite ajustar RTC e configuração de runtime (timeout manual e duração padrão) direto na web.
+- Tema claro/escuro automático conforme preferência do dispositivo, sem fontes ou recursos externos (funciona no AP isolado).
 - Exibe alertas ativos e histórico operacional (rede, irrigação, agenda, configuração e RTC).
 - Histórico usa buffer circular com até 40 registros.
 

@@ -179,6 +179,17 @@ bool IrrigationController::valvulaEmAgendamento(int indice) const
     return (_estados[indice] == EstadoValvula::ABERTA) && !_origemManual[indice];
 }
 
+unsigned long IrrigationController::tempoRestanteMs(int indice) const
+{
+    if (!indiceValido(indice) || _estados[indice] != EstadoValvula::ABERTA)
+    {
+        return 0;
+    }
+
+    long resto = (long)(_deadlineFechamento[indice] - millis());
+    return (resto > 0) ? (unsigned long)resto : 0UL;
+}
+
 // --- Loop: verifica timeout de segurança ---
 
 int IrrigationController::atualizar()

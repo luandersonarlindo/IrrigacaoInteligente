@@ -1,0 +1,34 @@
+#pragma once
+
+// ============================================================
+//  Config_privado.h.example — modelo de configuração local
+//
+//  Como usar:
+//    1. Copie este arquivo para "Config_privado.h" (sem .example)
+//       na mesma pasta.
+//    2. Preencha com as credenciais reais da sua rede Wi-Fi.
+//    3. "Config_privado.h" já está no .gitignore — não será
+//       commitado. Apenas este .example fica versionado.
+//
+//  Config.h inclui "Config_privado.h" automaticamente se ele
+//  existir (via __has_include), antes de aplicar seus próprios
+//  valores padrão com #ifndef — por isso só as definições abaixo
+//  (que usam #ifndef em Config.h) têm efeito quando definidas aqui.
+// ============================================================
+
+// --- Wi-Fi STA (conexão com o roteador da casa/local) ---
+#define WIFI_STA_ENABLED true
+#define WIFI_STA_SSID "NOME_DA_SUA_REDE"
+#define WIFI_STA_PASSWORD "SENHA_DA_SUA_REDE"
+
+// --- Opcional: ajustes finos (normalmente não precisa mexer) ---
+// #define WIFI_STA_RETRY_MS 15000
+// #define WIFI_MDNS_ENABLED true
+// #define WIFI_MDNS_HOSTNAME "irrigacaoesp32"
+// #define WIFI_WEBSOCKET_ENABLED true
+// #define WIFI_WEBSOCKET_PORT 81
+// #define WIFI_WEBSOCKET_PUSH_STATUS_MS 2000
+
+// --- Opcional: backend do sensor DHT11 ---
+// #define DHT11_USE_DHTESP 1
+// #define DHT11_USE_DHT 0

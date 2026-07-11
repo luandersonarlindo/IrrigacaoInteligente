@@ -50,6 +50,9 @@ public:
     // Origem da válvula aberta: false = manual, true = agendamento automático.
     bool valvulaEmAgendamento(int indice) const;
 
+    // Tempo restante até o fechamento automático (0 se fechada ou vencida)
+    unsigned long tempoRestanteMs(int indice) const;
+
     // Deve ser chamado no loop() — verifica timeout de segurança
     // Retorna índice da válvula que foi fechada por timeout, -1 se nenhuma
     int atualizar();

@@ -360,6 +360,9 @@ void loop() {
         (uint8_t)contarSetoresPendentesAgenda(),
         maskSetoresNoLoteAgenda(),
         maskSetoresPendentesAgenda());
+    webApManager.atualizarEstadoAgendaSequencial(
+        maskSetoresPendentesAgenda(),
+        execAgenda.aguardandoIntervalo);
 
     // 6.2 Atualiza leitura do DHT11 e publica no dashboard
     dht11.atualizar();

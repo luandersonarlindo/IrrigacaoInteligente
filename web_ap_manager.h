@@ -52,6 +52,10 @@ public:
     String urlAcesso() const;
 
     void atualizarLeituraClima(float temperaturaC, float umidadePct, bool leituraValida);
+
+    // Estado da execução sequencial de agenda (setores na fila de lotes).
+    void atualizarEstadoAgendaSequencial(uint16_t setoresPendentesMask, bool aguardandoIntervalo);
+
     bool sensorClimaValido() const;
     float temperaturaC() const;
     float umidadeArPct() const;
@@ -102,6 +106,8 @@ private:
     float _sensorUmidadePct;
     bool _sensorLeituraValida;
     unsigned long _sensorUltimoOkMs;
+    uint16_t _agendaPendenteMask;
+    bool _agendaAguardandoIntervalo;
 
     void configurarRotas();
     void tentarConexaoSta();

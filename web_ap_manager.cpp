@@ -16,1529 +16,1568 @@ namespace
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Sistema de Irrigacao</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <title>Sistema de Irrigação</title>
   <link type="image/png" sizes="32x32" rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAACgUlEQVR4nM2WXWiPURzHP4+hVhIr5m3+eSnNGraJlpdcIKEmshtaLky5GilzMfOW91pcuRE3rlyQWqgJF5sbXMxLcaG4WCtpF6IxhX71fep0ep75n+f/YN86dc7v9XvOc57f+cEYxXGgNsd4S4BjIQ67gaocCcwFdoU4TAYizaeUkDj2jRSzaPQBm4GVwFtPtwM4lzK2e7bmuwLYAvSGEChPmRvOAr9SxpmAOKNiHzAPmAG0SdYM1Os4hxKSD0lnNjvl06YY84HWEALtQDVQAE5KthdYpfkp4KY3TGZYLVvkaxdwMXA4hECUMnePc6o3yjPEScUjYAOwHOhP0HclfAKT+XgBNAAbgYcEYA4wASjTEWYlYL7jFGt2CIGtQOUo+mIJxKhUzKJxWcefFwGLdYkc0RVIIBgR0AhM+18EqhV0BLieQOSvE0CFJQ7+UQXmnxKIgKtOgm/OTQ4hMDG0CPnOT5wkw8Aa3eqRPxAwu1sibg1OZhSAL06iQWCm3guXwAXZzwK6HfltoIIScchL1q0K16/1c70HVr4/OXZHyAnjgfceiW1qWgaA6ZoPO/pOlfIq9YSZ70GMgx6Blwq6CKjRt451D6S75siWEbjj9cBSYJJk1tO980hsku1TR/ZTHXWzIztPIGqA73L+AdxVZTQyd5zAdcB+j1SPdv9Ka/sTMmEB8NjbWYee1l5dPMMbj4B1Q+s0/6z7UVJb/cFL0KLvflon5RckI35C8yvkgKNeggF99wrt1tV91fH3aN2UB4HGhF2ule6iJ7fPYXit9cI8CBQSCOyRzn0r"/>
-  <link type="image/png" sizes="96x96" rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAACXBIWXMAAAsTAAALEwEAmpwYAAAISklEQVR4nO1daYwVRRD+FlguBWEVV0xAuVYNCl5IxMipCN5H0EQx4g0JXogRVFDBoKCoHK4ooEY0QOAFRBREQCMgURBRdEWMSAIG0CAquhwu+0wl9ZJOp3umu/e9nWP7S/rHS83UdFXNm+6urqoGPDw8PBKNRgBao+7hZAANo+5EZwB7AGQBvI26gzks8x7WQWSYxh3JtfZIPzpIMpMOIsMDQkf+BNAM6UczljUn9/1RdqYBgJEA3gDQHXUH3VnmkawDDw8Pj7qKPgCGAyjVrBGGALgZQH0kB/W5z0NYBhmlLDPJHiluFGYDPys6O0+gT0VyME3o91yJRjJuF+iDECFelebEZRI9t0ijtsWC7wAAEwA8l6c2gXmaYovQb5JBRJkkczkixKUA/uOObFB8ZqYKHR1jyLOfJGA+W1/DPowN+OfStHMj00j2SxAx6I24EkATBa0IQG8APSz4PVpAAxBvU1zEfScZZDRlmeV/fCrQCcC+AiifeHaMWrikoATAXXlU/p3M08MCjQAcyYPyD2umkqkAfQunA1gF4GoFnVy1SwAsANBOQb8VwCcAJgEoVtC/zoMBNin4FvMz6dmDFXTq60Luu8rdfA3LPI11EBmeEAQ9qPibfyXQlyvculUC/R4F/1l5MMBMBd97BXqVwo2+XKCTDCKOB3BIoD+OCPGiJGxbib5DoNE0VcR50r2jFfyH5cEAQxV8R0vXnCvRNwi0XyRaW+le0kFkoM5s5jdivIJ+Pc8+dmvm4OX8nV/Hb5aMC/JggG4KvvSsz/nZ5Zq1yB7u+3UK+jMsM30i2yAGKHKkhdHrAWhZw0Y8CtG3sHs9PDxqBeT/aRFAPwZA4xrwL+VZiktTuchN0Zj7rkOLOLjYTwOwkwe71xT023mg+xfAtY7PyNRgAKZ7XUADbyX3nWSQ8Trz38k6iAyitzOrWGztClkQxdUA4gKQlCyinfSMKYgQDwsd+RvAcRJ9nUBflCADLBZ4rJVoJOMBgT4CEaIh+85p56ungn4qgNk81y5NkAFO4s0m6vspCnovlnlsHMITC41MBAbwEOANEDEy3gDBuJCnaiV1yAAlLDPJHilovlzNwm4t0ICUiZkBSMYfmX91DdY3tRKWkkYDlMUpLOVyAEe5I98WKFI4EzMDFLOsWZaddBApunKEXKFyAzIxMwChOcvcBXUAmRgaoE4h4w0QLTLeANEi4w0QLTLeAOFoxjE8mzhgaSIHtgZtiJvCG8AAEzUK2M5pnKrIaVN4AxhgfogidnHKj0soR8YbwCxRI+cTCmofOwQyZbwBzDDGUCn7LR1YGW8Ac0wxVAz5UEYZ8vQGsEARp/CbKmiuQcyQN4CDt/ADCyV9FhLY5Q3ggKZSSEpYWw/gWA0vbwBHtOLYelNlrdasF+JggIbsdieZEoWzOGDLVGFLFduafaRMmtoyQEtOEFkj5Kod0qRixRo3WSptvsKFMaoWDdCLc9rENCSxrUAC8Yql4sYpZldLCmyAAZw1E8aT9sETB0oT/cZCcdWc3iTiBKn2RL4M0IXfahN+C0JC1mONrpyza6q8A4ooi6vyaAAa8J8yzEX+Q5PFmTg8aanALxT5w+9a3P+0ph8UUPWTIY8Pkzj70YGUWWFphPGKDEeTWhKTFN5X+v2Q4VtfzS9MPvY0YoX+lgY4wp8vEcND7qH6QKrF4ULDZx7WZNCnBossjbBByseiALDvNNeWB+QFmyr/CqQcHRwKcQxT7EHI1yxWfDIomfwHw2dURR3rWZt409IA+xQR2J8K9ApFilQrC+VTuw91CB2Fcmem7QWJR19hytpRET4oFgtxKepRyrGfVFtiBrvP3+Ppa2LXAyLesjRApaJU/hou7iSCxouVFny/V5SdoQIe/wTcQ6v7xKOrpQGovSTxUNUhGmfBj7775yvOBsjlP+uanD2ZWKx3+BecGDLNzYXMmzS5KmI9/leF3UdT4VTgNod/ARWK0rmQ91rw2c/3iHjQ4L4ZaaqW0gTA75YG2KUpcTbdks9j0v3tuaxC0D2z46j8c/hTso+Vs4VDFCdzQFZYPYVTuX6bjfLkAlBnW27c/MUzJRs/0ztxdU2sNhB4K0/fdMaoxydyVBrw2qvYvjT5bgdNac8MGTuWxfmwho8shV8TUMu5m4Hfn5xkInpaPr+aC8TqCo3LbYempFpsUGYZBZFrKzSZlbSo+lVzT5ViLSAW1zBp5BeSV8yHA4xFkd6JQE/LmKAsf3Kosq2MM3gjRL5eLn9ZZjntVFU4GRFwbSKP57ojZBWpm48XSXwGKpQru4lfdvjnye7tzZrrDib5kLp+AZEFujZLwWey9PkpCahNmjUcwEVDtwm4VlUFLFEY7PB2jpZ4NBVOrFirmHra8pdPxLhbc93RqMuR5QtLLRV0lGv3yzWms1wgqSZ7zFmF426B5jqaVKQCLoNkhRQhR97NbQAuk3h/6WAAqsYrQjwPxvWwh9jDdmaU5U+DXJ9OnIs3cBhjspLvp0VAZs/pSBFucFDUNmnZL/vrOzvw/E3i0VtzHdW6ThWaOx7G0COA5y0O/ORBXHdKB23mpA62fv8sgOcD+D3rwI924EwG8SSdeWaMmQ4K2xjAb14eDJqrgGty5kDi8YiDwioD6jMvc+BH3lgR72uuozErdRjkoLCswmuZg4vzj87/FbFKc10qA7MGOhqgu4afLjIuqA01NKLpiXuJwsWOBuiv4RcWtaBqtKIWsUlzXeTlKAuBTo4G6KvhV5EHY27TXJfaE/fmWCpspWbzHbyjttuC12qJVxPNSjqR/n8btDY8/aKNIb+GioN72ip4yXsNxYpnJtb37+Hh4QF7/A91WIZ7gicjnAAAAABJRU5ErkJggg=="/>
-
   <style>
     :root {
-      --bg: #f5f7f5;
+      --bg: #f3f6f0;
       --surface: #ffffff;
-      --border: #e0e7e2;
-      --border2: #ccd6cf;
-      --green: #1a7a3c;
-      --green-light: #e8f5ed;
-      --green-mid: #2ea05a;
-      --red: #c0392b;
-      --amber: #b45309;
-      --amber-light: #fef3c7;
-      --blue: #1565c0;
-      --text: #1a2e1f;
-      --text2: #4a6652;
-      --muted: #7a9482;
-      --shadow: 0 1px 3px #0000000d, 0 1px 2px #0000000a;
+      --surface-2: #eaf0e5;
+      --border: #dbe3d3;
+      --border-strong: #c2cfb7;
+      --text: #202b1c;
+      --text-2: #52604a;
+      --text-3: #7c8a71;
+      --leaf-700: #2c6b3e;
+      --leaf-600: #3c8a52;
+      --leaf-100: #e1f0e1;
+      --leaf-050: #eef7ec;
+      --leaf-border: #aed3ba;
+      --water-700: #235777;
+      --water-600: #2f7099;
+      --water-100: #e1eef6;
+      --water-border: #b9d4e7;
+      --clay-700: #8a4a1d;
+      --clay-100: #f7e9da;
+      --clay-border: #e6cba8;
+      --brick-700: #8f2e26;
+      --brick-600: #ad3b30;
+      --brick-100: #fbe4e1;
+      --brick-border: #efc4bf;
+      --shadow: 0 1px 2px rgba(20,30,15,.06), 0 4px 14px rgba(20,30,15,.06);
+      --r-sm: 8px;
+      --r-md: 12px;
+      --r-lg: 18px;
+      color-scheme: light;
     }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #10150e;
+        --surface: #171e15;
+        --surface-2: #1e2619;
+        --border: #262f21;
+        --border-strong: #3b4634;
+        --text: #e8ece1;
+        --text-2: #a7b49d;
+        --text-3: #7c8a71;
+        --leaf-700: #86d59a;
+        --leaf-600: #59ab6f;
+        --leaf-100: #1c3322;
+        --leaf-050: #182a1d;
+        --leaf-border: #2f5a3c;
+        --water-700: #94c7e8;
+        --water-600: #5fa0cc;
+        --water-100: #172a3a;
+        --water-border: #2a4a63;
+        --clay-700: #e6ac71;
+        --clay-100: #3a2a17;
+        --clay-border: #5f4426;
+        --brick-700: #f0988e;
+        --brick-600: #da675c;
+        --brick-100: #3a1c18;
+        --brick-border: #5f2d26;
+        --shadow: 0 1px 2px rgba(0,0,0,.35), 0 6px 18px rgba(0,0,0,.3);
+        color-scheme: dark;
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
 
     body {
       background: var(--bg);
-      font-family: 'Inter', sans-serif;
       color: var(--text);
-      min-height: 100vh;
-      padding-bottom: 64px;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 48px;
+      overflow-x: hidden;
     }
 
+    h1, h2 { margin: 0; font-weight: 700; }
+    button { font-family: inherit; }
+
+    .mono {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+    :focus-visible { outline: 2px solid var(--leaf-600); outline-offset: 2px; border-radius: 4px; }
+
+    .icon {
+      width: 1em; height: 1em;
+      stroke: currentColor; stroke-width: 1.7; fill: none;
+      stroke-linecap: round; stroke-linejoin: round;
+      display: block; flex-shrink: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: .001ms !important; animation-duration: .001ms !important; }
+    }
+
+    /* ---- Topbar ---- */
     .topbar {
+      position: sticky; top: 0; z-index: 40;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 12px 20px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 14px 28px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
       box-shadow: var(--shadow);
-      position: sticky;
-      top: 0;
-      z-index: 100;
     }
 
-    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
 
-    .brand-icon {
-      width: 34px; height: 34px;
-      background: var(--green-light);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem;
+    .brand-mark {
+      width: 36px; height: 36px; border-radius: var(--r-sm);
+      background: var(--leaf-100); color: var(--leaf-700);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
 
-    .brand h1 {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--text);
+    .brand-mark .icon { width: 20px; height: 20px; stroke-width: 1.9; }
+    .brand-text h1 { font-size: .95rem; letter-spacing: -.01em; }
+
+    .brand-text p {
+      margin: 1px 0 0; font-size: .72rem; color: var(--text-3);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
 
-    .brand p {
-      font-size: 0.7rem;
-      color: var(--muted);
-      margin-top: 1px;
-    }
+    .topbar-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
-    .topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      font-size: 0.75rem;
-      color: var(--text2);
-    }
-
-    .ws-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      border-radius: 999px;
-      padding: 5px 10px;
-      font-size: 0.66rem;
-      font-weight: 700;
-      background: #fff;
-      border: 1px solid var(--border2);
-      color: var(--text2);
-      min-height: 30px;
+    .ws-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      border-radius: 999px; padding: 6px 11px;
+      font-size: .68rem; font-weight: 600;
+      border: 1px solid var(--border-strong); color: var(--text-2);
       white-space: nowrap;
     }
 
-    .ws-badge-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #8fa299;
-      flex-shrink: 0;
-    }
+    .ws-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-3); flex-shrink: 0; }
+    .ws-pill.connected { border-color: var(--leaf-border); background: var(--leaf-050); color: var(--leaf-700); }
+    .ws-pill.connected .dot { background: var(--leaf-600); }
+    .ws-pill.reconnecting { border-color: var(--clay-border); background: var(--clay-100); color: var(--clay-700); }
+    .ws-pill.reconnecting .dot { background: var(--clay-700); }
+    .ws-pill.fallback { border-color: var(--water-border); background: var(--water-100); color: var(--water-700); }
+    .ws-pill.fallback .dot { background: var(--water-600); }
 
-    .ws-badge.connected {
-      border-color: #b6dcc4;
-      background: var(--green-light);
-      color: var(--green);
-    }
-
-    .ws-badge.connected .ws-badge-dot {
-      background: var(--green-mid);
-    }
-
-    .ws-badge.reconnecting {
-      border-color: #f6d39d;
-      background: #fff6e7;
-      color: var(--amber);
-    }
-
-    .ws-badge.reconnecting .ws-badge-dot {
-      background: #d1892e;
-    }
-
-    .ws-badge.fallback {
-      border-color: #c8d3ea;
-      background: #eef3ff;
-      color: var(--blue);
-    }
-
-    .ws-badge.fallback .ws-badge-dot {
-      background: #4f7fd3;
-    }
-
-    .notif-btn {
-      width: 34px;
-      height: 34px;
-      border: 1px solid var(--border2);
-      border-radius: 10px;
-      background: #fff;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+    .icon-btn {
+      position: relative;
+      width: 36px; height: 36px; border-radius: var(--r-sm);
+      border: 1px solid var(--border-strong); background: var(--surface);
+      color: var(--text-2);
+      display: inline-flex; align-items: center; justify-content: center;
       cursor: pointer;
-      transition: border-color .15s ease, background .15s ease;
+    }
+
+    .icon-btn:hover { background: var(--surface-2); }
+    .icon-btn .icon { width: 18px; height: 18px; }
+
+    .notif-count {
+      position: absolute; top: -6px; right: -6px;
+      min-width: 17px; height: 17px; padding: 0 4px;
+      border-radius: 999px;
+      background: var(--brick-600); color: #fff;
+      font-size: .62rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid var(--surface);
+    }
+
+    .notif-count[hidden] { display: none; }
+
+    /* ---- Layout ---- */
+    .wrap {
+      max-width: 980px; margin: 0 auto; padding: 20px 20px 0;
+      display: flex; flex-direction: column; gap: 28px;
+    }
+
+    .panel-title {
+      display: flex; align-items: baseline; gap: 10px;
+      font-size: .78rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .08em;
+      color: var(--text-2);
+      padding-bottom: 10px; border-bottom: 1px solid var(--border);
+      margin-bottom: 14px;
+    }
+
+    .panel-sub {
+      text-transform: none; letter-spacing: 0;
+      font-weight: 500; font-size: .72rem; color: var(--text-3);
+    }
+
+    /* ---- Faixa de status ---- */
+    .status-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 16px 18px;
+      box-shadow: var(--shadow);
+      display: flex; flex-direction: column; gap: 6px; min-width: 0;
+    }
+
+    .stat-label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: .68rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text-3);
+    }
+
+    .stat-label .icon { width: 13px; height: 13px; }
+    .stat-value { font-weight: 600; font-size: 1.7rem; color: var(--text); line-height: 1.1; }
+    .stat-value-sub { font-size: 1rem; color: var(--text-3); font-weight: 500; }
+    .stat-sub { font-size: .74rem; color: var(--text-2); }
+    .stat-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+
+    .chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: .68rem; font-weight: 600; padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      color: var(--text-2); background: var(--surface-2);
+    }
+
+    .chip.origin-manual { color: var(--water-700); background: var(--water-100); border-color: var(--water-border); }
+    .chip.origin-agenda { color: var(--leaf-700); background: var(--leaf-050); border-color: var(--leaf-border); }
+
+    .action-card { justify-content: space-between; }
+
+    .btn {
+      font-weight: 700; font-size: .8rem;
+      border-radius: var(--r-sm); padding: 9px 14px;
+      border: 1px solid transparent; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      white-space: nowrap;
+    }
+
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-emergency { background: var(--brick-100); color: var(--brick-700); border-color: var(--brick-border); }
+    .btn-ghost { background: var(--surface); color: var(--text-2); border-color: var(--border-strong); }
+    .btn-ghost:hover { background: var(--surface-2); }
+    .btn-primary { background: var(--leaf-600); color: #fff; }
+    .btn-primary:hover { background: var(--leaf-700); }
+    .btn-sm { font-size: .72rem; padding: 6px 10px; }
+
+    .confirm-row {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+      font-size: .74rem; color: var(--brick-700);
+      background: var(--brick-100);
+      border: 1px solid var(--brick-border);
+      border-radius: var(--r-sm); padding: 8px 10px; margin-top: 4px;
+    }
+
+    .confirm-row[hidden] { display: none; }
+
+    /* ---- Sensores ---- */
+    .sensor-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 230px)); gap: 12px; }
+
+    .sensor-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 16px 18px;
+      box-shadow: var(--shadow);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+
+    .sensor-icon {
+      width: 32px; height: 32px; border-radius: var(--r-sm);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .sensor-icon .icon { width: 17px; height: 17px; }
+    .sensor-icon.temp { background: var(--clay-100); color: var(--clay-700); }
+    .sensor-icon.hum { background: var(--water-100); color: var(--water-700); }
+
+    .sensor-label {
+      font-size: .68rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em; color: var(--text-3);
+    }
+
+    .sensor-value { font-weight: 600; font-size: 1.6rem; color: var(--text); }
+    .sensor-value span { font-size: 1rem; color: var(--text-3); font-weight: 500; }
+    .sensor-age { font-size: .7rem; color: var(--text-3); }
+
+    /* ---- Válvulas ---- */
+    .valve-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+
+    .valve-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-md); padding: 12px 13px;
+      box-shadow: var(--shadow);
+      display: flex; flex-direction: column; gap: 9px;
+    }
+
+    .valve-card.open { border-color: var(--leaf-border); background: var(--leaf-050); }
+    .valve-card.pending { border-style: dashed; border-color: var(--border-strong); }
+
+    .valve-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+    .valve-id { font-weight: 700; font-size: .82rem; }
+    .valve-gpio { font-size: .66rem; color: var(--text-3); }
+    .valve-status-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
+    .valve-foot { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 22px; }
+    .valve-timer { font-size: .72rem; font-weight: 600; color: var(--text-2); }
+    .valve-hint { font-size: .66rem; color: var(--text-3); }
+
+    .toggle {
+      width: 40px; height: 22px; border-radius: 999px; border: none;
+      background: var(--border-strong); position: relative; cursor: pointer; flex-shrink: 0;
       padding: 0;
     }
 
-    .notif-btn img {
-      width: 19px;
-      height: 19px;
-      display: block;
-      opacity: 0.85;
+    .toggle .knob {
+      position: absolute; top: 2px; left: 2px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25);
+      transition: transform .15s ease;
     }
 
-    .notif-btn.active {
-      border-color: #f1c27d;
-      background: #fff8eb;
+    .toggle.on { background: var(--leaf-600); }
+    .toggle.on .knob { transform: translateX(18px); }
+
+    .pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: .64rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .03em;
+      padding: 3px 7px; border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      color: var(--text-2); background: var(--surface-2);
     }
 
-    .notif-btn.active img {
-      opacity: 1;
+    .pill-manual { color: var(--water-700); background: var(--water-100); border-color: var(--water-border); }
+    .pill-agenda { color: var(--leaf-700); background: var(--leaf-050); border-color: var(--leaf-border); }
+    .pill-pending { color: var(--clay-700); background: var(--clay-100); border-color: var(--clay-border); }
+    .pill-off { color: var(--text-3); }
+
+    /* ---- Agendas ---- */
+    .schedule-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .schedule-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-md); box-shadow: var(--shadow);
+      overflow: hidden;
     }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: var(--green-light);
-      color: var(--green);
-      border: 1px solid #b6dcc4;
-      border-radius: 20px;
-      padding: 4px 10px;
-      font-size: 0.7rem;
-      font-weight: 600;
+    .schedule-summary {
+      width: 100%; background: none; border: none;
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; cursor: pointer;
+      color: var(--text); text-align: left;
     }
 
-    .badge-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--green-mid);
+    .schedule-slot-badge {
+      width: 30px; height: 30px; border-radius: var(--r-sm);
+      background: var(--surface-2); color: var(--text-2);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .78rem; flex-shrink: 0;
     }
 
-    .wrap {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 28px 20px 0;
+    .schedule-item.active .schedule-slot-badge { background: var(--leaf-100); color: var(--leaf-700); }
+    .schedule-summary-text { flex: 1; min-width: 0; }
+    .schedule-summary-title { display: block; font-weight: 700; font-size: .84rem; }
+
+    .schedule-summary-detail {
+      display: block; font-size: .74rem; color: var(--text-3);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+
+    .schedule-summary .icon.chev { color: var(--text-3); transition: transform .15s ease; flex-shrink: 0; }
+    .schedule-item.expanded .schedule-summary .icon.chev { transform: rotate(180deg); }
+    .schedule-body { display: none; padding: 4px 16px 16px; border-top: 1px solid var(--border); }
+    .schedule-item.expanded .schedule-body { display: block; }
+
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+
+    .field-label {
+      display: block; font-size: .66rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .05em;
+      color: var(--text-3); margin: 0 0 4px;
+    }
+
+    input[type="time"], input[type="number"], input[type="date"] {
+      width: 100%;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: .82rem; color: var(--text);
+      background: var(--surface-2);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-sm); padding: 7px 9px;
+    }
+
+    input:focus-visible { background: var(--surface); }
+    .field-help { font-size: .66rem; color: var(--text-3); margin-top: 3px; }
+
+    .chips-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+
+    .bit-chip {
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: .7rem; font-weight: 600;
+      padding: 5px 9px; border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      background: var(--surface-2); color: var(--text-2);
+      cursor: pointer;
+    }
+
+    .bit-chip.on { background: var(--leaf-600); border-color: var(--leaf-600); color: #fff; }
+
+    .batch-note {
+      display: flex; gap: 8px; align-items: flex-start;
+      font-size: .74rem; color: var(--water-700);
+      background: var(--water-100);
+      border: 1px solid var(--water-border);
+      border-radius: var(--r-sm); padding: 9px 11px; margin-bottom: 12px;
+    }
+
+    .batch-note[hidden] { display: none; }
+    .batch-note .icon { width: 15px; height: 15px; margin-top: 1px; }
+
+    .schedule-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .schedule-empty { font-size: .8rem; color: var(--text-3); padding: 4px 0 8px; }
+    .schedule-clear { margin-top: 10px; }
+
+    /* ---- Sistema ---- */
+    .system-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .system-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg); box-shadow: var(--shadow);
+      padding: 16px 18px;
+    }
+
+    .system-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .system-card-head .icon { width: 15px; height: 15px; color: var(--leaf-700); }
+    .system-card-title { font-weight: 700; font-size: .82rem; }
+    .system-card-sub { font-size: .72rem; color: var(--text-3); margin: 0 0 14px; }
+    .rtc-readout { font-weight: 600; font-size: 1.9rem; color: var(--text); line-height: 1.1; }
+    .rtc-date { font-size: .76rem; color: var(--text-2); margin: 3px 0 14px; }
+
+    /* ---- Notificações ---- */
+    .notif-drawer {
+      max-width: 980px; margin: 0 auto; padding: 0 20px;
+      max-height: 0; overflow: hidden;
+      transition: max-height .2s ease;
+    }
+
+    .notif-drawer.open { max-height: 600px; }
 
     .notif-panel {
-      max-width: 860px;
-      margin: 10px auto 0;
-      padding: 0 20px;
-      display: none;
-    }
-
-    .notif-panel.open {
-      display: block;
-    }
-
-    .sensor-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    @media(max-width:600px){ .sensor-grid { grid-template-columns: repeat(2,1fr); } }
-
-    .sensor-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: var(--shadow);
-    }
-
-    .sensor-icon { font-size: 1.1rem; margin-bottom: 10px; display: block; }
-
-    .sensor-label {
-      font-size: 0.65rem;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .sensor-value {
-      font-size: 1.6rem;
-      font-weight: 700;
-      line-height: 1.15;
-      margin-top: 4px;
-    }
-
-    .sensor-unit {
-      font-size: 0.65rem;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
-    .section-label {
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-bottom: 10px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .valve-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    @media(max-width:480px){ .valve-grid { grid-template-columns: 1fr; } }
-
-    .valve-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      cursor: pointer;
-      box-shadow: var(--shadow);
-    }
-
-    .valve-card.active {
-      border-color: #a8d5b8;
-      background: var(--green-light);
-    }
-
-    .valve-num {
-      font-size: 0.6rem;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    .valve-name {
-      font-size: 0.9rem;
-      font-weight: 600;
-      margin-top: 2px;
-    }
-
-    .valve-status {
-      font-size: 0.68rem;
-      font-weight: 500;
-      margin-top: 3px;
-      color: var(--muted);
-    }
-
-    .valve-card.active .valve-status { color: var(--green); }
-
-    .toggle {
-      flex-shrink: 0;
-      width: 44px; height: 24px;
-      border-radius: 24px;
-      border: none;
-      cursor: pointer;
-      position: relative;
-      outline: none;
-    }
-
-    .toggle.off { background: var(--border2); }
-    .toggle.on { background: var(--green-mid); }
-
-    .knob {
-      position: absolute;
-      top: 3px;
-      width: 18px; height: 18px;
-      border-radius: 50%;
-      background: #fff;
-      box-shadow: 0 1px 3px #00000030;
-      pointer-events: none;
-      transition: left .15s ease;
-    }
-
-    .toggle.off .knob { left: 3px; }
-    .toggle.on .knob { left: 23px; }
-
-    .force-btn {
-      width: 100%;
+      margin-top: 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg); box-shadow: var(--shadow);
       padding: 14px;
-      background: var(--surface);
-      border: 1px solid #f5c6a0;
-      border-radius: 12px;
-      color: var(--amber);
-      font-family: 'Inter', sans-serif;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      box-shadow: var(--shadow);
-      margin-bottom: 20px;
     }
 
-    .force-btn:hover { background: var(--amber-light); }
-
-    .schedule-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .schedule-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px 18px;
-      box-shadow: var(--shadow);
-    }
-
-    .schedule-label {
-      font-size: 0.65rem;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 6px;
-    }
-
-    .schedule-time {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .schedule-status {
-      margin-top: 6px;
-      font-size: 0.7rem;
-      font-weight: 500;
-    }
-
-    .done { color: var(--green); }
-    .pending { color: var(--muted); }
-
-    .network-info {
-      margin-top: 16px;
-      background: var(--surface);
-      border: 1px dashed var(--border2);
-      border-radius: 12px;
-      padding: 12px 14px;
-      font-size: 0.72rem;
-      color: var(--text2);
-    }
-
-    .alerts-wrap {
-      background: #f4f6fb;
-      border: 1px solid #e3e7f0;
-      border-radius: 16px;
-      padding: 14px;
-      box-shadow: var(--shadow);
-      margin-bottom: 16px;
-    }
-
-    .alerts-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .alerts-title-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .alerts-title {
-      font-size: 1.05rem;
-      color: #222b45;
-      font-weight: 700;
-      letter-spacing: 0.01em;
-    }
-
-    .alerts-subtitle {
-      font-size: 0.68rem;
-      color: #7d8799;
-      font-weight: 600;
-    }
-
-    .notif-actions {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      min-width: 0;
-    }
+    .notif-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+    .notif-head-title { font-weight: 700; font-size: .9rem; }
+    .notif-head-sub { font-size: .7rem; color: var(--text-3); }
 
     .notif-tabs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
-      background: #e9ecf3;
-      border-radius: 12px;
-      padding: 4px;
-      margin-bottom: 10px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+      background: var(--surface-2); border-radius: var(--r-sm);
+      padding: 4px; margin-bottom: 12px;
     }
 
     .notif-tab {
-      border: none;
-      border-radius: 9px;
-      padding: 8px 10px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      font-family: 'Inter', sans-serif;
-      color: #6f7891;
-      background: transparent;
-      cursor: pointer;
+      border: none; border-radius: 7px; padding: 7px 10px;
+      font-size: .74rem; font-weight: 700;
+      color: var(--text-3); background: transparent; cursor: pointer;
     }
 
-    .notif-tab.active {
-      background: #fff;
-      color: #29314a;
-      box-shadow: 0 1px 2px #00000014;
-    }
-
-    .notif-tab-content {
-      display: block;
-    }
-
-    .notif-tab-content.hidden {
-      display: none;
-    }
-
-    .notif-list-wrap {
-      max-height: 360px;
-      overflow-y: auto;
-      padding-right: 3px;
-    }
+    .notif-tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .notif-tab-panel { display: none; flex-direction: column; gap: 8px; max-height: 340px; overflow-y: auto; }
+    .notif-tab-panel.active { display: flex; }
 
     .notif-group-label {
-      font-size: 0.66rem;
-      font-weight: 700;
-      color: #7f889f;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin: 8px 2px;
-    }
-
-    @media(max-width:640px){
-      .alerts-head {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .notif-actions {
-        width: 100%;
-        min-width: 0;
-      }
-
-      .notif-actions .tiny-btn {
-        width: 100%;
-      }
-    }
-
-    .alert-list {
-      display: block;
-      margin: 0;
-    }
-
-    .history-list {
-      display: block;
-      margin: 0;
+      font-size: .64rem; font-weight: 700; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: .08em;
+      margin: 6px 2px 0;
     }
 
     .notif-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 11px 8px;
-      background: #fff;
-      border: 1px solid #e6ebf5;
-      border-radius: 12px;
-      margin-bottom: 8px;
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--border); border-radius: var(--r-sm);
     }
 
     .notif-icon {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: #3f61d8;
-      background: #e7ecff;
-      border: 1px solid #d6dfff;
-      flex-shrink: 0;
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      background: var(--water-100); color: var(--water-700);
     }
 
-    .notif-icon.warning {
-      color: #a56a13;
-      background: #fff3df;
-      border-color: #f6d39d;
-    }
-
-    .notif-icon.critical {
-      color: #b23a33;
-      background: #ffe8e6;
-      border-color: #f6c2be;
-    }
-
-    .notif-text {
-      min-width: 0;
-      flex: 1;
-    }
-
-    .notif-msg {
-      font-size: 0.79rem;
-      color: #2e3448;
-      line-height: 1.35;
-      font-weight: 600;
-    }
+    .notif-icon.warning { background: var(--clay-100); color: var(--clay-700); }
+    .notif-icon.critical { background: var(--brick-100); color: var(--brick-700); }
+    .notif-icon .icon { width: 13px; height: 13px; }
+    .notif-msg { font-size: .78rem; color: var(--text); font-weight: 600; }
 
     .notif-meta {
-      margin-top: 3px;
-      font-size: 0.66rem;
-      color: #818aa2;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
+      font-size: .68rem; color: var(--text-3); margin-top: 2px;
+      text-transform: uppercase; letter-spacing: .04em;
     }
 
-    .empty-alert {
-      border: 1px dashed #cfd6e6;
-      border-radius: 12px;
-      padding: 12px;
-      font-size: 0.72rem;
-      color: #74809a;
-      background: #fff;
+    .notif-empty {
+      border: 1px dashed var(--border-strong); border-radius: var(--r-sm);
+      padding: 12px; font-size: .74rem; color: var(--text-3);
     }
 
-    .editor-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-top: 10px;
+    /* ---- Rodapé / toast ---- */
+    .network-footer {
+      max-width: 980px; margin: 4px auto 0;
+      padding: 12px 20px 28px;
+      font-size: .72rem; color: var(--text-3);
+      display: flex; flex-wrap: wrap; gap: 6px 14px;
     }
 
-    @media(max-width:700px){ .editor-grid { grid-template-columns: 1fr; } }
-
-    .editor-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
-      box-shadow: var(--shadow);
-    }
-
-    .editor-head {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--text2);
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .editor-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .editor-row label {
-      font-size: 0.68rem;
-      color: var(--text2);
-      margin-bottom: 3px;
-      display: block;
-    }
-
-    .editor-row input[type="time"],
-    .editor-row input[type="number"] {
-      width: 100%;
-      border: 1px solid var(--border2);
-      border-radius: 8px;
-      padding: 6px 8px;
-      font-size: 0.78rem;
-      font-family: 'Inter', sans-serif;
-      background: #fff;
-      color: var(--text);
-    }
-
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-
-    .chip {
-      border: 1px solid var(--border2);
-      border-radius: 18px;
-      padding: 3px 7px;
-      font-size: 0.66rem;
-      color: var(--text2);
-      background: #fff;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .tiny-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 6px;
-    }
-
-    .tiny-btn {
-      flex: 1;
-      border: 1px solid var(--border2);
-      border-radius: 8px;
-      padding: 7px 8px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      background: #fff;
-      color: var(--text2);
-      cursor: pointer;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .tiny-btn.primary {
-      border-color: #a8d5b8;
-      color: var(--green);
-      background: var(--green-light);
-    }
+    .network-footer strong { color: var(--text-2); }
 
     .toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
+      position: fixed; bottom: 24px; left: 50%;
       transform: translateX(-50%) translateY(60px);
-      background: var(--text);
-      color: #fff;
-      font-size: 0.75rem;
-      font-weight: 500;
-      padding: 9px 20px;
-      border-radius: 30px;
-      opacity: 0;
-      pointer-events: none;
+      background: var(--text); color: var(--bg);
+      font-size: .75rem; font-weight: 600;
+      padding: 9px 20px; border-radius: 30px;
+      opacity: 0; pointer-events: none;
       transition: transform .3s, opacity .3s;
-      white-space: nowrap;
+      white-space: nowrap; z-index: 60;
     }
 
-    .toast.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    @media (max-width: 720px) {
+      .status-strip { grid-template-columns: 1fr; }
+      .system-grid { grid-template-columns: 1fr; }
+      .field-row { grid-template-columns: 1fr; }
+      .brand-text p { display: none; }
+      .ws-pill span.ws-txt { display: none; }
     }
   </style>
 </head>
 <body>
 
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M4 20C4 11 10 4 20 4c0 9-6 16-16 16Z"/><path d="M4 20 14 10"/></symbol>
+  <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3c-3.5 5-6.5 8.8-6.5 12.4a6.5 6.5 0 0 0 13 0C18.5 11.8 15.5 8 12 3Z"/></symbol>
+  <symbol id="i-therm" viewBox="0 0 24 24"><path d="M11 14.6V6a2 2 0 1 1 4 0v8.6a4 4 0 1 1-4 0Z"/><path d="M13 8h2.4"/></symbol>
+  <symbol id="i-valve" viewBox="0 0 24 24"><path d="M3 9h9"/><circle cx="16" cy="9" r="3.2"/><path d="M16 5.8V3M16 12.2V15"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.6V12l3.2 2"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6.2 16c0-1 .6-1.6 1-2.2.7-1 1-2.3 1-4.3a3.8 3.8 0 0 1 7.6 0c0 2 .3 3.3 1 4.3.4.6 1 1.2 1 2.2Z"/><path d="M10.2 18.4a1.9 1.9 0 0 0 3.6 0"/></symbol>
+  <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M7 6.4a8 8 0 1 0 10 0"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17.4 7H20M4 17h2.6M11 17H20"/><circle cx="13" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><path d="M12 11v5.2"/><circle cx="12" cy="8" r="0.4" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4 3 19h18Z"/><path d="M12 10v4.4"/><circle cx="12" cy="16.8" r="0.4" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+</svg>
+
 <div class="topbar">
   <div class="brand">
-    <div class="brand-icon">IO</div>
-    <div>
+    <div class="brand-mark"><svg class="icon"><use href="#i-leaf"/></svg></div>
+    <div class="brand-text">
       <h1>Sistema de Irrigação</h1>
-      <p>ESP32 - 8 Válvulas</p>
+      <p id="brandSub">ESP32 · 8 válvulas</p>
     </div>
   </div>
-  <div class="topbar-right">
-    <div id="wsBadge" class="ws-badge reconnecting" title="WebSocket em reconexao">
-      <span class="ws-badge-dot"></span>
-      <span id="wsBadgeText">WS Reconectando</span>
+  <div class="topbar-actions">
+    <div id="wsBadge" class="ws-pill reconnecting" title="Conexão em tempo real">
+      <span class="dot"></span>
+      <span class="ws-txt" id="wsBadgeText">Conectando</span>
     </div>
-    <button id="notifButton" class="notif-btn" onclick="alternarPainelNotificacoes()" aria-label="Notificacoes" title="Notificacoes">
-      <img id="notifIcon" alt="Notificacoes" src=""/>
+    <button class="icon-btn" id="bellBtn" aria-expanded="false" aria-controls="notifDrawer" title="Notificações">
+      <svg class="icon"><use href="#i-bell"/></svg>
+      <span class="notif-count" id="notifCount" hidden>0</span>
     </button>
   </div>
 </div>
 
-<div id="notifPanel" class="notif-panel">
-  <div class="alerts-wrap">
-    <div class="alerts-head">
-      <div class="alerts-title-wrap">
-        <span class="alerts-title">Notificacoes</span>
-        <span class="alerts-subtitle" id="alertSummary">Verificando notificacoes...</span>
+<div class="notif-drawer" id="notifDrawer">
+  <div class="notif-panel">
+    <div class="notif-head">
+      <div>
+        <div class="notif-head-title">Notificações</div>
+        <div class="notif-head-sub" id="alertSummary">Verificando…</div>
       </div>
-      <div class="notif-actions">
-        <button class="tiny-btn" onclick="marcarNotificacoesLidas()">Marcar tudo como lido</button>
-      </div>
+      <button class="btn btn-ghost btn-sm" id="btnMarcarLidas">Marcar tudo como lido</button>
     </div>
-
     <div class="notif-tabs">
-      <button id="notifTabAlertas" class="notif-tab active" onclick="selecionarAbaNotificacoes('alertas')">Avisos</button>
-      <button id="notifTabHistorico" class="notif-tab" onclick="selecionarAbaNotificacoes('historico')">Historico</button>
+      <button class="notif-tab active" data-tab="alertas" id="notifTabAlertas">Avisos</button>
+      <button class="notif-tab" data-tab="historico">Histórico</button>
     </div>
-
-    <div id="notifTabContentAlertas" class="notif-tab-content">
-      <div class="alert-list notif-list-wrap" id="alertBox"></div>
-    </div>
-
-    <div id="notifTabContentHistorico" class="notif-tab-content hidden">
-      <div class="history-list notif-list-wrap" id="historyList"></div>
-    </div>
+    <div class="notif-tab-panel active" data-panel="alertas" id="alertBox"></div>
+    <div class="notif-tab-panel" data-panel="historico" id="historyList"></div>
   </div>
 </div>
 
-<div class="wrap">
-  <div class="section-label">Sensores</div>
-  <div class="sensor-grid">
-    <div class="sensor-card">
-      <span class="sensor-icon">T</span>
-      <div class="sensor-label">Temperatura</div>
-      <div class="sensor-value" id="sensorTempValue">--</div>
-      <div class="sensor-unit">°C</div>
+<main class="wrap">
+
+  <section class="status-strip">
+    <div class="stat-card">
+      <span class="stat-label"><svg class="icon"><use href="#i-valve"/></svg>Válvulas abertas</span>
+      <span class="stat-value mono" id="statValvulas">–/8</span>
+      <div class="stat-chips" id="statValvulasChips"></div>
     </div>
-    <div class="sensor-card">
-      <span class="sensor-icon">U</span>
-      <div class="sensor-label">Umidade do ar</div>
-      <div class="sensor-value" id="sensorHumValue">--</div>
-      <div class="sensor-unit">%</div>
+    <div class="stat-card">
+      <span class="stat-label"><svg class="icon"><use href="#i-clock"/></svg>Próxima agenda</span>
+      <span class="stat-value mono" id="statProxima">—</span>
+      <span class="stat-sub" id="statProximaSub">Nenhuma agenda ativa</span>
     </div>
-  </div>
+    <div class="stat-card action-card">
+      <span class="stat-label"><svg class="icon"><use href="#i-power"/></svg>Ação rápida</span>
+      <button class="btn btn-emergency" id="offAllBtn">
+        <svg class="icon"><use href="#i-power"/></svg>
+        Desligar todas as válvulas
+      </button>
+      <div class="confirm-row" id="offAllConfirm" hidden>
+        <span id="offAllConfirmMsg">Confirma desligar as válvulas abertas?</span>
+        <button class="btn btn-emergency btn-sm" id="offAllYes">Sim, desligar</button>
+        <button class="btn btn-ghost btn-sm" id="offAllNo">Cancelar</button>
+      </div>
+    </div>
+  </section>
 
-  <div class="section-label">Controle de Válvulas</div>
-  <div class="valve-grid" id="valveGrid"></div>
+  <section>
+    <h2 class="panel-title">Sensores</h2>
+    <div class="sensor-row">
+      <div class="sensor-card">
+        <span class="sensor-icon temp"><svg class="icon"><use href="#i-therm"/></svg></span>
+        <span class="sensor-label">Temperatura</span>
+        <span class="sensor-value mono" id="sensorTemp">--<span>°C</span></span>
+        <span class="sensor-age" id="sensorTempAge">aguardando leitura</span>
+      </div>
+      <div class="sensor-card">
+        <span class="sensor-icon hum"><svg class="icon"><use href="#i-drop"/></svg></span>
+        <span class="sensor-label">Umidade do ar</span>
+        <span class="sensor-value mono" id="sensorHum">--<span>%</span></span>
+        <span class="sensor-age" id="sensorHumAge">aguardando leitura</span>
+      </div>
+    </div>
+  </section>
 
-  <div class="section-label">Editor de Agendas</div>
-  <div class="editor-grid" id="editorAgendas"></div>
+  <section>
+    <h2 class="panel-title">Válvulas <span class="panel-sub">8 setores · 2 relés de 4 canais</span></h2>
+    <div class="valve-grid" id="valveGrid"></div>
+  </section>
 
-  <button class="force-btn" onclick="limparAgendasVisual()">
-    Limpar todas as agendas
-  </button>
+  <section>
+    <h2 class="panel-title">Agendas <span class="panel-sub">toque para editar · até 4 agendas</span></h2>
+    <div class="schedule-list" id="scheduleList"></div>
+    <div class="schedule-clear">
+      <button class="btn btn-ghost btn-sm" id="clearAllBtn">Limpar todas as agendas</button>
+      <div class="confirm-row" id="clearAllConfirm" hidden>
+        <span>Apagar as 4 agendas? Ciclos automáticos em andamento serão interrompidos.</span>
+        <button class="btn btn-emergency btn-sm" id="clearAllYes">Sim, apagar tudo</button>
+        <button class="btn btn-ghost btn-sm" id="clearAllNo">Cancelar</button>
+      </div>
+    </div>
+  </section>
 
-  <div class="network-info" id="networkInfo">Rede carregando...</div>
-</div>
+  <section>
+    <h2 class="panel-title">Sistema</h2>
+    <div class="system-grid">
+      <div class="system-card">
+        <div class="system-card-head"><svg class="icon"><use href="#i-clock"/></svg><span class="system-card-title">Relógio do sistema (RTC)</span></div>
+        <p class="system-card-sub">DS3231 · base de horário para todas as agendas</p>
+        <div class="rtc-readout mono" id="rtcClock">--:--:--</div>
+        <div class="rtc-date" id="rtcDate">—</div>
+        <div class="field-row">
+          <div><label class="field-label" for="rtcDataInput">Data</label><input type="date" id="rtcDataInput"/></div>
+          <div><label class="field-label" for="rtcHoraInput">Hora</label><input type="time" id="rtcHoraInput"/></div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="rtcSalvarBtn">Ajustar horário</button>
+      </div>
+      <div class="system-card">
+        <div class="system-card-head"><svg class="icon"><use href="#i-sliders"/></svg><span class="system-card-title">Configuração de runtime</span></div>
+        <p class="system-card-sub">Limites de segurança aplicados a todos os setores</p>
+        <div class="field-row">
+          <div>
+            <label class="field-label" for="rtTimeout">Timeout manual (min)</label>
+            <input type="number" id="rtTimeout" min="1" max="120" step="1"/>
+            <div class="field-help">1–120 min · fecha válvula manual esquecida</div>
+          </div>
+          <div>
+            <label class="field-label" for="rtDuracao">Duração padrão (min)</label>
+            <input type="number" id="rtDuracao" min="1" max="240" step="1"/>
+            <div class="field-help">1–240 min · usada em novas agendas</div>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="rtSalvarBtn">Salvar configuração</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="network-footer" id="netFooter">Carregando informações de rede…</footer>
+</main>
 
 <div class="toast" id="toast"></div>
 
 <script>
-const toastEl = document.getElementById('toast');
-const notifButtonEl = document.getElementById('notifButton');
-const notifIconEl = document.getElementById('notifIcon');
-const notifPanelEl = document.getElementById('notifPanel');
-const notifTabAlertasEl = document.getElementById('notifTabAlertas');
-const notifTabHistoricoEl = document.getElementById('notifTabHistorico');
-const notifTabContentAlertasEl = document.getElementById('notifTabContentAlertas');
-const notifTabContentHistoricoEl = document.getElementById('notifTabContentHistorico');
-const wsBadgeEl = document.getElementById('wsBadge');
-const wsBadgeTextEl = document.getElementById('wsBadgeText');
-const sensorTempValueEl = document.getElementById('sensorTempValue');
-const sensorHumValueEl = document.getElementById('sensorHumValue');
+(function () {
+  'use strict';
 
-const BELL_ICON_INACTIVE = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWJlbGwtaWNvbiBsdWNpZGUtYmVsbCI+PHBhdGggZD0iTTEwLjI2OCAyMWEyIDIgMCAwIDAgMy40NjQgMCIvPjxwYXRoIGQ9Ik0zLjI2MiAxNS4zMjZBMSAxIDAgMCAwIDQgMTdoMTZhMSAxIDAgMCAwIC43NC0xLjY3M0MxOS40MSAxMy45NTYgMTggMTIuNDk5IDE4IDhBNiA2IDAgMCAwIDYgOGMwIDQuNDk5LTEuNDExIDUuOTU2LTIuNzM4IDcuMzI2Ii8+PC9zdmc+';
-const BELL_ICON_ACTIVE = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWJlbGwtZG90LWljb24gbHVjaWRlLWJlbGwtZG90Ij48cGF0aCBkPSJNMTAuMjY4IDIxYTIgMiAwIDAgMCAzLjQ2NCAwIi8+PHBhdGggZD0iTTExLjY4IDIuMDA5QTYgNiAwIDAgMCA2IDhjMCA0LjQ5OS0xLjQxMSA1Ljk1Ni0yLjczOCA3LjMyNkExIDEgMCAwIDAgNCAxN2gxNmExIDEgMCAwIDAgLjc0LTEuNjczYy0uODI0LS44NS0xLjY3OC0xLjczMS0yLjIxLTMuMzQ4Ii8+PGNpcmNsZSBjeD0iMTgiIGN5PSI1IiByPSIzIi8+PC9zdmc+';
+  var DIAS_CURTOS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+  var DIAS_LONGOS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+  var NUM_VALVULAS = 8;
+  var MAX_AGENDAS = 4;
 
-const STORAGE_NOTIFICACOES_HIST = 'irrigacao.notificacoes.historico';
-const STORAGE_NOTIFICACOES_LIDAS_ATE = 'irrigacao.notificacoes.lidasAte';
+  var STORAGE_HIST = 'irrigacao.notificacoes.historico';
+  var STORAGE_LIDAS_ATE = 'irrigacao.notificacoes.lidasAte';
+  var WS_RECONEXAO_MS = 3000;
 
-let cacheAlertasAtivos = [];
-let cacheHistoricoNotificacoes = [];
-let abaNotificacaoAtual = 'alertas';
-let estadoRedeAtual = { ap: {}, sta: {}, websocket: {} };
-let wsPainel = null;
-let wsConectado = false;
-let wsTimerReconexao = null;
-let wsPortaAtual = 81;
-const WS_RECONEXAO_MS = 3000;
+  // ---- Estado ----
+  var statusAtual = null;
+  var valvulasRestantes = {};   // id -> segundos restantes (tick local)
+  var proximaEmS = null;
+  var rtcSegundos = null;
+  var agendaCfg = { maxSimultaneos: 2, intervaloLoteS: 10 };
+  var slotsAtuais = [];
+  var expandidos = {};          // slot -> true
+  var editorSujo = false;
+  var runtimeSujo = false;
+  var rtcSujo = false;
+  var cacheAlertas = [];
+  var cacheHistorico = [];
+  var wsPainel = null;
+  var wsConectado = false;
+  var wsTimerReconexao = null;
+  var wsPortaAtual = 81;
 
-function showToast(msg) {
-  toastEl.textContent = msg;
-  toastEl.classList.add('show');
-  setTimeout(() => toastEl.classList.remove('show'), 2200);
-}
+  // ---- Utilitários ----
+  function $(id) { return document.getElementById(id); }
+  function p2(v) { return String(v).padStart(2, '0'); }
 
-async function requestJson(url, options) {
-  const response = await fetch(url, options);
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data.erro || ('HTTP ' + response.status));
-  }
-  return data;
-}
-
-function pad2(v) {
-  return String(v).padStart(2, '0');
-}
-
-function carregarHistoricoLocalStorage() {
-  try {
-    const bruto = localStorage.getItem(STORAGE_NOTIFICACOES_HIST);
-    if (!bruto) return [];
-    const dados = JSON.parse(bruto);
-    return Array.isArray(dados) ? dados : [];
-  } catch (_err) {
-    return [];
-  }
-}
-
-function salvarHistoricoLocalStorage(historico) {
-  try {
-    localStorage.setItem(STORAGE_NOTIFICACOES_HIST, JSON.stringify(Array.isArray(historico) ? historico : []));
-  } catch (_err) {
-  }
-}
-
-function obterMaiorIdNotificacao(historico) {
-  if (!Array.isArray(historico) || historico.length === 0) return 0;
-  return historico.reduce((acc, item) => {
-    const id = Number(item?.id || 0);
-    return id > acc ? id : acc;
-  }, 0);
-}
-
-function obterIdLidoAte() {
-  try {
-    const valor = Number(localStorage.getItem(STORAGE_NOTIFICACOES_LIDAS_ATE) || 0);
-    return Number.isFinite(valor) ? valor : 0;
-  } catch (_err) {
-    return 0;
-  }
-}
-
-function definirIdLidoAte(id) {
-  try {
-    localStorage.setItem(STORAGE_NOTIFICACOES_LIDAS_ATE, String(Math.max(0, Number(id || 0))));
-  } catch (_err) {
-  }
-}
-
-function existeNotificacaoNaoLida(historico) {
-  const ultimoLido = obterIdLidoAte();
-  return Array.isArray(historico) && historico.some(item => Number(item?.id || 0) > ultimoLido);
-}
-
-function atualizarIndicadorNotificacoes() {
-  const temAlertaRelevante = Array.isArray(cacheAlertasAtivos) &&
-    cacheAlertasAtivos.some(a => String(a?.nivel || 'info').toLowerCase() !== 'info');
-  const ativo = temAlertaRelevante || existeNotificacaoNaoLida(cacheHistoricoNotificacoes);
-  notifIconEl.src = ativo ? BELL_ICON_ACTIVE : BELL_ICON_INACTIVE;
-  notifButtonEl.classList.toggle('active', ativo);
-}
-
-function marcarNotificacoesLidas() {
-  const maiorId = obterMaiorIdNotificacao(cacheHistoricoNotificacoes);
-  definirIdLidoAte(maiorId);
-  atualizarIndicadorNotificacoes();
-  showToast('Notificacoes marcadas como lidas');
-}
-
-function selecionarAbaNotificacoes(aba) {
-  abaNotificacaoAtual = aba === 'historico' ? 'historico' : 'alertas';
-
-  const emAlertas = abaNotificacaoAtual === 'alertas';
-
-  if (notifTabAlertasEl) {
-    notifTabAlertasEl.classList.toggle('active', emAlertas);
-  }
-  if (notifTabHistoricoEl) {
-    notifTabHistoricoEl.classList.toggle('active', !emAlertas);
-  }
-  if (notifTabContentAlertasEl) {
-    notifTabContentAlertasEl.classList.toggle('hidden', !emAlertas);
-  }
-  if (notifTabContentHistoricoEl) {
-    notifTabContentHistoricoEl.classList.toggle('hidden', emAlertas);
-  }
-}
-
-function alternarPainelNotificacoes() {
-  notifPanelEl.classList.toggle('open');
-  if (notifPanelEl.classList.contains('open')) {
-    const maiorId = obterMaiorIdNotificacao(cacheHistoricoNotificacoes);
-    definirIdLidoAte(maiorId);
-    atualizarIndicadorNotificacoes();
-    selecionarAbaNotificacoes(abaNotificacaoAtual);
-  }
-}
-
-function escapeHtml(texto) {
-  return String(texto || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function renderValvulas(valvulas) {
-  const grid = document.getElementById('valveGrid');
-  grid.innerHTML = valvulas.map(v => {
-    const activeCls = v.ativa ? 'active' : '';
-    const toggleCls = v.ativa ? 'on' : 'off';
-    return `
-      <div class="valve-card ${activeCls}" onclick="alternarValvula(${v.id})">
-        <div>
-          <div class="valve-num">Válvula ${pad2(v.id)} - GPIO ${v.gpio}</div>
-          <div class="valve-name">Setor ${v.id}</div>
-          <div class="valve-status">${v.status} (${v.origem})</div>
-        </div>
-        <button class="toggle ${toggleCls}" onclick="event.stopPropagation(); alternarValvula(${v.id});">
-          <span class="knob"></span>
-        </button>
-      </div>
-    `;
-  }).join('');
-}
-
-function renderSensores(sensores) {
-  const ok = Boolean(sensores?.ok);
-  const temp = Number(sensores?.temperatura_c);
-  const hum = Number(sensores?.umidade_ar_pct);
-
-  if (sensorTempValueEl) {
-    sensorTempValueEl.textContent = (ok && Number.isFinite(temp)) ? temp.toFixed(1) : '--';
+  function escapeHtml(texto) {
+    return String(texto == null ? '' : texto)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
-  if (sensorHumValueEl) {
-    sensorHumValueEl.textContent = (ok && Number.isFinite(hum)) ? String(Math.round(hum)) : '--';
-  }
-}
-
-function atualizarRede(rede) {
-  const info = document.getElementById('networkInfo');
-  const ap = rede.ap || {};
-  const sta = rede.sta || {};
-  const ws = rede.websocket || {};
-  let linhaSta = 'STA desativado';
-  if (sta.configurado) {
-    linhaSta = sta.conectado
-      ? ('STA conectado em ' + sta.ssid + ' (' + sta.ip + ')')
-      : ('STA tentando conectar em ' + sta.ssid);
+  function fmtMmSs(s) {
+    s = Math.max(0, s | 0);
+    var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    if (h > 0) return h + ':' + p2(m) + ':' + p2(sec);
+    return m + ':' + p2(sec);
   }
 
-  let linhaWs = 'WebSocket desativado';
-  if (ws.habilitado) {
-    if (!ws.biblioteca) {
-      linhaWs = 'WebSocket indisponivel (instale biblioteca)';
+  function fmtLongo(s) {
+    if (s == null) return '—';
+    s = Math.max(0, s | 0);
+    if (s < 60) return '< 1 min';
+    var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    if (h > 0) return h + 'h ' + p2(m) + 'min';
+    return m + ' min';
+  }
+
+  function contarBits(mask) {
+    var n = 0;
+    for (var i = 0; i < NUM_VALVULAS; i++) if (mask & (1 << i)) n++;
+    return n;
+  }
+
+  function comprimirIndices(mask, limite, nomes) {
+    var grupos = [], ini = -1;
+    for (var i = 0; i <= limite; i++) {
+      var on = i < limite && (mask & (1 << i));
+      if (on && ini < 0) ini = i;
+      if (!on && ini >= 0) { grupos.push([ini, i - 1]); ini = -1; }
+    }
+    return grupos.map(function (g) {
+      return g[0] === g[1] ? nomes(g[0]) : nomes(g[0]) + '–' + nomes(g[1]);
+    }).join(', ');
+  }
+
+  function resumoDias(mask) {
+    if ((mask & 127) === 127) return 'Todos os dias';
+    if ((mask & 127) === 0) return 'Sem dias';
+    return comprimirIndices(mask, 7, function (i) { return DIAS_CURTOS[i]; });
+  }
+
+  function resumoSetores(mask) {
+    if ((mask & 255) === 0) return 'Sem setores';
+    return comprimirIndices(mask, NUM_VALVULAS, function (i) { return 'S' + (i + 1); });
+  }
+
+  var toastEl = $('toast');
+  var toastTimer = null;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 2400);
+  }
+
+  function requestJson(url, options) {
+    return fetch(url, options).then(function (response) {
+      return response.json().catch(function () { return {}; }).then(function (data) {
+        if (!response.ok) throw new Error(data.erro || ('HTTP ' + response.status));
+        return data;
+      });
+    });
+  }
+
+  // ---- Notificações: armazenamento local ----
+  function carregarHistoricoLocal() {
+    try {
+      var bruto = localStorage.getItem(STORAGE_HIST);
+      if (!bruto) return [];
+      var dados = JSON.parse(bruto);
+      return Array.isArray(dados) ? dados : [];
+    } catch (e) { return []; }
+  }
+
+  function salvarHistoricoLocal(historico) {
+    try { localStorage.setItem(STORAGE_HIST, JSON.stringify(Array.isArray(historico) ? historico : [])); } catch (e) {}
+  }
+
+  function obterMaiorId(historico) {
+    var maior = 0;
+    (historico || []).forEach(function (item) {
+      var id = Number(item && item.id || 0);
+      if (id > maior) maior = id;
+    });
+    return maior;
+  }
+
+  function obterIdLidoAte() {
+    try {
+      var v = Number(localStorage.getItem(STORAGE_LIDAS_ATE) || 0);
+      return isFinite(v) ? v : 0;
+    } catch (e) { return 0; }
+  }
+
+  function definirIdLidoAte(id) {
+    try { localStorage.setItem(STORAGE_LIDAS_ATE, String(Math.max(0, Number(id || 0)))); } catch (e) {}
+  }
+
+  function atualizarBadgeNotificacoes() {
+    var lidoAte = obterIdLidoAte();
+    var naoLidas = (cacheHistorico || []).filter(function (item) {
+      return Number(item && item.id || 0) > lidoAte;
+    }).length;
+    var alertasRelevantes = (cacheAlertas || []).filter(function (a) {
+      return String(a && a.nivel || 'info').toLowerCase() !== 'info';
+    }).length;
+
+    var total = naoLidas + alertasRelevantes;
+    var badge = $('notifCount');
+    if (total > 0) {
+      badge.textContent = total > 99 ? '99+' : String(total);
+      badge.hidden = false;
     } else {
-      linhaWs = wsConectado
-        ? ('WebSocket conectado na porta ' + wsPortaAtual)
-        : ('WebSocket aguardando conexao na porta ' + wsPortaAtual);
+      badge.hidden = true;
     }
   }
 
-  info.textContent = 'AP: ' + (ap.ssid || '-') + ' (' + (ap.ip || '0.0.0.0') + ') | ' + linhaSta + ' | ' + linhaWs;
-  atualizarBadgeWebSocket();
-}
-
-function websocketPermitido() {
-  const ws = estadoRedeAtual?.websocket || {};
-  return Boolean(ws.habilitado && ws.biblioteca);
-}
-
-function atualizarBadgeWebSocket() {
-  if (!wsBadgeEl || !wsBadgeTextEl) {
-    return;
+  function marcarNotificacoesLidas() {
+    definirIdLidoAte(obterMaiorId(cacheHistorico));
+    atualizarBadgeNotificacoes();
+    showToast('Notificações marcadas como lidas');
   }
 
-  wsBadgeEl.classList.remove('connected', 'reconnecting', 'fallback');
+  // ---- Notificações: tradução leiga ----
+  function traduzirMensagem(mensagem) {
+    var texto = String(mensagem || '').trim();
+    if (!texto) return 'Atualização do sistema.';
 
-  if (!websocketPermitido()) {
-    wsBadgeEl.classList.add('fallback');
-    wsBadgeEl.title = 'WebSocket indisponivel, usando fallback HTTP';
-    wsBadgeTextEl.textContent = 'HTTP Fallback';
-    return;
+    var m = texto.match(/(\d+)\s+valvula\(s\)\s+manual\(is\)\s+aberta\(s\)/i);
+    if (m) return m[1] + ' setor(es) ligados manualmente neste momento.';
+
+    if (/STA configurado, mas desconectado/i.test(texto)) return 'O Wi-Fi da casa está desconectado. O acesso local continua funcionando.';
+    if (/Conexao STA estabelecida/i.test(texto)) return 'Wi-Fi da casa conectado com sucesso.';
+    if (/Conexao STA perdida/i.test(texto)) return 'Wi-Fi da casa foi desconectado.';
+    if (/Nenhuma agenda ativa configurada/i.test(texto)) return 'Nenhuma programação automática ativa foi configurada.';
+    if (/Servidor web iniciado/i.test(texto)) return 'Painel web iniciado e pronto para uso.';
+
+    m = texto.match(/Setor\s+(\d+)\s+(aberto|fechado)/i);
+    if (m) return 'Setor ' + m[1] + ' foi ' + (m[2].toLowerCase() === 'aberto' ? 'ligado' : 'desligado') + '.';
+
+    m = texto.match(/Agenda\s+(\d+)\s+salva/i);
+    if (m) return 'Agenda ' + m[1] + ' foi salva.';
+
+    m = texto.match(/Agenda\s+(\d+)\s+removida/i);
+    if (m) return 'Agenda ' + m[1] + ' foi removida.';
+
+    return texto;
   }
 
-  if (wsConectado) {
-    wsBadgeEl.classList.add('connected');
-    wsBadgeEl.title = 'Canal WebSocket conectado em tempo real';
-    wsBadgeTextEl.textContent = 'WS Conectado';
-    return;
+  function classeNivel(nivel) {
+    var n = String(nivel || 'info').toLowerCase();
+    if (n === 'critical') return 'critical';
+    if (n === 'warning') return 'warning';
+    return 'info';
   }
 
-  wsBadgeEl.classList.add('reconnecting');
-  wsBadgeEl.title = 'Canal WebSocket reconectando';
-  wsBadgeTextEl.textContent = 'WS Reconectando';
-}
-
-function classeNivel(nivel) {
-  const n = String(nivel || 'info').toLowerCase();
-  if (n === 'critical') return 'critical';
-  if (n === 'warning') return 'warning';
-  return 'info';
-}
-
-function rotuloNivelLeigo(nivel) {
-  const n = String(nivel || 'info').toLowerCase();
-  if (n === 'critical') return 'Urgente';
-  if (n === 'warning') return 'Atencao';
-  return 'Informacao';
-}
-
-function iconeNivelLeigo(nivel) {
-  const n = String(nivel || 'info').toLowerCase();
-  if (n === 'critical') return '!!';
-  if (n === 'warning') return '!';
-  return 'i';
-}
-
-function traduzirMensagemLeiga(mensagem) {
-  const texto = String(mensagem || '').trim();
-  if (!texto) return 'Atualizacao do sistema.';
-
-  const manuaisAbertas = texto.match(/(\d+)\s+valvula\(s\)\s+manual\(is\)\s+aberta\(s\)/i);
-  if (manuaisAbertas) {
-    return manuaisAbertas[1] + ' setor(es) estao ligados manualmente neste momento.';
+  function rotuloNivel(nivel) {
+    var n = classeNivel(nivel);
+    if (n === 'critical') return 'Urgente';
+    if (n === 'warning') return 'Atenção';
+    return 'Informação';
   }
 
-  if (/STA configurado, mas desconectado/i.test(texto)) {
-    return 'O Wi-Fi da casa esta desconectado. O acesso local do equipamento continua funcionando.';
+  function linhaNotificacao(mensagem, detalhe, nivel) {
+    var classe = classeNivel(nivel);
+    var simbolo = classe === 'info' ? 'i-info' : 'i-alert';
+    return '<div class="notif-row">' +
+      '<span class="notif-icon ' + classe + '"><svg class="icon"><use href="#' + simbolo + '"/></svg></span>' +
+      '<div><div class="notif-msg">' + escapeHtml(mensagem) + '</div>' +
+      '<div class="notif-meta">' + escapeHtml(detalhe) + '</div></div></div>';
   }
 
-  if (/Conexao STA estabelecida/i.test(texto)) {
-    return 'Wi-Fi da casa conectado com sucesso.';
+  function normalizarDataBr(data) {
+    var m = String(data || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!m) return '';
+    return p2(Number(m[1])) + '/' + p2(Number(m[2])) + '/' + m[3];
   }
 
-  if (/Conexao STA perdida/i.test(texto)) {
-    return 'Wi-Fi da casa foi desconectado.';
+  function dataBrComOffset(dias) {
+    var d = new Date();
+    d.setDate(d.getDate() + dias);
+    return p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + '/' + d.getFullYear();
   }
 
-  if (/Nenhuma agenda ativa configurada/i.test(texto)) {
-    return 'Nenhuma programacao automatica ativa foi configurada.';
-  }
+  function renderAlertas(alertas) {
+    var resumo = $('alertSummary');
+    var alvo = $('alertBox');
 
-  if (/Servidor web iniciado/i.test(texto)) {
-    return 'Painel web iniciado e pronto para uso.';
-  }
-
-  const setorAtualizado = texto.match(/Setor\s+(\d+)\s+(aberto|fechado)/i);
-  if (setorAtualizado) {
-    const acao = setorAtualizado[2].toLowerCase() === 'aberto' ? 'ligado' : 'desligado';
-    return 'Setor ' + setorAtualizado[1] + ' foi ' + acao + '.';
-  }
-
-  const agendaSalva = texto.match(/Agenda\s+(\d+)\s+salva/i);
-  if (agendaSalva) {
-    return 'Programacao ' + agendaSalva[1] + ' foi salva.';
-  }
-
-  const agendaRemovida = texto.match(/Agenda\s+(\d+)\s+removida/i);
-  if (agendaRemovida) {
-    return 'Programacao ' + agendaRemovida[1] + ' foi removida.';
-  }
-
-  return texto;
-}
-
-function formatarDataHoraLeiga(data, hora) {
-  const dataTxt = String(data || '').trim();
-  const horaTxt = String(hora || '').trim();
-  if (!dataTxt && !horaTxt) return 'Horario indisponivel';
-  if (dataTxt && horaTxt) return dataTxt + ' as ' + horaTxt;
-  if (dataTxt) return dataTxt;
-  return horaTxt;
-}
-
-function normalizarDataBr(data) {
-  const texto = String(data || '').trim();
-  const partes = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!partes) return '';
-  return pad2(Number(partes[1])) + '/' + pad2(Number(partes[2])) + '/' + partes[3];
-}
-
-function dataBrComOffset(dias) {
-  const data = new Date();
-  data.setDate(data.getDate() + dias);
-  return pad2(data.getDate()) + '/' + pad2(data.getMonth() + 1) + '/' + data.getFullYear();
-}
-
-function agruparHistoricoPorDia(itens) {
-  const hoje = dataBrComOffset(0);
-  const ontem = dataBrComOffset(-1);
-  const grupos = { hoje: [], ontem: [], anteriores: [] };
-
-  (itens || []).forEach(item => {
-    const dataItem = normalizarDataBr(item?.data);
-    if (dataItem === hoje) {
-      grupos.hoje.push(item);
+    if (!Array.isArray(alertas) || alertas.length === 0) {
+      resumo.textContent = 'Tudo certo no momento.';
+      alvo.innerHTML = '<div class="notif-empty">Nenhum aviso importante agora.</div>';
       return;
     }
-    if (dataItem === ontem) {
-      grupos.ontem.push(item);
-      return;
-    }
-    grupos.anteriores.push(item);
-  });
 
-  return grupos;
-}
-
-function removerDuplicatasHistoricoVisual(itens) {
-  const vistos = new Set();
-  return (itens || []).filter(item => {
-    const mensagem = traduzirMensagemLeiga(item?.mensagem || 'Sem mensagem');
-    const nivel = String(item?.nivel || 'info').toLowerCase();
-    const data = normalizarDataBr(item?.data);
-    const hora = String(item?.hora || '').trim();
-    const chave = mensagem + '|' + nivel + '|' + data + '|' + hora;
-
-    if (vistos.has(chave)) {
-      return false;
-    }
-
-    vistos.add(chave);
-    return true;
-  });
-}
-
-function montarLinhaNotificacao(mensagem, detalhe, nivel) {
-  const classe = classeNivel(nivel);
-  const icone = iconeNivelLeigo(nivel);
-
-  return `
-    <div class="notif-row">
-      <div class="notif-icon ${classe}">${escapeHtml(icone)}</div>
-      <div class="notif-text">
-        <div class="notif-msg">${escapeHtml(mensagem)}</div>
-        <div class="notif-meta">${escapeHtml(detalhe)}</div>
-      </div>
-    </div>
-  `;
-}
-
-function renderAlertas(alertas) {
-  const alvo = document.getElementById('alertBox');
-  const resumo = document.getElementById('alertSummary');
-
-  if (!Array.isArray(alertas) || alertas.length === 0) {
-    resumo.textContent = 'Tudo certo no momento.';
-    alvo.innerHTML = '<div class="empty-alert">Nenhum aviso importante agora.</div>';
-    return;
-  }
-
-  const total = alertas.length;
-  resumo.textContent = total === 1
-    ? 'Voce tem 1 aviso importante.'
-    : ('Voce tem ' + total + ' avisos importantes.');
-
-  alvo.innerHTML = alertas.map(a => {
-    const nivelLeigo = rotuloNivelLeigo(a.nivel);
-    const titulo = nivelLeigo === 'Urgente'
-      ? 'Acao recomendada agora'
-      : (nivelLeigo === 'Atencao' ? 'Atencao necessaria' : 'Informacao do sistema');
-
-    return montarLinhaNotificacao(
-      titulo + ': ' + traduzirMensagemLeiga(a.mensagem || 'Sem descricao'),
-      nivelLeigo,
-      a.nivel
-    );
-  }).join('');
-}
-
-function renderHistorico(historico) {
-  const alvo = document.getElementById('historyList');
-
-  if (!Array.isArray(historico) || historico.length === 0) {
-    alvo.innerHTML = '<div class="empty-alert">Sem registros de eventos ate o momento.</div>';
-    return;
-  }
-
-  const itens = removerDuplicatasHistoricoVisual(historico.slice().reverse()).slice(0, 20);
-  const grupos = agruparHistoricoPorDia(itens);
-
-  const montarSecao = (titulo, lista) => {
-    if (!Array.isArray(lista) || lista.length === 0) {
-      return '';
-    }
-
-    const linhas = lista.map(e => {
-      const nivelLeigo = rotuloNivelLeigo(e.nivel);
-      const dataHora = formatarDataHoraLeiga('', e.hora || '--:--:--');
-      const mensagem = traduzirMensagemLeiga(e.mensagem || 'Sem mensagem');
-      return montarLinhaNotificacao(mensagem, nivelLeigo + ' | ' + dataHora, e.nivel);
+    resumo.textContent = alertas.length === 1 ? '1 aviso ativo.' : (alertas.length + ' avisos ativos.');
+    alvo.innerHTML = alertas.map(function (a) {
+      return linhaNotificacao(traduzirMensagem(a.mensagem || 'Sem descrição'), rotuloNivel(a.nivel), a.nivel);
     }).join('');
-
-    return '<div class="notif-group-label">' + escapeHtml(titulo) + '</div>' + linhas;
-  };
-
-  const secoes =
-    montarSecao('Hoje', grupos.hoje) +
-    montarSecao('Ontem', grupos.ontem) +
-    montarSecao('Anteriores', grupos.anteriores);
-
-  alvo.innerHTML = secoes || '<div class="empty-alert">Sem registros de eventos ate o momento.</div>';
-}
-
-function maskAtivo(mask, bit) {
-  return (Number(mask || 0) & (1 << bit)) !== 0;
-}
-
-function montarEditorAgendas(slots) {
-  const alvo = document.getElementById('editorAgendas');
-  const diasSigla = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
-
-  alvo.innerHTML = slots.map(s => {
-    const hora = pad2(s.hora || 0) + ':' + pad2(s.minuto || 0);
-
-    let diasHtml = '';
-    for (let i = 0; i < 7; i++) {
-      const checked = maskAtivo(s.diasMask, i) ? 'checked' : '';
-      diasHtml += `<label class="chip"><input type="checkbox" id="dia-${s.slot}-${i}" ${checked} onchange="marcarEdicaoAgenda()"/>${diasSigla[i]}</label>`;
-    }
-
-    let setoresHtml = '';
-    for (let i = 0; i < 8; i++) {
-      const checked = maskAtivo(s.setoresMask, i) ? 'checked' : '';
-      setoresHtml += `<label class="chip"><input type="checkbox" id="set-${s.slot}-${i}" ${checked} onchange="marcarEdicaoAgenda()"/>S${i + 1}</label>`;
-    }
-
-    return `
-      <div class="editor-card">
-        <div class="editor-head">Agenda ${s.slot}</div>
-        <label class="chip"><input type="checkbox" id="ativo-${s.slot}" ${s.ativa ? 'checked' : ''} onchange="marcarEdicaoAgenda()"/>Ativa</label>
-        <div class="editor-row" style="margin-top:8px;">
-          <div>
-            <label for="hora-${s.slot}">Horario</label>
-            <input id="hora-${s.slot}" type="time" value="${hora}" onchange="marcarEdicaoAgenda()"/>
-          </div>
-          <div>
-            <label for="dur-${s.slot}">Duracao (min)</label>
-            <input id="dur-${s.slot}" type="number" min="1" max="240" step="1" value="${Number(s.duracaoMin || 10)}" onchange="marcarEdicaoAgenda()"/>
-          </div>
-        </div>
-        <label style="font-size:0.68rem;color:#4a6652;display:block;margin:6px 0 3px;">Dias</label>
-        <div class="chips">${diasHtml}</div>
-        <label style="font-size:0.68rem;color:#4a6652;display:block;margin:6px 0 3px;">Setores</label>
-        <div class="chips">${setoresHtml}</div>
-        <div class="tiny-actions">
-          <button class="tiny-btn primary" onclick="salvarAgendaVisual(${s.slot})">Salvar</button>
-          <button class="tiny-btn" onclick="excluirAgendaVisual(${s.slot})">Excluir</button>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-let editorAgendaModificado = false;
-
-function marcarEdicaoAgenda() {
-  editorAgendaModificado = true;
-}
-
-function coletarMaskDias(slot) {
-  let mask = 0;
-  for (let i = 0; i < 7; i++) {
-    if (document.getElementById(`dia-${slot}-${i}`)?.checked) {
-      mask |= (1 << i);
-    }
   }
-  return mask;
-}
 
-function coletarMaskSetores(slot) {
-  let mask = 0;
-  for (let i = 0; i < 8; i++) {
-    if (document.getElementById(`set-${slot}-${i}`)?.checked) {
-      mask |= (1 << i);
+  function renderHistorico(historico) {
+    var alvo = $('historyList');
+    if (!Array.isArray(historico) || historico.length === 0) {
+      alvo.innerHTML = '<div class="notif-empty">Sem registros de eventos até o momento.</div>';
+      return;
     }
-  }
-  return mask;
-}
 
-async function salvarAgendaVisual(slot) {
-  try {
-    const horaTxt = document.getElementById(`hora-${slot}`).value || '06:00';
-    const partes = horaTxt.split(':');
-    const hora = Number(partes[0] || 0);
-    const minuto = Number(partes[1] || 0);
+    // Mais recentes primeiro, sem duplicatas visuais, limitado a 20.
+    var vistos = {};
+    var itens = historico.slice().reverse().filter(function (item) {
+      var chave = traduzirMensagem(item && item.mensagem) + '|' + classeNivel(item && item.nivel) + '|' +
+                  normalizarDataBr(item && item.data) + '|' + String(item && item.hora || '');
+      if (vistos[chave]) return false;
+      vistos[chave] = true;
+      return true;
+    }).slice(0, 20);
 
-    const duracao = Math.max(1, Math.min(240, Number(document.getElementById(`dur-${slot}`).value || 10)));
-    const ativa = document.getElementById(`ativo-${slot}`).checked ? 1 : 0;
-    const diasMask = coletarMaskDias(slot);
-    const setoresMask = coletarMaskSetores(slot);
-
-    const params = new URLSearchParams({
-      slot: String(slot),
-      active: String(ativa),
-      hour: String(hora),
-      minute: String(minuto),
-      duration: String(duracao),
-      diasMask: String(diasMask),
-      setoresMask: String(setoresMask)
+    var hoje = dataBrComOffset(0), ontem = dataBrComOffset(-1);
+    var grupos = { 'Hoje': [], 'Ontem': [], 'Anteriores': [] };
+    itens.forEach(function (item) {
+      var d = normalizarDataBr(item && item.data);
+      if (d === hoje) grupos['Hoje'].push(item);
+      else if (d === ontem) grupos['Ontem'].push(item);
+      else grupos['Anteriores'].push(item);
     });
 
-    await requestJson('/api/schedule/save?' + params.toString(), { method: 'POST' });
-    editorAgendaModificado = false;
-    showToast('Agenda ' + slot + ' salva');
-    await carregarAgendas(true);
-  } catch (err) {
-    showToast('Erro ao salvar agenda: ' + err.message);
-  }
-}
+    var html = '';
+    Object.keys(grupos).forEach(function (titulo) {
+      var lista = grupos[titulo];
+      if (lista.length === 0) return;
+      html += '<div class="notif-group-label">' + titulo + '</div>';
+      html += lista.map(function (e) {
+        return linhaNotificacao(
+          traduzirMensagem(e.mensagem || 'Sem mensagem'),
+          rotuloNivel(e.nivel) + ' · ' + String(e.hora || '--:--:--'),
+          e.nivel);
+      }).join('');
+    });
 
-async function excluirAgendaVisual(slot) {
-  try {
-    await requestJson('/api/schedule/delete?slot=' + slot, { method: 'POST' });
-    editorAgendaModificado = false;
-    showToast('Agenda ' + slot + ' excluida');
-    await carregarAgendas(true);
-  } catch (err) {
-    showToast('Erro ao excluir agenda: ' + err.message);
-  }
-}
-
-async function limparAgendasVisual() {
-  try {
-    await requestJson('/api/schedule/clear', { method: 'POST' });
-    editorAgendaModificado = false;
-    showToast('Todas as agendas foram limpas');
-    await carregarAgendas(true);
-  } catch (err) {
-    showToast('Erro ao limpar agendas: ' + err.message);
-  }
-}
-
-function aplicarStatusSistema(dados) {
-  renderSensores(dados.sensores || {});
-  renderValvulas(dados.valvulas || []);
-  estadoRedeAtual = dados.rede || { ap: {}, sta: {}, websocket: {} };
-
-  const wsPorta = Number(estadoRedeAtual?.websocket?.porta || 0);
-  if (Number.isFinite(wsPorta) && wsPorta > 0) {
-    wsPortaAtual = wsPorta;
+    alvo.innerHTML = html || '<div class="notif-empty">Sem registros de eventos até o momento.</div>';
   }
 
-  if (!websocketPermitido() && wsPainel) {
+  // ---- Faixa de status ----
+  function renderStrip(dados) {
+    var valvulas = dados.valvulas || [];
+    var abertas = valvulas.filter(function (v) { return v.ativa; });
+
+    $('statValvulas').textContent = abertas.length + '/' + valvulas.length;
+
+    var chips = abertas.map(function (v) {
+      var origem = v.origem === 'agenda' ? 'origin-agenda' : 'origin-manual';
+      var rotulo = v.origem === 'agenda' ? 'Agenda' : 'Manual';
+      return '<span class="chip ' + origem + '">Setor ' + v.id + ' · ' + rotulo + '</span>';
+    });
+
+    var pendentes = valvulas.filter(function (v) { return v.pendente; });
+    pendentes.forEach(function (v) {
+      chips.push('<span class="chip">Setor ' + v.id + ' · na fila</span>');
+    });
+
+    $('statValvulasChips').innerHTML = chips.length
+      ? chips.join('')
+      : '<span class="chip">Nenhum setor ativo</span>';
+
+    var prox = dados.proxima_agenda;
+    if (prox && typeof prox === 'object') {
+      proximaEmS = Number(prox.em_s || 0);
+      var dow = Number(prox.dow || 0) % 7;
+      var quando = proximaEmS < 86400 ? 'hoje' : DIAS_CURTOS[dow];
+      $('statProximaSub').textContent = 'Agenda ' + prox.slot + ' · ' + quando + ' às ' +
+        p2(prox.hora) + ':' + p2(prox.minuto) + ' · ' + prox.setores + ' setor(es)';
+    } else {
+      proximaEmS = null;
+      $('statProximaSub').textContent = 'Nenhuma agenda ativa';
+    }
+    $('statProxima').textContent = fmtLongo(proximaEmS);
+
+    $('offAllBtn').disabled = (abertas.length === 0 && pendentes.length === 0);
+  }
+
+  // ---- Sensores ----
+  function renderSensores(sensores) {
+    var ok = Boolean(sensores && sensores.ok);
+    var temp = Number(sensores && sensores.temperatura_c);
+    var hum = Number(sensores && sensores.umidade_ar_pct);
+    var idadeS = Math.round(Number(sensores && sensores.idade_ms || 0) / 1000);
+
+    $('sensorTemp').innerHTML = (ok && isFinite(temp) ? temp.toFixed(1) : '--') + '<span>°C</span>';
+    $('sensorHum').innerHTML = (ok && isFinite(hum) ? String(Math.round(hum)) : '--') + '<span>%</span>';
+
+    var idadeTxt = ok ? ('DHT11 · atualizado há ' + idadeS + 's') : 'DHT11 · sem leitura válida';
+    $('sensorTempAge').textContent = idadeTxt;
+    $('sensorHumAge').textContent = idadeTxt;
+  }
+
+  // ---- Válvulas ----
+  function renderValvulas(valvulas) {
+    valvulasRestantes = {};
+
+    $('valveGrid').innerHTML = (valvulas || []).map(function (v) {
+      var classes = 'valve-card' + (v.ativa ? ' open' : (v.pendente ? ' pending' : ''));
+      var pill, foot;
+
+      if (v.ativa) {
+        pill = v.origem === 'agenda'
+          ? '<span class="pill pill-agenda">Agenda</span>'
+          : '<span class="pill pill-manual">Manual</span>';
+        valvulasRestantes[v.id] = Number(v.restante_s || 0);
+        foot = '<span class="valve-timer mono" data-vtimer="' + v.id + '">' + fmtMmSs(v.restante_s || 0) + '</span>' +
+          '<button class="toggle on" data-valve="' + v.id + '" aria-pressed="true">' +
+          '<span class="knob"></span><span class="sr-only">Alternar Setor ' + v.id + '</span></button>';
+      } else if (v.pendente) {
+        pill = '<span class="pill pill-pending">Na fila · agenda</span>';
+        foot = '<span class="valve-hint">Aguardando próximo lote</span>' +
+          '<button class="toggle" data-valve="' + v.id + '" aria-pressed="false">' +
+          '<span class="knob"></span><span class="sr-only">Alternar Setor ' + v.id + '</span></button>';
+      } else {
+        pill = '<span class="pill pill-off">Fechada</span>';
+        foot = '<span class="valve-hint">&nbsp;</span>' +
+          '<button class="toggle" data-valve="' + v.id + '" aria-pressed="false">' +
+          '<span class="knob"></span><span class="sr-only">Alternar Setor ' + v.id + '</span></button>';
+      }
+
+      return '<div class="' + classes + '">' +
+        '<div class="valve-head"><span class="valve-id">Setor ' + p2(v.id) + '</span>' +
+        '<span class="valve-gpio mono">GPIO ' + v.gpio + '</span></div>' +
+        '<div class="valve-status-row">' + pill + '</div>' +
+        '<div class="valve-foot">' + foot + '</div></div>';
+    }).join('');
+  }
+
+  // ---- Agendas ----
+  function notaLotes(qtdSetores) {
+    var maxSim = Math.max(1, Number(agendaCfg.maxSimultaneos || 2));
+    var lotes = Math.ceil(qtdSetores / maxSim);
+    if (qtdSetores <= 0 || lotes <= 1) return '';
+    return qtdSetores + ' setores, limite de ' + maxSim + ' simultâneos → executa em <strong>' + lotes +
+      ' lotes</strong> com ' + agendaCfg.intervaloLoteS + 's de intervalo entre eles.';
+  }
+
+  function detalheAgenda(s) {
+    if (!s.ativa) return 'Toque para configurar';
+    var partes = ['Setores ' + resumoSetores(s.setoresMask)];
+    var prox = statusAtual && statusAtual.proxima_agenda;
+    if (prox && Number(prox.slot) === Number(s.slot)) {
+      partes.push('próxima em ' + fmtLongo(Number(prox.em_s || 0)));
+    }
+    return partes.join(' · ');
+  }
+
+  function renderAgendas(slots, forcar) {
+    slotsAtuais = slots || [];
+    if (editorSujo && !forcar) return;
+
+    $('scheduleList').innerHTML = slotsAtuais.map(function (s) {
+      var slot = Number(s.slot);
+      var classes = 'schedule-item' + (s.ativa ? ' active' : '') + (expandidos[slot] ? ' expanded' : '');
+      var titulo = s.ativa
+        ? resumoDias(s.diasMask) + ' · ' + p2(s.hora) + ':' + p2(s.minuto) + ' · ' + s.duracaoMin + ' min'
+        : 'Slot vazio';
+
+      var chipsDias = DIAS_CURTOS.map(function (nome, i) {
+        var on = (s.diasMask & (1 << i)) !== 0;
+        return '<button type="button" class="bit-chip' + (on ? ' on' : '') + '" data-dia="' + i + '">' + nome.toUpperCase() + '</button>';
+      }).join('');
+
+      var chipsSetores = '';
+      for (var i = 0; i < NUM_VALVULAS; i++) {
+        var on = (s.setoresMask & (1 << i)) !== 0;
+        chipsSetores += '<button type="button" class="bit-chip' + (on ? ' on' : '') + '" data-setor="' + i + '">S' + (i + 1) + '</button>';
+      }
+
+      var nota = notaLotes(contarBits(s.setoresMask));
+
+      return '<div class="' + classes + '" data-slot="' + slot + '">' +
+        '<button type="button" class="schedule-summary" data-acao="expandir">' +
+        '<span class="schedule-slot-badge mono">' + p2(slot) + '</span>' +
+        '<span class="schedule-summary-text">' +
+        '<span class="schedule-summary-title">' + escapeHtml(titulo) + '</span>' +
+        '<span class="schedule-summary-detail">' + escapeHtml(detalheAgenda(s)) + '</span></span>' +
+        '<svg class="icon chev"><use href="#i-chevron"/></svg></button>' +
+        '<div class="schedule-body">' +
+        (s.ativa ? '' : '<div class="schedule-empty">Nenhuma agenda configurada neste slot.</div>') +
+        '<div class="field-row">' +
+        '<div><label class="field-label" for="ag-hora-' + slot + '">Horário</label>' +
+        '<input type="time" id="ag-hora-' + slot + '" value="' + p2(s.hora) + ':' + p2(s.minuto) + '"/></div>' +
+        '<div><label class="field-label" for="ag-dur-' + slot + '">Duração (min)</label>' +
+        '<input type="number" id="ag-dur-' + slot + '" min="1" max="240" step="1" value="' + Number(s.duracaoMin || 10) + '"/>' +
+        '<div class="field-help">1–240 min</div></div></div>' +
+        '<div class="field-label">Dias</div><div class="chips-row" data-chips="dias">' + chipsDias + '</div>' +
+        '<div class="field-label">Setores</div><div class="chips-row" data-chips="setores">' + chipsSetores + '</div>' +
+        '<div class="batch-note" data-nota' + (nota ? '' : ' hidden') + '>' +
+        '<svg class="icon"><use href="#i-info"/></svg><span data-nota-texto>' + nota + '</span></div>' +
+        '<div class="schedule-actions">' +
+        '<button type="button" class="btn btn-primary btn-sm" data-acao="salvar">' + (s.ativa ? 'Salvar agenda' : 'Criar agenda') + '</button>' +
+        (s.ativa ? '<button type="button" class="btn btn-ghost btn-sm" data-acao="excluir">Excluir</button>' : '') +
+        '<span class="confirm-row" hidden data-confirm>' +
+        '<span>Excluir esta agenda?</span>' +
+        '<button type="button" class="btn btn-emergency btn-sm" data-acao="excluir-sim">Sim, excluir</button>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-acao="excluir-nao">Cancelar</button></span>' +
+        '</div></div></div>';
+    }).join('');
+  }
+
+  function atualizarNotaLotes(item) {
+    var marcados = item.querySelectorAll('[data-chips="setores"] .bit-chip.on').length;
+    var nota = notaLotes(marcados);
+    var caixa = item.querySelector('[data-nota]');
+    var texto = item.querySelector('[data-nota-texto]');
+    if (!caixa || !texto) return;
+    if (nota) {
+      texto.innerHTML = nota;
+      caixa.hidden = false;
+    } else {
+      caixa.hidden = true;
+    }
+  }
+
+  function coletarMask(item, seletor) {
+    var mask = 0;
+    item.querySelectorAll(seletor + ' .bit-chip.on').forEach(function (chip) {
+      var bit = Number(chip.getAttribute('data-dia') != null ? chip.getAttribute('data-dia') : chip.getAttribute('data-setor'));
+      mask |= (1 << bit);
+    });
+    return mask;
+  }
+
+  function salvarAgenda(slot, item) {
+    var horaTxt = item.querySelector('#ag-hora-' + slot).value || '06:00';
+    var partes = horaTxt.split(':');
+    var duracao = Math.max(1, Math.min(240, Number(item.querySelector('#ag-dur-' + slot).value || 10)));
+
+    var params = new URLSearchParams({
+      slot: String(slot),
+      active: '1',
+      hour: String(Number(partes[0] || 0)),
+      minute: String(Number(partes[1] || 0)),
+      duration: String(duracao),
+      diasMask: String(coletarMask(item, '[data-chips="dias"]')),
+      setoresMask: String(coletarMask(item, '[data-chips="setores"]'))
+    });
+
+    requestJson('/api/schedule/save?' + params.toString(), { method: 'POST' })
+      .then(function () {
+        editorSujo = false;
+        showToast('Agenda ' + slot + ' salva');
+        return carregarAgendas(true);
+      })
+      .catch(function (err) { showToast('Erro ao salvar: ' + err.message); });
+  }
+
+  function excluirAgenda(slot) {
+    requestJson('/api/schedule/delete?slot=' + slot, { method: 'POST' })
+      .then(function () {
+        editorSujo = false;
+        showToast('Agenda ' + slot + ' excluída');
+        return carregarAgendas(true);
+      })
+      .catch(function (err) { showToast('Erro ao excluir: ' + err.message); });
+  }
+
+  // Delegação de eventos do editor de agendas
+  $('scheduleList').addEventListener('click', function (ev) {
+    var alvo = ev.target.closest('[data-acao], .bit-chip');
+    if (!alvo) return;
+    var item = alvo.closest('.schedule-item');
+    if (!item) return;
+    var slot = Number(item.getAttribute('data-slot'));
+
+    if (alvo.classList.contains('bit-chip')) {
+      alvo.classList.toggle('on');
+      editorSujo = true;
+      atualizarNotaLotes(item);
+      return;
+    }
+
+    var acao = alvo.getAttribute('data-acao');
+    if (acao === 'expandir') {
+      var aberto = item.classList.toggle('expanded');
+      if (aberto) expandidos[slot] = true; else delete expandidos[slot];
+    } else if (acao === 'salvar') {
+      salvarAgenda(slot, item);
+    } else if (acao === 'excluir') {
+      alvo.hidden = true;
+      item.querySelector('[data-confirm]').hidden = false;
+    } else if (acao === 'excluir-nao') {
+      item.querySelector('[data-confirm]').hidden = true;
+      var btnExcluir = item.querySelector('[data-acao="excluir"]');
+      if (btnExcluir) btnExcluir.hidden = false;
+    } else if (acao === 'excluir-sim') {
+      excluirAgenda(slot);
+    }
+  });
+
+  $('scheduleList').addEventListener('input', function () { editorSujo = true; });
+
+  // Limpar todas as agendas
+  $('clearAllBtn').addEventListener('click', function () {
+    $('clearAllBtn').hidden = true;
+    $('clearAllConfirm').hidden = false;
+  });
+  $('clearAllNo').addEventListener('click', function () {
+    $('clearAllConfirm').hidden = true;
+    $('clearAllBtn').hidden = false;
+  });
+  $('clearAllYes').addEventListener('click', function () {
+    requestJson('/api/schedule/clear', { method: 'POST' })
+      .then(function () {
+        editorSujo = false;
+        showToast('Todas as agendas foram apagadas');
+        return carregarAgendas(true);
+      })
+      .catch(function (err) { showToast('Erro ao limpar: ' + err.message); })
+      .then(function () {
+        $('clearAllConfirm').hidden = true;
+        $('clearAllBtn').hidden = false;
+      });
+  });
+
+  // ---- Sistema: RTC ----
+  function renderRtc(dados) {
+    if (dados.hora) {
+      var partes = String(dados.hora).split(':');
+      rtcSegundos = (Number(partes[0]) * 3600) + (Number(partes[1]) * 60) + Number(partes[2] || 0);
+      pintarRelogio();
+    }
+
+    var dataBr = normalizarDataBr(dados.data);
+    var dow = Number(dados.dow);
+    $('rtcDate').textContent = dataBr
+      ? dataBr + (isFinite(dow) ? ' · ' + DIAS_LONGOS[dow % 7] : '')
+      : '—';
+
+    if (!rtcSujo && dataBr) {
+      var m = dataBr.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (m) $('rtcDataInput').value = m[3] + '-' + m[2] + '-' + m[1];
+      if (dados.hora) $('rtcHoraInput').value = String(dados.hora).slice(0, 5);
+    }
+  }
+
+  function pintarRelogio() {
+    if (rtcSegundos == null) return;
+    var h = Math.floor(rtcSegundos / 3600), m = Math.floor((rtcSegundos % 3600) / 60), s = rtcSegundos % 60;
+    $('rtcClock').textContent = p2(h) + ':' + p2(m) + ':' + p2(s);
+  }
+
+  $('rtcDataInput').addEventListener('input', function () { rtcSujo = true; });
+  $('rtcHoraInput').addEventListener('input', function () { rtcSujo = true; });
+
+  $('rtcSalvarBtn').addEventListener('click', function () {
+    var data = $('rtcDataInput').value;   // yyyy-mm-dd
+    var hora = $('rtcHoraInput').value;   // HH:MM
+    if (!data || !hora) {
+      showToast('Preencha data e hora');
+      return;
+    }
+    var d = data.split('-'), h = hora.split(':');
+    var params = new URLSearchParams({
+      year: d[0], month: String(Number(d[1])), day: String(Number(d[2])),
+      hour: String(Number(h[0])), minute: String(Number(h[1]))
+    });
+    requestJson('/api/rtc/set?' + params.toString(), { method: 'POST' })
+      .then(function () {
+        rtcSujo = false;
+        showToast('Relógio ajustado');
+      })
+      .catch(function (err) { showToast('Erro ao ajustar relógio: ' + err.message); });
+  });
+
+  // ---- Sistema: runtime ----
+  function renderRuntime(runtime) {
+    if (runtimeSujo || !runtime) return;
+    $('rtTimeout').value = Number(runtime.timeoutMin || 10);
+    $('rtDuracao').value = Number(runtime.duracaoMin || 10);
+  }
+
+  $('rtTimeout').addEventListener('input', function () { runtimeSujo = true; });
+  $('rtDuracao').addEventListener('input', function () { runtimeSujo = true; });
+
+  $('rtSalvarBtn').addEventListener('click', function () {
+    var timeout = Math.max(1, Math.min(120, Number($('rtTimeout').value || 10)));
+    var duracao = Math.max(1, Math.min(240, Number($('rtDuracao').value || 10)));
+    var params = new URLSearchParams({ timeoutMin: String(timeout), duracaoMin: String(duracao) });
+    requestJson('/api/config/runtime?' + params.toString(), { method: 'POST' })
+      .then(function () {
+        runtimeSujo = false;
+        showToast('Configuração salva');
+      })
+      .catch(function (err) { showToast('Erro ao salvar configuração: ' + err.message); });
+  });
+
+  // ---- Desligar todas ----
+  $('offAllBtn').addEventListener('click', function () {
+    var abertas = statusAtual ? (statusAtual.valvulas || []).filter(function (v) { return v.ativa; }).length : 0;
+    $('offAllConfirmMsg').textContent = abertas > 0
+      ? 'Confirma desligar ' + abertas + ' válvula(s) aberta(s)?'
+      : 'Confirma desligar todas as válvulas?';
+    $('offAllConfirm').hidden = false;
+    $('offAllBtn').hidden = true;
+  });
+  $('offAllNo').addEventListener('click', function () {
+    $('offAllConfirm').hidden = true;
+    $('offAllBtn').hidden = false;
+  });
+  $('offAllYes').addEventListener('click', function () {
+    requestJson('/api/valves/off-all', { method: 'POST' })
+      .then(function (dados) {
+        showToast('Todas as válvulas foram desligadas');
+        if (dados && dados.ok) aplicarStatusSistema(dados);
+      })
+      .catch(function (err) { showToast('Erro ao desligar: ' + err.message); })
+      .then(function () {
+        $('offAllConfirm').hidden = true;
+        $('offAllBtn').hidden = false;
+      });
+  });
+
+  // ---- Toggle de válvula ----
+  $('valveGrid').addEventListener('click', function (ev) {
+    var botao = ev.target.closest('.toggle[data-valve]');
+    if (!botao) return;
+    var id = Number(botao.getAttribute('data-valve'));
+    requestJson('/api/valve/toggle?index=' + id, { method: 'POST' })
+      .then(function (dados) {
+        if (dados && dados.ok) aplicarStatusSistema(dados);
+      })
+      .catch(function (err) { showToast('Erro ao alternar válvula: ' + err.message); });
+  });
+
+  // ---- Rede / badge WS ----
+  function websocketPermitido() {
+    var ws = statusAtual && statusAtual.rede && statusAtual.rede.websocket;
+    return Boolean(ws && ws.habilitado && ws.biblioteca);
+  }
+
+  function atualizarBadgeWs() {
+    var badge = $('wsBadge'), texto = $('wsBadgeText');
+    badge.classList.remove('connected', 'reconnecting', 'fallback');
+
+    if (!websocketPermitido()) {
+      badge.classList.add('fallback');
+      badge.title = 'WebSocket indisponível; atualizando por HTTP';
+      texto.textContent = 'HTTP';
+      return;
+    }
+    if (wsConectado) {
+      badge.classList.add('connected');
+      badge.title = 'Atualização em tempo real conectada';
+      texto.textContent = 'Tempo real';
+      return;
+    }
+    badge.classList.add('reconnecting');
+    badge.title = 'Reconectando canal em tempo real';
+    texto.textContent = 'Reconectando';
+  }
+
+  function renderRede(rede) {
+    var ap = (rede && rede.ap) || {};
+    var sta = (rede && rede.sta) || {};
+    var ws = (rede && rede.websocket) || {};
+
+    var linhaSta;
+    if (!sta.configurado) linhaSta = '<span><strong>STA</strong> desativado</span>';
+    else if (sta.conectado) linhaSta = '<span><strong>STA</strong> ' + escapeHtml(sta.ssid) + ' · ' + escapeHtml(sta.ip) + (sta.mdns_ativo ? ' · ' + escapeHtml(sta.mdns_host) : '') + '</span>';
+    else linhaSta = '<span><strong>STA</strong> tentando conectar em ' + escapeHtml(sta.ssid) + '</span>';
+
+    var linhaWs = ws.habilitado
+      ? (ws.biblioteca ? '<span><strong>WebSocket</strong> porta ' + ws.porta + '</span>' : '<span><strong>WebSocket</strong> biblioteca ausente (fallback HTTP)</span>')
+      : '<span><strong>WebSocket</strong> desativado</span>';
+
+    $('netFooter').innerHTML =
+      '<span><strong>AP</strong> ' + escapeHtml(ap.ssid || '-') + ' · ' + escapeHtml(ap.ip || '0.0.0.0') + '</span>' +
+      linhaSta + linhaWs;
+
+    if (sta.conectado && sta.mdns_ativo) $('brandSub').textContent = 'ESP32 · ' + sta.mdns_host;
+    else $('brandSub').textContent = 'ESP32 · ' + (ap.ip || '8 válvulas');
+  }
+
+  // ---- Aplicação do payload de status ----
+  function aplicarStatusSistema(dados) {
+    if (!dados || typeof dados !== 'object') return;
+    statusAtual = dados;
+
+    if (dados.agenda_cfg) {
+      agendaCfg.maxSimultaneos = Number(dados.agenda_cfg.maxSimultaneos || agendaCfg.maxSimultaneos);
+      agendaCfg.intervaloLoteS = Number(dados.agenda_cfg.intervaloLoteS || agendaCfg.intervaloLoteS);
+    }
+
+    var wsPorta = Number(dados.rede && dados.rede.websocket && dados.rede.websocket.porta || 0);
+    if (isFinite(wsPorta) && wsPorta > 0) wsPortaAtual = wsPorta;
+
+    renderStrip(dados);
+    renderSensores(dados.sensores);
+    renderValvulas(dados.valvulas || []);
+    renderRede(dados.rede);
+    renderRtc(dados);
+    renderRuntime(dados.runtime);
+
+    if (!websocketPermitido() && wsPainel) {
+      try { wsPainel.close(); } catch (e) {}
+      wsPainel = null;
+      wsConectado = false;
+    }
+    atualizarBadgeWs();
+  }
+
+  // ---- Carregamentos ----
+  function carregarStatus() {
+    return requestJson('/api/status').then(aplicarStatusSistema);
+  }
+
+  function carregarAgendas(forcar) {
+    return requestJson('/api/schedules').then(function (dados) {
+      renderAgendas(dados.slots || [], Boolean(forcar));
+    });
+  }
+
+  function carregarEventos() {
+    return requestJson('/api/events').then(function (dados) {
+      cacheAlertas = dados.alertas || [];
+      cacheHistorico = dados.historico || [];
+      salvarHistoricoLocal(cacheHistorico);
+      renderAlertas(cacheAlertas);
+      renderHistorico(cacheHistorico);
+      atualizarBadgeNotificacoes();
+    });
+  }
+
+  // ---- WebSocket ----
+  function agendarReconexaoWs() {
+    if (!websocketPermitido() || wsTimerReconexao) return;
+    wsTimerReconexao = setTimeout(function () {
+      wsTimerReconexao = null;
+      conectarWebSocket();
+    }, WS_RECONEXAO_MS);
+  }
+
+  function conectarWebSocket() {
+    if (typeof WebSocket === 'undefined' || !websocketPermitido()) return;
+    if (wsPainel && (wsPainel.readyState === WebSocket.OPEN || wsPainel.readyState === WebSocket.CONNECTING)) return;
+
+    var protocolo = location.protocol === 'https:' ? 'wss://' : 'ws://';
     try {
-      wsPainel.close();
-    } catch (_err) {
+      wsPainel = new WebSocket(protocolo + location.hostname + ':' + wsPortaAtual + '/');
+    } catch (e) {
+      wsConectado = false;
+      atualizarBadgeWs();
+      agendarReconexaoWs();
+      return;
     }
-    wsPainel = null;
-    wsConectado = false;
+
+    wsPainel.onopen = function () { wsConectado = true; atualizarBadgeWs(); };
+    wsPainel.onmessage = function (evento) {
+      var pacote;
+      try { pacote = JSON.parse(evento.data || ''); } catch (e) { return; }
+      if (pacote && pacote.type === 'status' && pacote.payload) aplicarStatusSistema(pacote.payload);
+    };
+    wsPainel.onerror = function () { wsConectado = false; atualizarBadgeWs(); };
+    wsPainel.onclose = function () {
+      wsConectado = false;
+      atualizarBadgeWs();
+      agendarReconexaoWs();
+    };
   }
 
-  atualizarRede(estadoRedeAtual);
-}
-
-async function carregarStatus() {
-  const dados = await requestJson('/api/status');
-  aplicarStatusSistema(dados);
-}
-
-function agendarReconexaoWebSocket() {
-  if (!websocketPermitido()) {
-    return;
-  }
-
-  if (wsTimerReconexao) {
-    return;
-  }
-
-  wsTimerReconexao = setTimeout(() => {
-    wsTimerReconexao = null;
-    conectarWebSocket();
-  }, WS_RECONEXAO_MS);
-}
-
-function processarMensagemWebSocket(texto) {
-  let pacote;
-  try {
-    pacote = JSON.parse(texto);
-  } catch (_err) {
-    return;
-  }
-
-  if (!pacote || typeof pacote !== 'object') {
-    return;
-  }
-
-  if (pacote.type === 'status' && pacote.payload && typeof pacote.payload === 'object') {
-    aplicarStatusSistema(pacote.payload);
-  }
-}
-
-function conectarWebSocket() {
-  if (typeof WebSocket === 'undefined') {
-    return;
-  }
-
-  if (!websocketPermitido()) {
-    return;
-  }
-
-  if (wsPainel && (wsPainel.readyState === WebSocket.OPEN || wsPainel.readyState === WebSocket.CONNECTING)) {
-    return;
-  }
-
-  const protocolo = location.protocol === 'https:' ? 'wss://' : 'ws://';
-  const url = protocolo + location.hostname + ':' + wsPortaAtual + '/';
-
-  try {
-    wsPainel = new WebSocket(url);
-  } catch (_err) {
-    wsConectado = false;
-    atualizarRede(estadoRedeAtual);
-    agendarReconexaoWebSocket();
-    return;
-  }
-
-  wsPainel.onopen = () => {
-    wsConectado = true;
-    atualizarRede(estadoRedeAtual);
-  };
-
-  wsPainel.onmessage = (evento) => {
-    processarMensagemWebSocket(evento.data || '');
-  };
-
-  wsPainel.onerror = () => {
-    wsConectado = false;
-    atualizarRede(estadoRedeAtual);
-  };
-
-  wsPainel.onclose = () => {
-    wsConectado = false;
-    atualizarRede(estadoRedeAtual);
-    agendarReconexaoWebSocket();
-  };
-}
-
-async function carregarAlertasHistorico() {
-  const dados = await requestJson('/api/events');
-  cacheAlertasAtivos = dados.alertas || [];
-  cacheHistoricoNotificacoes = dados.historico || [];
-
-  salvarHistoricoLocalStorage(cacheHistoricoNotificacoes);
-
-  renderAlertas(cacheAlertasAtivos);
-  renderHistorico(cacheHistoricoNotificacoes);
-  atualizarIndicadorNotificacoes();
-}
-
-async function carregarAgendas(forcarEditor = false) {
-  const dados = await requestJson('/api/schedules');
-  if (forcarEditor || !editorAgendaModificado) {
-    montarEditorAgendas(dados.slots || []);
-  }
-}
-
-async function alternarValvula(indice) {
-  try {
-    await requestJson('/api/valve/toggle?index=' + indice, { method: 'POST' });
-    if (!wsConectado) {
-      await carregarStatus();
+  // ---- Notificações: interações ----
+  $('bellBtn').addEventListener('click', function () {
+    var aberto = $('notifDrawer').classList.toggle('open');
+    $('bellBtn').setAttribute('aria-expanded', aberto ? 'true' : 'false');
+    if (aberto) {
+      definirIdLidoAte(obterMaiorId(cacheHistorico));
+      atualizarBadgeNotificacoes();
     }
-  } catch (err) {
-    showToast('Erro ao alternar valvula: ' + err.message);
-  }
-}
+  });
 
-async function refreshAll() {
-  try {
-    await Promise.all([carregarStatus(), carregarAgendas(true), carregarAlertasHistorico()]);
-  } catch (err) {
-    showToast('Falha de comunicacao: ' + err.message);
-  }
-}
+  $('btnMarcarLidas').addEventListener('click', marcarNotificacoesLidas);
 
-cacheHistoricoNotificacoes = carregarHistoricoLocalStorage();
-renderHistorico(cacheHistoricoNotificacoes);
-renderAlertas([]);
-atualizarIndicadorNotificacoes();
-selecionarAbaNotificacoes('alertas');
-atualizarBadgeWebSocket();
+  document.querySelectorAll('.notif-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      document.querySelectorAll('.notif-tab').forEach(function (t) { t.classList.remove('active'); });
+      document.querySelectorAll('.notif-tab-panel').forEach(function (p) { p.classList.remove('active'); });
+      tab.classList.add('active');
+      document.querySelector('.notif-tab-panel[data-panel="' + tab.getAttribute('data-tab') + '"]').classList.add('active');
+    });
+  });
 
-refreshAll().then(() => {
-  if (websocketPermitido()) {
-    conectarWebSocket();
+  // ---- Tick local de 1s ----
+  setInterval(function () {
+    Object.keys(valvulasRestantes).forEach(function (id) {
+      if (valvulasRestantes[id] > 0) valvulasRestantes[id] -= 1;
+      var el = document.querySelector('[data-vtimer="' + id + '"]');
+      if (el) el.textContent = fmtMmSs(valvulasRestantes[id]);
+    });
+
+    if (proximaEmS != null) {
+      if (proximaEmS > 0) proximaEmS -= 1;
+      $('statProxima').textContent = fmtLongo(proximaEmS);
+    }
+
+    if (rtcSegundos != null) {
+      rtcSegundos = (rtcSegundos + 1) % 86400;
+      pintarRelogio();
+    }
+  }, 1000);
+
+  // ---- Inicialização ----
+  cacheHistorico = carregarHistoricoLocal();
+  renderHistorico(cacheHistorico);
+  renderAlertas([]);
+  atualizarBadgeNotificacoes();
+  atualizarBadgeWs();
+
+  function iniciarWsSePossivel() {
+    if (websocketPermitido()) conectarWebSocket();
   }
-}).catch(() => {
-  if (websocketPermitido()) {
-    conectarWebSocket();
-  }
-});
-setInterval(() => {
-  if (!wsConectado) {
-    carregarStatus().catch(() => {});
-  }
-}, 2000);
-setInterval(carregarAgendas, 10000);
-setInterval(carregarAlertasHistorico, 4000);
+
+  Promise.all([carregarStatus(), carregarAgendas(true), carregarEventos()])
+    .then(iniciarWsSePossivel)
+    .catch(function (err) {
+      showToast('Falha de comunicação: ' + err.message);
+      iniciarWsSePossivel();
+    });
+
+  setInterval(function () {
+    if (!wsConectado) carregarStatus().catch(function () {});
+  }, 2000);
+  setInterval(function () { carregarAgendas(false).catch(function () {}); }, 10000);
+  setInterval(function () { carregarEventos().catch(function () {}); }, 4000);
+})();
 </script>
 
 </body>
@@ -1576,7 +1615,9 @@ WebApManager::WebApManager(IrrigationController &irrigacao,
       _sensorTempC(WEB_TEMP_DEFAULT_C),
       _sensorUmidadePct(WEB_HUMIDADE_AR_DEFAULT_PCT),
       _sensorLeituraValida(false),
-      _sensorUltimoOkMs(0)
+      _sensorUltimoOkMs(0),
+      _agendaPendenteMask(0),
+      _agendaAguardandoIntervalo(false)
 {
   for (int i = 0; i < NUM_VALVULAS; i++)
   {
@@ -1761,6 +1802,12 @@ void WebApManager::atualizarLeituraClima(float temperaturaC, float umidadePct, b
   }
 
   _sensorLeituraValida = false;
+}
+
+void WebApManager::atualizarEstadoAgendaSequencial(uint16_t setoresPendentesMask, bool aguardandoIntervalo)
+{
+  _agendaPendenteMask = setoresPendentesMask;
+  _agendaAguardandoIntervalo = aguardandoIntervalo;
 }
 
 bool WebApManager::sensorClimaValido() const
@@ -2533,16 +2580,21 @@ String WebApManager::montarJsonStatusSistema()
   char data[16];
   snprintf(data, sizeof(data), "%02d/%02d/%04d", agora.day(), agora.month(), agora.year());
 
+  char hora[12];
+  snprintf(hora, sizeof(hora), "%02d:%02d:%02d", agora.hour(), agora.minute(), agora.second());
+
   bool staConectada = this->staConectada();
   String urlSta = staConectada ? urlAcessoSta() : String("");
   String mdnsHost = String(WIFI_MDNS_HOSTNAME) + ".local";
   String mdnsUrl = _mdnsAtivo ? (String("http://") + mdnsHost + "/") : String("");
 
   String json;
-  json.reserve(2500);
+  json.reserve(3400);
   json += "{";
   json += "\"ok\":true,";
   json += "\"data\":\"" + String(data) + "\",";
+  json += "\"hora\":\"" + String(hora) + "\",";
+  json += "\"dow\":" + String(agora.dayOfTheWeek()) + ",";
   json += "\"uptime_s\":" + String(millis() / 1000UL) + ",";
 
   json += "\"rede\":{";
@@ -2587,6 +2639,54 @@ String WebApManager::montarJsonStatusSistema()
 
   json += "\"agendas_ativas\":" + String(_schedule.totalAtivas()) + ",";
 
+  json += "\"runtime\":{";
+  json += "\"timeoutMin\":" + String(_config.timeoutManualMs() / 60000UL) + ",";
+  json += "\"duracaoMin\":" + String(_config.duracaoPadraoMin());
+  json += "},";
+
+  json += "\"agenda_cfg\":{";
+  json += "\"maxSimultaneos\":" + String(MAX_SETOR_SIMULTANEOS_AGENDA) + ",";
+  json += "\"intervaloLoteS\":" + String(INTERVALO_LOTE_AGENDA_MS / 1000UL);
+  json += "},";
+
+  DateTime proximaData;
+  AgendaSetor proximaAgenda = {};
+  int slotProximo = -1;
+  bool temProxima = _schedule.obterProximaExecucao(agora, proximaData, proximaAgenda, slotProximo);
+
+  json += "\"proxima_agenda\":";
+  if (!temProxima)
+  {
+    json += "null,";
+  }
+  else
+  {
+    long emS = (long)(proximaData.unixtime() - agora.unixtime());
+    if (emS < 0)
+    {
+      emS = 0;
+    }
+
+    int setoresProxima = 0;
+    for (int i = 0; i < NUM_VALVULAS; i++)
+    {
+      if (proximaAgenda.setoresMask & (1U << i))
+      {
+        setoresProxima++;
+      }
+    }
+
+    json += "{";
+    json += "\"slot\":" + String(slotProximo + 1) + ",";
+    json += "\"dow\":" + String(proximaData.dayOfTheWeek()) + ",";
+    json += "\"hora\":" + String(proximaData.hour()) + ",";
+    json += "\"minuto\":" + String(proximaData.minute()) + ",";
+    json += "\"setores\":" + String(setoresProxima) + ",";
+    json += "\"setoresMask\":" + String(proximaAgenda.setoresMask) + ",";
+    json += "\"em_s\":" + String(emS);
+    json += "},";
+  }
+
   json += "\"sensores\":{";
   json += "\"temperatura_c\":" + String(_sensorTempC, 1) + ",";
   json += "\"umidade_ar_pct\":" + String(_sensorUmidadePct, 0) + ",";
@@ -2599,13 +2699,16 @@ String WebApManager::montarJsonStatusSistema()
   {
     bool aberta = (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA);
     bool autoAgenda = _irrigacao.valvulaEmAgendamento(i);
+    bool pendente = !aberta && ((_agendaPendenteMask & (1U << i)) != 0);
 
     json += "{";
     json += "\"id\":" + String(i + 1) + ",";
     json += "\"gpio\":" + String(gpioValvula(i)) + ",";
     json += "\"ativa\":" + String(aberta ? "true" : "false") + ",";
     json += "\"status\":\"" + String(aberta ? "Ativa" : "Inativa") + "\",";
-    json += "\"origem\":\"" + String(!aberta ? "desligada" : (autoAgenda ? "agenda" : "manual")) + "\"";
+    json += "\"origem\":\"" + String(!aberta ? "desligada" : (autoAgenda ? "agenda" : "manual")) + "\",";
+    json += "\"pendente\":" + String(pendente ? "true" : "false") + ",";
+    json += "\"restante_s\":" + String(_irrigacao.tempoRestanteMs(i) / 1000UL);
     json += "}";
 
     if (i < (NUM_VALVULAS - 1))
