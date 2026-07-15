@@ -8,6 +8,7 @@ Este README descreve o comportamento real implementado no firmware.
 
 - ✅ Controle manual de setores no menu local.
 - 🗓️ Agendamento automático semanal com execução sequencial por lotes.
+- 🌡️ Leitura de temperatura e umidade do ar (DHT11) no OLED e no dashboard.
 - 🌐 Dashboard web local via AP do ESP32, com tentativas periódicas de STA.
 - 🚨 API de alertas e histórico operacional em tempo real.
 - 💾 Persistência em NVS com versão e CRC para agendas e configurações runtime.
@@ -42,11 +43,9 @@ O firmware entrega:
 - Persistência de agendas e configurações runtime após reboot.
 - Regras de validação para evitar configurações inválidas.
 
-Documentos complementares:
+Documentação complementar:
 
-- `GUIA_DIDATICO_PROJETO.md`
-- `FASE5_CONTRATO_TECNICO.md`
-- `PLANO_AULAS_12_ENCONTROS.md`
+- `PROJETO_ABNT.docx` — documento único e consolidado do projeto (estrutura ABNT), reunindo fundamentação teórica, contrato técnico do módulo de agendamento (Fase 5), plano de ensino em 12 encontros e apêndices técnicos.
 
 ## 2. 🧰 Hardware
 
@@ -56,6 +55,7 @@ Plataforma:
 - Encoder rotativo com botão (HW-040 ou equivalente)
 - OLED SSD1306 128x64 I2C
 - RTC DS3231 I2C
+- Sensor DHT11 (temperatura e umidade do ar)
 - 2 módulos de relé 4 canais (8 canais no total)
 
 Mapeamento de pinos (Config.h):
@@ -67,6 +67,7 @@ Mapeamento de pinos (Config.h):
 | Encoder BTN | 4    |
 | OLED SDA    | 21   |
 | OLED SCL    | 22   |
+| DHT11       | 15   |
 | Relé 1      | 23   |
 | Relé 2      | 25   |
 | Relé 3      | 26   |
@@ -85,6 +86,8 @@ Observação: OLED e DS3231 compartilham o mesmo barramento I2C.
    - U8g2
    - RTClib
    - ESP32Encoder
+   - DHTesp (ou DHT da Adafruit — selecione o backend em `Config.h`)
+   - WebSockets (Links2004) — opcional, para atualização em tempo real
 3. Selecione a placa ESP32 e a porta serial.
 4. Compile e grave o firmware.
 5. Abra o monitor serial em 115200.
@@ -183,6 +186,7 @@ Menu principal:
 - Irrigar Agora
 - Programar
 - WEBSERVER
+- Sensores
 - Configurações
 
 Encoder:
@@ -197,6 +201,10 @@ Irrigação manual:
 - Existe item `Voltar` na navegação.
 - Clique curto abre/fecha relé do setor.
 - Timeout manual fecha automaticamente após o tempo configurado.
+
+Sensores:
+
+- Exibe temperatura e umidade do ar do DHT11, status da leitura e backend em uso.
 
 Programar:
 
@@ -242,6 +250,7 @@ Comportamento:
 - Com STA conectada, ativa mDNS para acesso por `http://<hostname>.local/`.
 - Publica status em tempo real por WebSocket (porta 81) com fallback para polling HTTP no dashboard.
 - Exibe dashboard para status, válvulas, agendas e runtime.
+- Cards de sensores exibem temperatura e umidade do ar do DHT11.
 - Faixa de resumo com válvulas abertas (origem manual/agenda), contagem regressiva da próxima agenda e botão de emergência "desligar todas" com confirmação.
 - Cards de válvula mostram tempo restante até o fechamento e setores na fila de lotes da agenda.
 - Editor de agendas em acordeão com aviso de execução em lotes e confirmação antes de excluir.
@@ -309,15 +318,15 @@ No boot:
 - `display_driver_oled.h/.cpp`
 - `display_manager.h/.cpp`
 - `rtc_driver_ds3231.h/.cpp`
+- `dht11_driver.h/.cpp`
 - `runtime_config_manager.h/.cpp`
 - `menu_controller.h/.cpp`
 - `schedule_manager.h/.cpp`
 - `irrigation_controller.h/.cpp`
 - `web_ap_manager.h/.cpp`
 - `README.md`
-- `GUIA_DIDATICO_PROJETO.md`
-- `FASE5_CONTRATO_TECNICO.md`
-- `PLANO_AULAS_12_ENCONTROS.md`
+- `PROJETO_ABNT.docx` - documentação consolidada do projeto
+- `figuras/` - diagramas e capturas usados na documentação
 
 ## 12. 🛠️ Build e gravação
 
@@ -392,4 +401,4 @@ Próximos passos sugeridos:
 
 ---
 
-Última revisão deste documento: 2026-04-19
+Última revisão deste documento: 2026-07-13

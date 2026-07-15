@@ -1,0 +1,147 @@
+{
+  "Config.h": {
+    "mtime": 1783876376.9202943,
+    "ast_hash": "013f595041c92b5dc85d7d5745472593",
+    "semantic_hash": "013f595041c92b5dc85d7d5745472593"
+  },
+  "dht11_driver.cpp": {
+    "mtime": 1783876376.941992,
+    "ast_hash": "6662c1241bc2ea4de065e9d0c0f6137c",
+    "semantic_hash": "6662c1241bc2ea4de065e9d0c0f6137c"
+  },
+  "dht11_driver.h": {
+    "mtime": 1783876376.943516,
+    "ast_hash": "03c5ab07d07f30b2351eec376f7fb37c",
+    "semantic_hash": "03c5ab07d07f30b2351eec376f7fb37c"
+  },
+  "display_driver_oled.cpp": {
+    "mtime": 1783876376.943516,
+    "ast_hash": "b1debc281ef4654199cf6db9ff99de33",
+    "semantic_hash": "b1debc281ef4654199cf6db9ff99de33"
+  },
+  "display_driver_oled.h": {
+    "mtime": 1783876376.943516,
+    "ast_hash": "e192edb6532af821125479d154dd3b88",
+    "semantic_hash": "e192edb6532af821125479d154dd3b88"
+  },
+  "display_manager.cpp": {
+    "mtime": 1783876376.9469314,
+    "ast_hash": "aac0512c2aead6a2106898dd5e157997",
+    "semantic_hash": "aac0512c2aead6a2106898dd5e157997"
+  },
+  "display_manager.h": {
+    "mtime": 1783876376.9469314,
+    "ast_hash": "5fb3f7a6a3f382965862610a805d8579",
+    "semantic_hash": "5fb3f7a6a3f382965862610a805d8579"
+  },
+  "encoder_driver.cpp": {
+    "mtime": 1783876376.9469314,
+    "ast_hash": "0c5b8fd36f27fc7d4ec15a7d92862a7b",
+    "semantic_hash": "0c5b8fd36f27fc7d4ec15a7d92862a7b"
+  },
+  "encoder_driver.h": {
+    "mtime": 1783876376.9469314,
+    "ast_hash": "fee2a89a7b536dc606cad952d0098993",
+    "semantic_hash": "fee2a89a7b536dc606cad952d0098993"
+  },
+  "irrigation_controller.cpp": {
+    "mtime": 1783876376.970609,
+    "ast_hash": "063393d7d23ad44f1c93d67522e3845f",
+    "semantic_hash": "063393d7d23ad44f1c93d67522e3845f"
+  },
+  "irrigation_controller.h": {
+    "mtime": 1783876376.970609,
+    "ast_hash": "5f148e48c0a3752cd136b3eaf10966b5",
+    "semantic_hash": "5f148e48c0a3752cd136b3eaf10966b5"
+  },
+  "menu_controller.cpp": {
+    "mtime": 1783876376.970609,
+    "ast_hash": "c9b566d1ec3a877127d71e2e36703dfa",
+    "semantic_hash": "c9b566d1ec3a877127d71e2e36703dfa"
+  },
+  "menu_controller.h": {
+    "mtime": 1783876376.970609,
+    "ast_hash": "c190f42db5ea0703d4d253e4d4b1a4d6",
+    "semantic_hash": "c190f42db5ea0703d4d253e4d4b1a4d6"
+  },
+  "rtc_driver_ds3231.cpp": {
+    "mtime": 1783876376.9771695,
+    "ast_hash": "dfad9f303040d5221cdf17e7777bdcb3",
+    "semantic_hash": "dfad9f303040d5221cdf17e7777bdcb3"
+  },
+  "rtc_driver_ds3231.h": {
+    "mtime": 1783876376.9781988,
+    "ast_hash": "aefd8d0a46836a80927f1492feca5727",
+    "semantic_hash": "aefd8d0a46836a80927f1492feca5727"
+  },
+  "runtime_config_manager.cpp": {
+    "mtime": 1783876376.9781988,
+    "ast_hash": "eb0f2130976b2eb8da6a7f7a5c30eb8e",
+    "semantic_hash": "eb0f2130976b2eb8da6a7f7a5c30eb8e"
+  },
+  "runtime_config_manager.h": {
+    "mtime": 1783876376.9781988,
+    "ast_hash": "070bc2fa80e52d3ec68acc75019d2466",
+    "semantic_hash": "070bc2fa80e52d3ec68acc75019d2466"
+  },
+  "schedule_manager.cpp": {
+    "mtime": 1783876376.9781988,
+    "ast_hash": "1b195656459c711cd353ba9a01a6a31c",
+    "semantic_hash": "1b195656459c711cd353ba9a01a6a31c"
+  },
+  "schedule_manager.h": {
+    "mtime": 1783876376.9826162,
+    "ast_hash": "f49d14c11f744037f3291a8d56d532ac",
+    "semantic_hash": "f49d14c11f744037f3291a8d56d532ac"
+  },
+  "web_ap_manager.cpp": {
+    "mtime": 1783876376.9845977,
+    "ast_hash": "2e3a4727a62b236ebca83ce06f49f9b6",
+    "semantic_hash": "2e3a4727a62b236ebca83ce06f49f9b6"
+  },
+  "web_ap_manager.h": {
+    "mtime": 1783876376.9845977,
+    "ast_hash": "0650f60d606b07c2f9bfb1d2ea4f95c2",
+    "semantic_hash": "0650f60d606b07c2f9bfb1d2ea4f95c2"
+  },
+  "README.md": {
+    "mtime": 1783991464.134992,
+    "ast_hash": "aef621357050eefc3eb4aa643cbdb8a7",
+    "semantic_hash": "aef621357050eefc3eb4aa643cbdb8a7"
+  },
+  "figuras/figura1_hardware.png": {
+    "mtime": 1783876376.9564352,
+    "ast_hash": "d5274d03f498a8d2d493565802833462",
+    "semantic_hash": "d5274d03f498a8d2d493565802833462"
+  },
+  "figuras/figura2_arquitetura.png": {
+    "mtime": 1783876376.9586275,
+    "ast_hash": "e1a5a16131b8b6bfb97fcec72f4d581c",
+    "semantic_hash": "e1a5a16131b8b6bfb97fcec72f4d581c"
+  },
+  "figuras/figura3_fluxograma.png": {
+    "mtime": 1783876376.9612901,
+    "ast_hash": "7edca5821c504e41edcf062a07b65c7e",
+    "semantic_hash": "7edca5821c504e41edcf062a07b65c7e"
+  },
+  "figuras/figura4_estados.png": {
+    "mtime": 1783876376.9639635,
+    "ast_hash": "ea47030ec9a5fdb2fbbb9bda1ab4c2a7",
+    "semantic_hash": "ea47030ec9a5fdb2fbbb9bda1ab4c2a7"
+  },
+  "figuras/figura5a_dashboard_status.png": {
+    "mtime": 1783993545.1055133,
+    "ast_hash": "377f65b76bc61cd30b99dbe7e56cbfcc",
+    "semantic_hash": "377f65b76bc61cd30b99dbe7e56cbfcc"
+  },
+  "figuras/figura5b_dashboard_agendas.png": {
+    "mtime": 1783993545.682697,
+    "ast_hash": "624cd863116b4d42193e7d60de45edaa",
+    "semantic_hash": "624cd863116b4d42193e7d60de45edaa"
+  },
+  "figuras/figura5c_dashboard_eventos.png": {
+    "mtime": 1783993546.672642,
+    "ast_hash": "03847f0400add3f28a3637848a2e4137",
+    "semantic_hash": "03847f0400add3f28a3637848a2e4137"
+  }
+}
