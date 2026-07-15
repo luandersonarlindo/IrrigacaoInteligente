@@ -37,28 +37,46 @@ Extrair a checagem de versão/CRC do banco de agendas para uma função pura tes
 
 ---
 
-### Task 2.2: Testar motor de execução sequencial por lotes
+### Task 2.2: Testar motor de execução sequencial por lotes (escopo parcial)
+**Status:** complete
+
+**Deviation:** Escopo original era grande demais pra uma task só (misturava 3 preocupações distintas). Repartido, com aprovação do usuário, em:
+- Task 2.2 (esta): seleção de setores pro lote atual (respeita `MAX_SETOR_SIMULTANEOS_AGENDA`) + regra de conflito de duração (mantém a maior) — extraído pra `schedule_execution.h/.cpp`, ligado em `IrrigacaoInteligente.ino` (`iniciarProximoLoteAgenda`, `enfileirarDisparosAgenda`)
+- Task 2.3 (nova): retomada de janela ativa com tempo remanescente — adiada, ver abaixo
+
+Build ESP32 real não compilado neste ambiente (sem arduino-cli/core ESP32) — verificado por revisão manual.
+
+**Acceptance Criteria:**
+- [x] Limite de setores simultâneos respeitado no teste
+- [x] Conflito de duração no mesmo setor mantém a maior
+- [x] `pio test -e native` passa com os novos testes
+
+---
+
+### Task 2.3: Testar retomada de janela ativa com tempo remanescente
 **Status:** pending
 
 **Description:**
-Testar a lógica de fila/lote do motor de execução: respeita `MAX_SETOR_SIMULTANEOS_AGENDA`, em conflito no mesmo setor mantém a maior duração, e retoma janela ativa com tempo remanescente após reboot. Essa lógica vive hoje em `irrigation_controller`/`schedule_manager` misturada com estado de hardware (relés, `millis()`); extrair a parte de decisão pura (dado um conjunto de setores disparados e o estado atual da fila, o que deve acontecer) para função testável.
+`ScheduleManager::avaliarDisparos` (schedule_manager.cpp, ~150 linhas) calcula em que lote uma agenda deveria estar a partir do horário de início, incluindo retomada após reboot com tempo remanescente do lote em execução. Usa `DateTime` (RTClib) pra `agora` e aritmética de época em segundos/minutos. Extrair a decisão pura (dado `agoraEpoch`, `inicioEpoch`, `duracaoMin`, `totalSetores`, `limiteSimultaneo`, `intervaloLoteMs` → qual lote está ativo, quanto tempo falta, se a janela já encerrou) pra função testável, convertendo `DateTime` pra epoch inteiro na borda (quem chama already tem `agora.unixtime()`).
 
 **TDD Approach:**
-1. Write test: fila com mais setores que `MAX_SETOR_SIMULTANEOS_AGENDA` -> só os N primeiros entram no lote atual, resto fica pendente; dois disparos no mesmo setor com durações diferentes -> mantém a maior; retomada com tempo remanescente conhecido -> não reinicia do zero
+1. Write test: dentro do primeiro lote (tempo restante correto); no intervalo entre lotes (aponta pro próximo lote); dentro de um lote intermediário após reboot (retoma com tempo remanescente); depois do fim da janela total (não dispara mais); antes do horário de início (não dispara ainda)
 2. Run test (should FAIL - RED): função ainda não extraída/testável
-3. Implement: extrair função pura de decisão de lote (sem `millis()`/hardware, recebendo tempo/estado como parâmetro)
+3. Implement: extrair função pura de janela/lote, operando só com inteiros (segundos/minutos), sem `DateTime`/`Preferences`
 4. Run test (should PASS - GREEN): casos cobertos
-5. Refactor: código de produção usa a função extraída
+5. Refactor: `schedule_manager.cpp::avaliarDisparos` usa a função extraída, convertendo `DateTime` pra epoch antes de chamar
 
 **Files to create/modify:**
-- Novo módulo de lógica pura (ex.: `schedule_execution.h/.cpp`)
-- `irrigation_controller.cpp` e/ou `schedule_manager.cpp`: usa a função extraída
-- `test/test_schedule/test_execution.cpp`: novo, casos de fila/conflito/retomada
+- `schedule_execution.h` / `.cpp`: nova função de decisão de janela/lote
+- `schedule_manager.cpp`: `avaliarDisparos` usa a função extraída
+- `test/test_execution/test_execution.cpp`: novos casos de janela/retomada
 
 **Acceptance Criteria:**
-- [ ] Limite de setores simultâneos respeitado no teste
-- [ ] Conflito de duração no mesmo setor mantém a maior
-- [ ] Retomada de janela ativa com tempo remanescente coberta
+- [ ] Caso "dentro do lote atual" retorna tempo remanescente correto
+- [ ] Caso "no intervalo entre lotes" aponta pro próximo lote
+- [ ] Caso "depois do fim da janela total" não dispara
+- [ ] Caso "antes do horário de início" não dispara
 - [ ] `pio test -e native` passa com os novos testes
+- [ ] Comportamento de `avaliarDisparos` não muda (mesma decisão pro firmware real)
 
 ---

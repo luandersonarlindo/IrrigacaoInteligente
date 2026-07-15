@@ -31,7 +31,7 @@
 | Phase | Name | Goal | Tasks | Dependencies | Status |
 |-------|------|------|-------|--------------|--------|
 | 1 | Fundação de Testes | Criar harness de teste em host, cobrir validação de agenda | 2 | - | pending |
-| 2 | Testes - Persistência e Execução | Cobrir CRC/versão e motor de execução por lotes | 2 | Phase 1 | pending |
+| 2 | Testes - Persistência e Execução | Cobrir CRC/versão e motor de execução por lotes | 3 | Phase 1 | in-progress |
 | 3 | Testes - API Web | Cobrir parsing/contrato da API REST | 1 | Phase 1 | pending |
 | 4 | Modelo de Agenda | Definir e migrar modelo final (resolve gap com contrato ABNT) | 2 | Phase 1, Phase 2 | pending |
 | 5 | UX de Configurações | Reduzir profundidade do menu de configuração | 2 | Phase 1 | pending |
@@ -86,12 +86,21 @@
 - **Acceptance:** Casos válido e corrompido cobertos e passando
 - **Estimate:** M
 
-#### Task 2.2: Testar motor de execução sequencial por lotes
-- **What:** Testar lógica de fila (`MAX_SETOR_SIMULTANEOS_AGENDA`, `INTERVALO_LOTE_AGENDA_MS`), conflito de setor (mantém maior duração), retomada de janela ativa após reboot
-- **Test first:** Fila com mais setores que o limite simultâneo; conflito de duração no mesmo setor; retomada com tempo remanescente
-- **Files:** `irrigation_controller.cpp`, `schedule_manager.cpp`, `test/test_schedule/test_execution.cpp`
+#### Task 2.2: Testar motor de execução sequencial por lotes (escopo parcial)
+- **What:** Testar seleção de setores pro lote atual (`MAX_SETOR_SIMULTANEOS_AGENDA`) e conflito de setor (mantém maior duração). Repartido em 2.2/2.3 durante o build — escopo original era grande demais pra uma task.
+- **Test first:** Fila com mais setores que o limite simultâneo; conflito de duração no mesmo setor
+- **Files:** `schedule_execution.h/.cpp`, `IrrigacaoInteligente.ino`, `test/test_execution/test_execution.cpp`
 - **Acceptance:** Casos cobertos e passando
+- **Estimate:** M
+- **Status:** complete
+
+#### Task 2.3: Testar retomada de janela ativa com tempo remanescente
+- **What:** Extrair e testar a decisão de qual lote está ativo, com tempo remanescente, incluindo retomada após reboot (`ScheduleManager::avaliarDisparos`)
+- **Test first:** Dentro do lote atual; no intervalo entre lotes; retomada após reboot com tempo remanescente; depois do fim da janela; antes do início
+- **Files:** `schedule_execution.h/.cpp`, `schedule_manager.cpp`, `test/test_execution/test_execution.cpp`
+- **Acceptance:** Casos cobertos e passando, comportamento de `avaliarDisparos` não muda
 - **Estimate:** L
+- **Status:** pending
 
 ---
 

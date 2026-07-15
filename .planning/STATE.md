@@ -5,7 +5,7 @@
 **Last Updated:** 2026-07-15
 
 ## Current Focus
-Phase 2: Testes - Persistência e Execução - 1/2 tasks done. Task 2.2 em andamento.
+Phase 2: Testes - Persistência e Execução - 2/3 tasks done (Task 2.2 repartida, gerou Task 2.3). Próxima: Task 2.3 (retomada de janela ativa).
 
 ## Decisions
 | Date | Decision | Rationale |
@@ -18,6 +18,8 @@ Phase 2: Testes - Persistência e Execução - 1/2 tasks done. Task 2.2 em andam
 | 2026-07-15 | Task 1.2 complete | Validação de agenda extraída pra `schedule_validation.h/.cpp`, 9 testes novos; `schedule_manager.cpp` delega pra lá |
 | 2026-07-15 | Phase 1 complete | 2 tasks, 10 tests, todos passando |
 | 2026-07-15 | Task 2.1 complete | CRC16 + checagem versão extraída pra `schedule_persistence.h/.cpp`, 5 testes novos; removeu duplicação (`calcularCrc16` usado em 4 pontos, agora 1 só) |
+| 2026-07-15 | Task 2.2 repartida em 2.2+2.3 | Escopo original (motor de lotes completo) misturava 3 preocupações; usuário aprovou fazer seleção de lote + conflito de duração agora, adiar retomada de janela (maior, ~150 linhas de aritmética de época, sem toolchain ESP32 pra validar) pra Task 2.3 |
+| 2026-07-15 | Task 2.2 complete (escopo parcial) | Seleção de lote + conflito de duração extraídos pra `schedule_execution.h/.cpp`, 7 testes novos; `IrrigacaoInteligente.ino` delega pra lá |
 
 ## Blockers
 None.
