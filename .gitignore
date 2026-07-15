@@ -1,2 +1,5 @@
 # Configurações locais com credenciais
 Config_privado.h
+
+# PlatformIO build artifacts (testes em host)
+.pio/
