@@ -17,6 +17,7 @@
 #include "display_manager.h"
 #include "irrigation_controller.h"
 #include "schedule_manager.h"
+#include "schedule_execution.h"
 #include "runtime_config_manager.h"
 #include "web_ap_manager.h"
 
@@ -130,21 +131,17 @@ void cancelarExecucaoAgendaAutomatica() {
 }
 
 void iniciarProximoLoteAgenda() {
-    int iniciados = 0;
+    bool selecionados[NUM_VALVULAS] = {};
+    int iniciados = ScheduleExecution::selecionarLote(execAgenda.setorPendente, selecionados,
+                                                        NUM_VALVULAS, MAX_SETOR_SIMULTANEOS_AGENDA);
+
     for (int i = 0; i < NUM_VALVULAS; i++) {
-        if (!execAgenda.setorPendente[i]) {
+        if (!selecionados[i]) {
             continue;
         }
-
         irrigacao.iniciarAgendamento(i, execAgenda.duracaoPendenteMin[i]);
-        execAgenda.setorPendente[i] = false;
         execAgenda.setorNoLote[i] = true;
         execAgenda.duracaoPendenteMin[i] = 0;
-        iniciados++;
-
-        if (iniciados >= MAX_SETOR_SIMULTANEOS_AGENDA) {
-            break;
-        }
     }
 
     execAgenda.ativa = (iniciados > 0) || haSetorPendenteAgenda();
@@ -168,7 +165,7 @@ void enfileirarDisparosAgenda(const uint16_t duracoesMinPorSetor[NUM_VALVULAS]) 
             continue;
         }
 
-        if (!execAgenda.setorPendente[i] || duracao > execAgenda.duracaoPendenteMin[i]) {
+        if (ScheduleExecution::deveAtualizarDuracaoPendente(execAgenda.setorPendente[i], execAgenda.duracaoPendenteMin[i], duracao)) {
             execAgenda.setorPendente[i] = true;
             execAgenda.duracaoPendenteMin[i] = duracao;
         }
