@@ -33,7 +33,9 @@ Adicionar um ambiente `native` via PlatformIO com o framework Unity, rodando em 
 ---
 
 ### Task 1.2: Isolar e testar regras de validação de agenda
-**Status:** pending
+**Status:** complete
+
+**Deviation:** `schedule_manager.h` inclui `Arduino.h`/`Preferences.h`/`RTClib.h`, então a lógica pura foi extraída para um módulo novo (`schedule_validation.h/.cpp`) com struct própria (`CampoAgenda`), em vez de reusar `AgendaSetor` diretamente — evita puxar dependências de hardware pro teste nativo. `schedule_manager.cpp` agora delega pra esse módulo. Build ESP32 real não foi compilado neste ambiente (sem arduino-cli/core ESP32 instalado) — verificado por revisão manual, extração é mecânica e preserva ordem de checagem e mensagens de erro originais.
 
 **Description:**
 Extrair a lógica de validação de agenda de `schedule_manager.cpp` (hora 0-23, minuto 0-59, duração >=1, ao menos 1 dia selecionado, ao menos 1 setor selecionado, sem duplicata exata de hora+minuto+diasMask+setoresMask) para uma função pura, sem dependência de `Preferences`/NVS ou hardware, testável em host.

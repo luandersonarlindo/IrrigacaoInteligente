@@ -1,11 +1,11 @@
 # Project State
 
-**Status:** planned
-**Active Phase:** 1
+**Status:** phase-1-complete
+**Active Phase:** 2
 **Last Updated:** 2026-07-15
 
 ## Current Focus
-Phase 1: Fundação de Testes - 1/2 tasks done. Task 1.2 em andamento.
+Phase 1 complete. 2 tasks, 10 tests passing. Próxima: Phase 2 (Testes - Persistência e Execução).
 
 ## Decisions
 | Date | Decision | Rationale |
@@ -15,6 +15,8 @@ Phase 1: Fundação de Testes - 1/2 tasks done. Task 1.2 em andamento.
 | 2026-07-15 | Architecture: Testes-primeiro (safety net) | TDD é regra do plugin; rede de testes antes de mexer em modelo de agenda (schema NVS) ou UX reduz risco de regressão em sistema já em campo |
 | 2026-07-15 | Roadmap created | 6 phases, 11 total tasks |
 | 2026-07-15 | Task 1.1 complete | PlatformIO `native` + Unity instalado (via pip) e MinGW-w64 UCRT (via winget) instalado no sistema — nenhum toolchain C++ existia antes; harness roda 1 teste, build ESP32/Arduino IDE intocado |
+| 2026-07-15 | Task 1.2 complete | Validação de agenda extraída pra `schedule_validation.h/.cpp`, 9 testes novos; `schedule_manager.cpp` delega pra lá |
+| 2026-07-15 | Phase 1 complete | 2 tasks, 10 tests, todos passando |
 
 ## Blockers
 None.
