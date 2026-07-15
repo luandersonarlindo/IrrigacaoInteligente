@@ -1,4 +1,5 @@
 #include "schedule_manager.h"
+#include "schedule_validation.h"
 
 ScheduleManager::ScheduleManager(RuntimeConfigManager &config)
     : _config(config),
@@ -570,58 +571,30 @@ bool ScheduleManager::indiceSlotValido(int slot) const
 
 bool ScheduleManager::agendaValida(const AgendaSetor &agenda, String &erro) const
 {
-    if (agenda.hora > 23)
+    ScheduleValidation::CampoAgenda campo{agenda.hora, agenda.minuto, agenda.duracaoMin,
+                                           agenda.diasMask, agenda.setoresMask};
+    const char *erroPuro = nullptr;
+    bool ok = ScheduleValidation::validar(campo, erroPuro);
+    if (!ok)
     {
-        erro = "hora invalida";
-        return false;
+        erro = erroPuro;
     }
-    if (agenda.minuto > 59)
-    {
-        erro = "minuto invalido";
-        return false;
-    }
-    if (agenda.duracaoMin < 1)
-    {
-        erro = "duracao invalida";
-        return false;
-    }
-    if ((agenda.diasMask & 0x7F) == 0)
-    {
-        erro = "selecione ao menos um dia";
-        return false;
-    }
-    if ((agenda.setoresMask & ((1 << NUM_VALVULAS) - 1)) == 0)
-    {
-        erro = "selecione ao menos um setor";
-        return false;
-    }
-    return true;
+    return ok;
 }
 
 bool ScheduleManager::duplicada(int slotIgnorado, const AgendaSetor &agenda) const
 {
+    ScheduleValidation::CampoAgenda candidata{agenda.hora, agenda.minuto, agenda.duracaoMin,
+                                               agenda.diasMask, agenda.setoresMask};
+    ScheduleValidation::CampoAgenda existentes[MAX_AGENDAS_TOTAIS];
+    bool ativas[MAX_AGENDAS_TOTAIS];
     for (int i = 0; i < MAX_AGENDAS_TOTAIS; i++)
     {
-        if (i == slotIgnorado)
-        {
-            continue;
-        }
-
         const AgendaSetor &atual = _banco.agendas[i];
-        if (!atual.ativa)
-        {
-            continue;
-        }
-
-        if (atual.hora == agenda.hora &&
-            atual.minuto == agenda.minuto &&
-            atual.diasMask == agenda.diasMask &&
-            atual.setoresMask == agenda.setoresMask)
-        {
-            return true;
-        }
+        existentes[i] = {atual.hora, atual.minuto, atual.duracaoMin, atual.diasMask, atual.setoresMask};
+        ativas[i] = atual.ativa;
     }
-    return false;
+    return ScheduleValidation::duplicada(candidata, existentes, ativas, MAX_AGENDAS_TOTAIS, slotIgnorado);
 }
 
 uint16_t ScheduleManager::calcularCrc16(const uint8_t *dados, size_t tamanho)
