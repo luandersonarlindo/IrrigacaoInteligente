@@ -10,7 +10,7 @@ Criar infraestrutura de teste automatizado rodável em host (sem hardware ESP32)
 ## Tasks
 
 ### Task 1.1: Configurar ambiente PlatformIO nativo para testes
-**Status:** pending
+**Status:** complete
 
 **Description:**
 Adicionar um ambiente `native` via PlatformIO com o framework Unity, rodando em host (Windows), separado do build ESP32 via Arduino IDE. O `.ino` e os drivers de hardware continuam intocados; o ambiente `native` serve só pra rodar testes de lógica pura.
