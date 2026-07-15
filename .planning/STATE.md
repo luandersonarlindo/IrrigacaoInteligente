@@ -5,7 +5,7 @@
 **Last Updated:** 2026-07-15
 
 ## Current Focus
-Phase 1 complete. 2 tasks, 10 tests passing. Próxima: Phase 2 (Testes - Persistência e Execução).
+Phase 2: Testes - Persistência e Execução - 1/2 tasks done. Task 2.2 em andamento.
 
 ## Decisions
 | Date | Decision | Rationale |
@@ -17,6 +17,7 @@ Phase 1 complete. 2 tasks, 10 tests passing. Próxima: Phase 2 (Testes - Persist
 | 2026-07-15 | Task 1.1 complete | PlatformIO `native` + Unity instalado (via pip) e MinGW-w64 UCRT (via winget) instalado no sistema — nenhum toolchain C++ existia antes; harness roda 1 teste, build ESP32/Arduino IDE intocado |
 | 2026-07-15 | Task 1.2 complete | Validação de agenda extraída pra `schedule_validation.h/.cpp`, 9 testes novos; `schedule_manager.cpp` delega pra lá |
 | 2026-07-15 | Phase 1 complete | 2 tasks, 10 tests, todos passando |
+| 2026-07-15 | Task 2.1 complete | CRC16 + checagem versão extraída pra `schedule_persistence.h/.cpp`, 5 testes novos; removeu duplicação (`calcularCrc16` usado em 4 pontos, agora 1 só) |
 
 ## Blockers
 None.

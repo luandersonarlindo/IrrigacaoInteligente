@@ -10,7 +10,9 @@ Testar lógica de persistência (versão+CRC) e motor de execução sequencial p
 ## Tasks
 
 ### Task 2.1: Testar validação de versão+CRC do banco de agendas
-**Status:** pending
+**Status:** complete
+
+**Deviation:** Novo módulo `schedule_persistence.h/.cpp` (não reaproveitou `schedule_validation`, escopo diferente). `calcularCrc16` era usado em 4 pontos (banco de agendas + cache de execução diária) — todos migrados pra `SchedulePersistence::crc16`, método privado antigo removido (sem duplicação). Checagem de versão do cache de execução diária, que antes era um `if` separado, foi absorvida por `bancoValido` (mesmo comportamento, menos duplicação).
 
 **Description:**
 Extrair a checagem de versão/CRC do banco de agendas para uma função pura testável, isolada de `Preferences`. No boot, se a versão ou o CRC forem inválidos, o banco é reinicializado com o padrão seguro — essa decisão (aceitar vs. reinicializar) é o que deve virar lógica pura testável.
