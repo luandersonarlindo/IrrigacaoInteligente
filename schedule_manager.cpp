@@ -1,5 +1,6 @@
 #include "schedule_manager.h"
 #include "schedule_validation.h"
+#include "schedule_persistence.h"
 
 ScheduleManager::ScheduleManager(RuntimeConfigManager &config)
     : _config(config),
@@ -440,25 +441,16 @@ bool ScheduleManager::carregarBanco()
         return false;
     }
 
-    if (_banco.versao != VERSAO_BANCO)
-    {
-        if (DEBUG_SERIAL)
-        {
-            Serial.println("[Agenda] Versao de banco invalida.");
-        }
-        return false;
-    }
-
     uint16_t crcSalvo = _banco.crc;
     _banco.crc = 0;
-    uint16_t crcCalc = calcularCrc16(reinterpret_cast<const uint8_t *>(&_banco), sizeof(BancoAgendas));
+    uint16_t crcCalc = SchedulePersistence::crc16(reinterpret_cast<const uint8_t *>(&_banco), sizeof(BancoAgendas));
     _banco.crc = crcSalvo;
 
-    if (crcSalvo != crcCalc)
+    if (!SchedulePersistence::bancoValido(_banco.versao, VERSAO_BANCO, crcSalvo, crcCalc))
     {
         if (DEBUG_SERIAL)
         {
-            Serial.println("[Agenda] CRC invalido. Banco resetado.");
+            Serial.println("[Agenda] Banco invalido (versao ou CRC). Resetando.");
         }
         return false;
     }
@@ -470,7 +462,7 @@ bool ScheduleManager::salvarBanco()
 {
     _banco.versao = VERSAO_BANCO;
     _banco.crc = 0;
-    _banco.crc = calcularCrc16(reinterpret_cast<const uint8_t *>(&_banco), sizeof(BancoAgendas));
+    _banco.crc = SchedulePersistence::crc16(reinterpret_cast<const uint8_t *>(&_banco), sizeof(BancoAgendas));
 
     size_t escritos = _prefs.putBytes(KEY_BANCO, &_banco, sizeof(BancoAgendas));
     bool ok = (escritos == sizeof(BancoAgendas));
@@ -511,23 +503,14 @@ bool ScheduleManager::carregarCacheExecucaoDia()
         return false;
     }
 
-    if (cache.versao != VERSAO_CACHE_EXECUCAO)
-    {
-        if (DEBUG_SERIAL)
-        {
-            Serial.println("[Agenda] Versao do cache de execucao invalida.");
-        }
-        return false;
-    }
-
     uint16_t crcSalvo = cache.crc;
     cache.crc = 0;
-    uint16_t crcCalc = calcularCrc16(reinterpret_cast<const uint8_t *>(&cache), sizeof(CacheExecucaoDiaria));
-    if (crcSalvo != crcCalc)
+    uint16_t crcCalc = SchedulePersistence::crc16(reinterpret_cast<const uint8_t *>(&cache), sizeof(CacheExecucaoDiaria));
+    if (!SchedulePersistence::bancoValido(cache.versao, VERSAO_CACHE_EXECUCAO, crcSalvo, crcCalc))
     {
         if (DEBUG_SERIAL)
         {
-            Serial.println("[Agenda] CRC invalido no cache de execucao diaria.");
+            Serial.println("[Agenda] Cache de execucao diaria invalido (versao ou CRC).");
         }
         return false;
     }
@@ -551,7 +534,7 @@ bool ScheduleManager::salvarCacheExecucaoDia()
         cache.ultimaExecucaoDiaPorSlot[slot] = _ultimaExecucaoDiaPorSlot[slot];
     }
 
-    cache.crc = calcularCrc16(reinterpret_cast<const uint8_t *>(&cache), sizeof(CacheExecucaoDiaria));
+    cache.crc = SchedulePersistence::crc16(reinterpret_cast<const uint8_t *>(&cache), sizeof(CacheExecucaoDiaria));
 
     size_t escritos = _prefs.putBytes(KEY_CACHE_EXECUCAO, &cache, sizeof(CacheExecucaoDiaria));
     bool ok = (escritos == sizeof(CacheExecucaoDiaria));
@@ -595,27 +578,6 @@ bool ScheduleManager::duplicada(int slotIgnorado, const AgendaSetor &agenda) con
         ativas[i] = atual.ativa;
     }
     return ScheduleValidation::duplicada(candidata, existentes, ativas, MAX_AGENDAS_TOTAIS, slotIgnorado);
-}
-
-uint16_t ScheduleManager::calcularCrc16(const uint8_t *dados, size_t tamanho)
-{
-    uint16_t crc = 0xFFFF;
-    for (size_t i = 0; i < tamanho; i++)
-    {
-        crc ^= static_cast<uint16_t>(dados[i]) << 8;
-        for (uint8_t b = 0; b < 8; b++)
-        {
-            if (crc & 0x8000)
-            {
-                crc = (crc << 1) ^ 0x1021;
-            }
-            else
-            {
-                crc <<= 1;
-            }
-        }
-    }
-    return crc;
 }
 
 int32_t ScheduleManager::chaveMinuto(const DateTime &agora)

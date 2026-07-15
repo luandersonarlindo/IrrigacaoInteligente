@@ -90,7 +90,6 @@ private:
     bool agendaValida(const AgendaSetor &agenda, String &erro) const;
     bool duplicada(int slotIgnorado, const AgendaSetor &agenda) const;
 
-    static uint16_t calcularCrc16(const uint8_t *dados, size_t tamanho);
     static int chaveDia(const DateTime &agora);
     static int32_t chaveMinuto(const DateTime &agora);
     static uint8_t bitDiaSemana(const DateTime &agora);
