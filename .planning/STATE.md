@@ -7,7 +7,7 @@
 ## Current Focus
 Phase 2: Testes - Persistência e Execução - 2/3 tasks done (Task 2.2 repartida, gerou Task 2.3). Próxima: Task 2.3 (retomada de janela ativa).
 
-Trabalho paralelo (fora do roadmap, 2026-07-15/16): histórico de sensores + gráfico na tela Sensores, correções da revisão estrutural, redesign do Menu Principal em cards empilhados, e expansão do estilo cards pros 3 submenus de Configurações (MENU/SUBMENU_RELOGIO/SUBMENU_SISTEMA) — tudo mergeado no main. Pendente: validação visual em hardware real (Menu Principal e Config).
+Trabalho paralelo (fora do roadmap, 2026-07-15/16): histórico de sensores + gráfico na tela Sensores, correções da revisão estrutural, redesign do Menu Principal em cards empilhados, expansão do estilo cards pros 3 submenus de Configurações, e ajuste pós-validação em hardware real (ícones Lucide 28x28, cabeçalho removido dos cards) — tudo mergeado ou pronto pra commit no main. Pendente: validação visual do ajuste de ícones em hardware real (ainda não visto fisicamente).
 
 ## Decisions
 | Date | Decision | Rationale |
@@ -26,6 +26,7 @@ Trabalho paralelo (fora do roadmap, 2026-07-15/16): histórico de sensores + gr�
 | 2026-07-15 | Revisão estrutural completa aplicada | 8 ângulos paralelos + verificação: bug do eixo X do gráfico (CONFIRMED), staleness em obterProximaExecucao, bounds check, contarBitsSetor/contarAbertas* compartilhados, AgendaExecutor extraído do main.ino (bitmask), rodapé unificado |
 | 2026-07-16 | Menu Principal em cards empilhados | Layout B (2 linhas: selecionado grande + próximo dimmed), wrap circular via `MenuCards::proximoIndice` (5 testes TDD); spec em docs/brainstorms, plano em docs/plans; fix de overflow de label (fonte 6px) pego na revisão final |
 | 2026-07-16 | Cards nos submenus de Configurações | Helper `DisplayManager::desenharCardsOpcao` reusa `MenuCards::proximoIndice` + geometria do Menu Principal, com contador "N/total" no rodapé (submenus têm até 8 opções, sem scroll de janela); ícones mantidos em 8x8 (não redesenhados em 32x32, fora de escopo); revisão leve aprovada sem findings |
+| 2026-07-16 | Ajuste pós-hardware: ícones Lucide 28x28 + sem cabeçalho | Fotos do display físico mostraram cabeçalho sobrepondo card e ícone 8x8 ilegível; usuário indicou lucide.dev. Baixados 13 SVGs reais via unpkg (lucide-static), rasterizados 1bpp 28x28 com @resvg/resvg-js (script fora do repo); `desenharCardsOpcao` passou a receber `const uint8_t*` (bitmap) em vez de índice int; `desenharIconeOuVoltar` removida (ícone "Voltar" agora é bitmap corner-up-left); cabeçalho removido só nos 3 blocos de opções (telas de animação de feedback mantidas intactas) |
 
 ## Blockers
 None.

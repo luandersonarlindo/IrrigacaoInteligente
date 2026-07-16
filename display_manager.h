@@ -70,9 +70,10 @@ private:
     // Par de botões SIM/NAO com destaque no selecionado (opcaoSelecionada: 0=SIM, 1=NAO)
     void desenharConfirmacaoSimNao(int opcaoSelecionada);
     // Cards empilhados (estilo Menu Principal) com contador "N/total" no rodapé,
-    // usados pelos submenus de Configurações. icone < 0 desenha seta "voltar".
+    // usados pelos submenus de Configurações. iconeAtual é um bitmap 1bpp 28x28
+    // (ex: ICON_CLOCK_28X28); a opção "Voltar" usa ICON_CORNER_UP_LEFT_28X28.
     void desenharCardsOpcao(const char *rotuloAtual, const char *rotuloProximo,
-                             int iconeAtual, int posicaoAtual, int totalOpcoes);
+                             const uint8_t *iconeAtual, int posicaoAtual, int totalOpcoes);
 
     // Controle de atualização (evita redesenho desnecessário)
     unsigned long _ultimaAtualizacao;
