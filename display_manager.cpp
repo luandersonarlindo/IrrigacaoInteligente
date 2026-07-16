@@ -268,6 +268,19 @@ namespace
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00};
 
+    // Lucide "check-circle-2" 28x28, 1bpp
+    const uint8_t ICON_CHECK_CIRCLE_2_28X28[] = {
+        0x00, 0x00, 0x00, 0x00, 0x00, 0xF8, 0x01, 0x00, 0x00, 0xFF, 0x0F, 0x00,
+        0x80, 0xFF, 0x1F, 0x00, 0xE0, 0x03, 0x7C, 0x00, 0xF0, 0x00, 0xF0, 0x00,
+        0x70, 0x00, 0xE0, 0x00, 0x38, 0x00, 0xC0, 0x01, 0x1C, 0x00, 0x80, 0x03,
+        0x1C, 0x00, 0x80, 0x03, 0x0C, 0x00, 0x00, 0x03, 0x0E, 0x00, 0x07, 0x07,
+        0x0E, 0x80, 0x03, 0x07, 0x0E, 0xCE, 0x01, 0x07, 0x0E, 0xFE, 0x00, 0x07,
+        0x0E, 0x7C, 0x00, 0x07, 0x0E, 0x38, 0x00, 0x07, 0x0C, 0x00, 0x00, 0x03,
+        0x1C, 0x00, 0x80, 0x03, 0x1C, 0x00, 0x80, 0x03, 0x38, 0x00, 0xC0, 0x01,
+        0x70, 0x00, 0xE0, 0x00, 0xF0, 0x00, 0xF0, 0x00, 0xE0, 0x03, 0x7C, 0x00,
+        0x80, 0xFF, 0x1F, 0x00, 0x00, 0xFF, 0x0F, 0x00, 0x00, 0xF8, 0x01, 0x00,
+        0x00, 0x00, 0x00, 0x00};
+
     // Wi-Fi icon derived from the provided icons8 image (id 9922), converted to 1-bit 24x18.
     const uint8_t WIFI_ICON_9922_24X18[] = {
         0x00, 0xFF, 0x00, 0xE0, 0xFF, 0x07, 0xF8, 0xFF, 0x1F, 0xFC, 0xFF, 0x3F,
@@ -414,61 +427,6 @@ namespace
         }
     }
 
-    void desenharIconeSubmenu(DisplayDriverOled &d, int x, int y, int opcao)
-    {
-        // área útil: 8x8
-        if (opcao == 0)
-        {
-            // Hora: relógio
-            d.desenharRetangulo(x, y, 8, 8);
-            d.desenharLinha(x + 4, y + 4, x + 4, y + 2);
-            d.desenharLinha(x + 4, y + 4, x + 6, y + 5);
-        }
-        else if (opcao == 1)
-        {
-            // Minuto: cronômetro
-            d.desenharRetangulo(x + 1, y + 1, 6, 6);
-            d.desenharRetanguloPreenchido(x + 3, y, 2, 1);
-            d.desenharLinha(x + 4, y + 4, x + 5, y + 3);
-        }
-        else if (opcao == 2)
-        {
-            // Duração: barra
-            d.desenharRetangulo(x, y + 2, 8, 4);
-            d.desenharRetanguloPreenchido(x + 1, y + 3, 5, 2);
-        }
-        else if (opcao == 3)
-        {
-            // Dias: calendário mini
-            d.desenharRetangulo(x, y + 1, 8, 7);
-            d.desenharLinha(x, y + 3, x + 7, y + 3);
-            d.desenharRetanguloPreenchido(x + 2, y, 1, 2);
-            d.desenharRetanguloPreenchido(x + 5, y, 1, 2);
-        }
-        else if (opcao == 4)
-        {
-            // Setores: grade 2x2
-            d.desenharRetangulo(x, y, 3, 3);
-            d.desenharRetangulo(x + 5, y, 3, 3);
-            d.desenharRetangulo(x, y + 5, 3, 3);
-            d.desenharRetangulo(x + 5, y + 5, 3, 3);
-        }
-        else if (opcao == 5)
-        {
-            // Salvar: disquete simplificado
-            d.desenharRetangulo(x, y, 8, 8);
-            d.desenharRetanguloPreenchido(x + 1, y + 1, 5, 2);
-            d.desenharRetangulo(x + 2, y + 5, 4, 2);
-        }
-        else
-        {
-            // Excluir: lixeira simplificada
-            d.desenharRetangulo(x + 1, y + 2, 6, 6);
-            d.desenharRetanguloPreenchido(x, y + 1, 8, 1);
-            d.desenharRetanguloPreenchido(x + 3, y, 2, 1);
-        }
-    }
-
     void desenharIconeAgendaSlot(DisplayDriverOled &d, int x, int y, bool ativa)
     {
         // Moldura do slot
@@ -532,113 +490,30 @@ namespace
         d.desenharLinha(x + 5, y + 5, x + 7, y + 6);
     }
 
-    void desenharAnimacaoCheck(DisplayDriverOled &d, int x, int y)
+    // Feedback de ação (salvo/excluído/limpo/restaurado): ícone Lucide 28x28
+    // centralizado, com texto mini opcional embaixo. Duração fixa em ms,
+    // controlada pelo chamador via `inicioMs`/`ativo` (sem frames de animação).
+    const unsigned long FEEDBACK_DURACAO_MS = 1200;
+
+    bool desenharFeedbackIcone(DisplayDriverOled &d, const uint8_t *icone, const char *texto,
+                                unsigned long inicioMs, bool &ativo)
     {
-        // Animacao simples baseada no tempo (4 quadros em loop)
-        const unsigned long quadroMs = 90;
-        int quadro = (millis() / quadroMs) % 4;
-
-        // Caixa do check
-        d.desenharRetangulo(x, y, 10, 10);
-
-        // Quadro 1: primeiro segmento curto
-        if (quadro >= 1)
+        if (millis() - inicioMs >= FEEDBACK_DURACAO_MS)
         {
-            d.desenharLinha(x + 2, y + 5, x + 4, y + 7);
+            ativo = false;
+            return false;
         }
 
-        // Quadro 2: alonga primeiro segmento
-        if (quadro >= 2)
+        const int tam = 28;
+        const int x = (OLED_LARGURA - tam) / 2;
+        const int y = 10;
+        desenharBitmap1Bpp(d, x, y, tam, tam, icone);
+        if (texto != nullptr)
         {
-            d.desenharLinha(x + 3, y + 6, x + 5, y + 8);
+            int larguraTxt = d.larguraTexto(texto);
+            d.desenharTextoMini((OLED_LARGURA - larguraTxt) / 2, 56, texto);
         }
-
-        // Quadro 3+: completa check
-        if (quadro >= 3)
-        {
-            d.desenharLinha(x + 4, y + 7, x + 8, y + 3);
-            d.desenharLinha(x + 5, y + 8, x + 9, y + 4);
-        }
-    }
-
-    void desenharSegmentoParcial(DisplayDriverOled &d, int x1, int y1, int x2, int y2, int passo, int totalPassos)
-    {
-        if (passo <= 0)
-            return;
-        if (passo > totalPassos)
-            passo = totalPassos;
-
-        int dx = x2 - x1;
-        int dy = y2 - y1;
-        int xp = x1 + (dx * passo) / totalPassos;
-        int yp = y1 + (dy * passo) / totalPassos;
-        d.desenharLinha(x1, y1, xp, yp);
-    }
-
-    void desenharAnimacaoCheck48(DisplayDriverOled &d, int frame)
-    {
-        const int x = 40;
-        const int y = 8;
-        const int w = 48;
-        const int h = 48;
-        d.desenharRetangulo(x, y, w, h);
-
-        // Coordenadas do check dentro da caixa 48x48
-        const int ax = x + 12;
-        const int ay = y + 26;
-        const int bx = x + 21;
-        const int by = y + 35;
-        const int cx = x + 37;
-        const int cy = y + 18;
-
-        // 16 quadros totais por loop
-        // quadros 0..7: primeira perna, 8..15: segunda perna
-        if (frame >= 2)
-        {
-            int p1 = frame - 1;
-            desenharSegmentoParcial(d, ax, ay, bx, by, p1, 7);
-            desenharSegmentoParcial(d, ax, ay + 1, bx, by + 1, p1, 7);
-        }
-
-        if (frame >= 8)
-        {
-            int p2 = frame - 7;
-            desenharSegmentoParcial(d, bx, by, cx, cy, p2, 8);
-            desenharSegmentoParcial(d, bx, by + 1, cx, cy + 1, p2, 8);
-        }
-    }
-
-    void desenharAnimacaoLixeira48(DisplayDriverOled &d, int frame)
-    {
-        const int x = 40;
-        const int y = 8;
-
-        // Corpo da lixeira
-        d.desenharRetangulo(x + 12, y + 10, 24, 30);
-
-        // Tampa animada (abre e fecha)
-        int fase = frame % 16;
-        int off = 0;
-        if (fase >= 3 && fase <= 7)
-            off = (fase - 2);
-        else if (fase >= 8 && fase <= 12)
-            off = (13 - fase);
-
-        d.desenharLinha(x + 10, y + 9 - off, x + 38, y + 9 - off);
-        d.desenharRetanguloPreenchido(x + 22, y + 7 - off, 4, 2);
-
-        // Linhas internas
-        d.desenharLinha(x + 18, y + 14, x + 18, y + 36);
-        d.desenharLinha(x + 24, y + 14, x + 24, y + 36);
-        d.desenharLinha(x + 30, y + 14, x + 30, y + 36);
-
-        // "Papel" caindo durante a abertura
-        if (fase >= 4 && fase <= 11)
-        {
-            int py = y + 10 + (fase - 4) * 3;
-            if (py < y + 38)
-                d.desenharRetanguloPreenchido(x + 24, py, 3, 3);
-        }
+        return true;
     }
 
 }
@@ -1056,10 +931,6 @@ void DisplayManager::desenharTelaProgramar()
         FeedbackProgramacao fb = _menu.feedbackProgramacao();
         if (fb == FeedbackProgramacao::SALVO || fb == FeedbackProgramacao::EXCLUIDO)
         {
-            const unsigned long FRAME_DELAY_MS = 42;
-            const int FRAME_COUNT = 16;
-            const int LOOP_COUNT = 3;
-
             if (!animFeedbackAtivo || animTipo != fb)
             {
                 animFeedbackAtivo = true;
@@ -1067,25 +938,11 @@ void DisplayManager::desenharTelaProgramar()
                 animTipo = fb;
             }
 
-            unsigned long elapsed = millis() - animFeedbackInicioMs;
-            unsigned long frameGlobal = elapsed / FRAME_DELAY_MS;
-            unsigned long totalFrames = (unsigned long)FRAME_COUNT * LOOP_COUNT;
-
-            if (frameGlobal >= totalFrames)
-            {
-                animFeedbackAtivo = false;
-                animTipo = FeedbackProgramacao::NENHUM;
-                _menu.limparFeedbackProgramacao();
-            }
-            else
-            {
-                int frameLocal = (int)(frameGlobal % FRAME_COUNT);
-                if (fb == FeedbackProgramacao::SALVO)
-                    desenharAnimacaoCheck48(_display, frameLocal);
-                else
-                    desenharAnimacaoLixeira48(_display, frameLocal);
+            const uint8_t *icone = (fb == FeedbackProgramacao::SALVO) ? ICON_CHECK_CIRCLE_2_28X28 : ICON_TRASH_2_28X28;
+            if (desenharFeedbackIcone(_display, icone, nullptr, animFeedbackInicioMs, animFeedbackAtivo))
                 return;
-            }
+            animTipo = FeedbackProgramacao::NENHUM;
+            _menu.limparFeedbackProgramacao();
         }
         else
         {
@@ -1157,65 +1014,35 @@ void DisplayManager::desenharTelaProgramar()
     AgendaSetor ag = _menu.agendaEdicao();
     if (etapa == EtapaProgramacao::SUBMENU_AGENDA)
     {
-        desenharCabecalho("EDITAR AGENDA");
-
         const char *opcoes[8] = {
-            "Hora",
-            "Minuto",
-            "Duracao",
-            "Dias",
-            "Setores",
-            "Salvar",
-            "Excluir",
-            "Voltar"};
+            "Hora", "Minuto", "Duracao", "Dias",
+            "Setores", "Salvar", "Excluir", "Voltar"};
+        static const uint8_t *iconesAgenda[8] = {
+            ICON_CLOCK_28X28, ICON_TIMER_28X28, ICON_HOURGLASS_28X28, ICON_CALENDAR_DAYS_28X28,
+            ICON_DROPLETS_28X28, ICON_SAVE_28X28, ICON_TRASH_2_28X28, ICON_CORNER_UP_LEFT_28X28};
+
+        auto formatarRotulo = [&ag, &opcoes](int idx, char *out, size_t outLen)
+        {
+            if (idx == 0)
+                snprintf(out, outLen, "Hora: %02dh", ag.hora);
+            else if (idx == 1)
+                snprintf(out, outLen, "Minuto: %02dmin", ag.minuto);
+            else if (idx == 2)
+                snprintf(out, outLen, "Duracao: %umin", ag.duracaoMin);
+            else
+                snprintf(out, outLen, "%s", opcoes[idx]);
+        };
 
         int selecionada = _menu.opcaoSubmenuProgramacao();
-        int inicio = 0;
-        if (selecionada > 2)
-            inicio = selecionada - 2;
-        if (inicio > 4)
-            inicio = 4;
+        int proxima = MenuCards::proximoIndice(selecionada, 8);
 
-        for (int i = 0; i < 4; i++)
-        {
-            int idx = inicio + i;
-            int y = 16 + (i * 10);
-            if (idx >= 8)
-                break;
+        char rotuloAtual[32];
+        char rotuloProximo[32];
+        formatarRotulo(selecionada, rotuloAtual, sizeof(rotuloAtual));
+        formatarRotulo(proxima, rotuloProximo, sizeof(rotuloProximo));
 
-            if (idx == selecionada)
-            {
-                _display.desenharRetanguloPreenchido(0, y - 1, OLED_LARGURA, 9);
-                _display.setCorDesenho(0);
-            }
-
-            char linha[28];
-            if (idx == 0)
-                snprintf(linha, sizeof(linha), "Hora: %02dh", ag.hora);
-            else if (idx == 1)
-                snprintf(linha, sizeof(linha), "Minuto: %02dmin", ag.minuto);
-            else if (idx == 2)
-                snprintf(linha, sizeof(linha), "Duracao: %umin", ag.duracaoMin);
-            else
-                snprintf(linha, sizeof(linha), "%s", opcoes[idx]);
-
-            if (idx <= 6)
-            {
-                desenharIconeSubmenu(_display, 2, y, idx);
-            }
-            else
-            {
-                _display.desenharLinha(3, y + 4, 10, y + 4);
-                _display.desenharLinha(3, y + 4, 6, y + 1);
-                _display.desenharLinha(3, y + 4, 6, y + 7);
-            }
-            _display.desenharTexto(14, y, linha);
-
-            if (idx == selecionada)
-                _display.setCorDesenho(1);
-        }
-
-        desenharRodapeDica("OK: entrar");
+        desenharCardsOpcao(rotuloAtual, rotuloProximo,
+                            iconesAgenda[selecionada], selecionada, 8);
         return;
     }
 
@@ -1415,10 +1242,6 @@ void DisplayManager::desenharTelaConfig()
     static unsigned long animLimpoInicioMs = 0;
     static unsigned long animRestauradoInicioMs = 0;
 
-    const unsigned long FRAME_DELAY_MS = 42;
-    const int FRAME_COUNT = 16;
-    const int LOOP_COUNT = 3;
-
     if (_menu.feedbackConfiguracaoSalvo())
     {
         animSalvoAtiva = true;
@@ -1443,55 +1266,22 @@ void DisplayManager::desenharTelaConfig()
     if (animSalvoAtiva)
     {
         desenharCabecalho("CONFIGURACOES");
-        unsigned long elapsed = millis() - animSalvoInicioMs;
-        unsigned long frameGlobal = elapsed / FRAME_DELAY_MS;
-        unsigned long totalFrames = (unsigned long)FRAME_COUNT * LOOP_COUNT;
-        if (frameGlobal >= totalFrames)
-        {
-            animSalvoAtiva = false;
+        if (desenharFeedbackIcone(_display, ICON_CHECK_CIRCLE_2_28X28, "Relogio salvo!", animSalvoInicioMs, animSalvoAtiva))
             return;
-        }
-
-        int frameLocal = (int)(frameGlobal % FRAME_COUNT);
-        desenharAnimacaoCheck48(_display, frameLocal);
-        _display.desenharTextoMini(34, 56, "Relogio salvo!");
-        return;
     }
 
     if (animLimpoAtiva)
     {
         desenharCabecalho("CONFIGURACOES");
-        unsigned long elapsed = millis() - animLimpoInicioMs;
-        unsigned long frameGlobal = elapsed / FRAME_DELAY_MS;
-        unsigned long totalFrames = (unsigned long)FRAME_COUNT * LOOP_COUNT;
-        if (frameGlobal >= totalFrames)
-        {
-            animLimpoAtiva = false;
+        if (desenharFeedbackIcone(_display, ICON_TRASH_2_28X28, "Agendas apagadas!", animLimpoInicioMs, animLimpoAtiva))
             return;
-        }
-
-        int frameLocal = (int)(frameGlobal % FRAME_COUNT);
-        desenharAnimacaoLixeira48(_display, frameLocal);
-        _display.desenharTextoMini(20, 56, "Agendas apagadas!");
-        return;
     }
 
     if (animRestauradoAtiva)
     {
         desenharCabecalho("CONFIGURACOES");
-        unsigned long elapsed = millis() - animRestauradoInicioMs;
-        unsigned long frameGlobal = elapsed / FRAME_DELAY_MS;
-        unsigned long totalFrames = (unsigned long)FRAME_COUNT * LOOP_COUNT;
-        if (frameGlobal >= totalFrames)
-        {
-            animRestauradoAtiva = false;
+        if (desenharFeedbackIcone(_display, ICON_CHECK_CIRCLE_2_28X28, "Padrao restaurado!", animRestauradoInicioMs, animRestauradoAtiva))
             return;
-        }
-
-        int frameLocal = (int)(frameGlobal % FRAME_COUNT);
-        desenharAnimacaoCheck48(_display, frameLocal);
-        _display.desenharTextoMini(16, 56, "Padrao restaurado!");
-        return;
     }
 
     if (etapa == EtapaConfiguracao::MENU)
