@@ -293,9 +293,9 @@ namespace
         0xCE, 0x1F, 0x42, 0x10, 0x62, 0x12, 0x62, 0x12, 0x62, 0x10, 0x42, 0x18,
         0x9E, 0x0F, 0x18, 0x00};
 
-    // Lucide "wifi" 12x12, 1bpp
-    const uint8_t ICON_WIFI_12X12[] = {
-        0x00, 0x00, 0x00, 0x00, 0xF0, 0x00, 0x04, 0x02, 0x02, 0x04, 0xF8, 0x01,
+    // Lucide "wifi-high" 12x12, 1bpp
+    const uint8_t ICON_WIFI_HIGH_12X12[] = {
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF8, 0x01,
         0x04, 0x02, 0x60, 0x00, 0x90, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
     // Lucide "wifi-off" 12x12, 1bpp
@@ -656,7 +656,7 @@ void DisplayManager::desenharTelaStatus()
 
     bool agendaAtivaNoCiclo = _agendaExecucaoAtiva &&
                               (_agendaAguardandoIntervalo || _agendaSetoresEmLote > 0 || _agendaSetoresPendentes > 0);
-    const uint8_t *iconeWifi = _webAp.staConectada() ? ICON_WIFI_12X12 : ICON_WIFI_OFF_12X12;
+    const uint8_t *iconeWifi = _webAp.staConectada() ? ICON_WIFI_HIGH_12X12 : ICON_WIFI_OFF_12X12;
     desenharBitmap1Bpp(_display, OLED_LARGURA - 15, 4, 12, 12, iconeWifi);
 
     char linhaIrrigacao[32];
@@ -664,13 +664,13 @@ void DisplayManager::desenharTelaStatus()
     if (totalAbertas > 0)
     {
         if (qtdMan > 0 && qtdAuto > 0)
-            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "MAN S%d/%d AUTO S%d/%d", qtdMan, NUM_VALVULAS, qtdAuto, NUM_VALVULAS);
+            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "MANUAL + AUTO");
         else if (qtdMan > 0)
-            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "MANUAL S%d/%d", qtdMan, NUM_VALVULAS);
+            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "MANUAL");
         else if (qtdAuto > 0)
-            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "AUTO S%d/%d", qtdAuto, NUM_VALVULAS);
+            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "AUTO");
         else
-            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "ATIVO S%d/%d", totalAbertas, NUM_VALVULAS);
+            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "ATIVO");
     }
     else if (agendaAtivaNoCiclo)
     {
@@ -678,7 +678,7 @@ void DisplayManager::desenharTelaStatus()
         int qtdAutoCiclo = contarBitsSetor(mask);
 
         if (qtdAutoCiclo > 0)
-            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "AUTO S%d/%d", qtdAutoCiclo, NUM_VALVULAS);
+            snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "AUTO");
         else if (_agendaAguardandoIntervalo)
             snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "Agenda ativa: intervalo");
         else if (_agendaSetoresPendentes > 0)
@@ -693,7 +693,7 @@ void DisplayManager::desenharTelaStatus()
     truncarParaLargura(_display, linhaIrrigacao, OLED_LARGURA - 6);
     _display.desenharTexto(3, 13, linhaIrrigacao);
 
-    _display.desenharRetangulo(0, 29, OLED_LARGURA, 20);
+    _display.desenharRetangulo(0, 29, OLED_LARGURA, 35);
     _display.desenharTextoMini(3, 31, "PROXIMA AGENDA");
 
     DateTime proximaDataHora;
@@ -708,27 +708,22 @@ void DisplayManager::desenharTelaStatus()
         if (dow < 0 || dow > 6)
             dow = 0;
 
-        desenharBitmap1Bpp(_display, 4, 33, 14, 14, ICON_CALENDAR_CLOCK_14X14);
+        desenharBitmap1Bpp(_display, 4, 41, 14, 14, ICON_CALENDAR_CLOCK_14X14);
         char linhaProxima[24];
         snprintf(linhaProxima, sizeof(linhaProxima), "%s %02d:%02d",
                  dias[dow], proximaDataHora.hour(), proximaDataHora.minute());
-        _display.desenharTextoMini(21, 38, linhaProxima);
+        _display.desenharTexto(21, 42, linhaProxima);
 
         int qtdSetoresProxima = contarBitsSetor(proximaAgenda.setoresMask);
 
         char linhaSetores[32];
-        if (qtdSetoresProxima == 0)
-            snprintf(linhaSetores, sizeof(linhaSetores), "Setores: S0/%d", NUM_VALVULAS);
-        else
-            snprintf(linhaSetores, sizeof(linhaSetores), "Setores: S%d/%d", qtdSetoresProxima, NUM_VALVULAS);
-        _display.desenharTextoMini(64, 38, linhaSetores);
+        snprintf(linhaSetores, sizeof(linhaSetores), "Setores: S%d/%d", qtdSetoresProxima, NUM_VALVULAS);
+        _display.desenharTextoMini(21, 54, linhaSetores);
     }
     else
     {
-        _display.desenharTexto(3, 38, "Nenhuma agenda ativa");
+        _display.desenharTexto(3, 44, "Nenhuma agenda ativa");
     }
-
-    desenharRodapeDica("Gire para abrir menu");
 }
 
 void DisplayManager::desenharTelaSensores()
