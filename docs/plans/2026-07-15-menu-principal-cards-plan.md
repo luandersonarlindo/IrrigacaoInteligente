@@ -32,7 +32,7 @@
 - Consumes: nada (função pura, sem dependências externas).
 - Produces: `MenuCards::proximoIndice(int atual, int total)` — usado pela Task 2 (`DisplayManager::desenharMenuPrincipal`) para saber qual índice desenhar na linha inferior (dimmed).
 
-- [ ] **Step 1: Criar o diretório de teste e escrever o teste que falha**
+- [x] **Step 1: Criar o diretório de teste e escrever o teste que falha**
 
 Crie o arquivo `test/test_menu/test_menu_cards.cpp`:
 
@@ -83,7 +83,7 @@ int main(int argc, char **argv)
 }
 ```
 
-- [ ] **Step 2: Criar o header vazio para o teste compilar (mas falhar por falta de implementação)**
+- [x] **Step 2: Criar o header vazio para o teste compilar (mas falhar por falta de implementação)**
 
 Crie `menu_cards.h`:
 
@@ -114,7 +114,7 @@ namespace MenuCards
 } // namespace MenuCards
 ```
 
-- [ ] **Step 3: Adicionar `menu_cards.cpp` ao build nativo**
+- [x] **Step 3: Adicionar `menu_cards.cpp` ao build nativo**
 
 Edite `platformio.ini`, linha 13 — adicione `+<menu_cards.cpp>` à lista existente:
 
@@ -122,13 +122,13 @@ Edite `platformio.ini`, linha 13 — adicione `+<menu_cards.cpp>` à lista exist
 build_src_filter = -<*> +<schedule_validation.cpp> +<schedule_persistence.cpp> +<schedule_execution.cpp> +<sensor_historico.cpp> +<menu_cards.cpp>
 ```
 
-- [ ] **Step 4: Rodar o teste e confirmar que falha (RED)**
+- [x] **Step 4: Rodar o teste e confirmar que falha (RED)**
 
 Run: `g++ -std=gnu++17 -I .pio/libdeps/native/Unity/src -I . .pio/libdeps/native/Unity/src/unity.c menu_cards.cpp test/test_menu/test_menu_cards.cpp -o test_menu_cards.exe`
 
 Expected: erro de linkagem — `undefined reference to MenuCards::proximoIndice(int, int)` (a função ainda não existe, só a declaração).
 
-- [ ] **Step 5: Implementar `proximoIndice`**
+- [x] **Step 5: Implementar `proximoIndice`**
 
 Edite `menu_cards.cpp`:
 
@@ -150,7 +150,7 @@ int proximoIndice(int atual, int total)
 } // namespace MenuCards
 ```
 
-- [ ] **Step 6: Rodar o teste e confirmar que passa (GREEN)**
+- [x] **Step 6: Rodar o teste e confirmar que passa (GREEN)**
 
 Run: `g++ -std=gnu++17 -I .pio/libdeps/native/Unity/src -I . .pio/libdeps/native/Unity/src/unity.c menu_cards.cpp test/test_menu/test_menu_cards.cpp -o test_menu_cards.exe && ./test_menu_cards.exe`
 
@@ -160,7 +160,7 @@ Expected:
 OK
 ```
 
-- [ ] **Step 7: Limpar o binário de teste e commitar**
+- [x] **Step 7: Limpar o binário de teste e commitar**
 
 ```bash
 rm -f test_menu_cards.exe
@@ -180,7 +180,7 @@ git commit -m "test(menu): add MenuCards::proximoIndice with circular wrap"
 - Consumes: `MenuCards::proximoIndice(int, int)` (Task 1); `MenuController::itemSelecionado()`, `MenuController::totalItens()`, `MenuController::nomeItem(int)` (já existentes, sem mudança); `DisplayDriverOled::desenharRetangulo`, `desenharTexto`, `desenharTextoGrande`, `larguraTexto` (já existentes).
 - Produces: nada consumido por tasks futuras — esta é a última task do plano.
 
-- [ ] **Step 1: Ler a função atual para confirmar o texto exato a substituir**
+- [x] **Step 1: Ler a função atual para confirmar o texto exato a substituir**
 
 Abra `display_manager.cpp` e confirme que a função `desenharMenuPrincipal()` (linhas 566-599) é exatamente:
 
@@ -223,7 +223,7 @@ void DisplayManager::desenharMenuPrincipal()
 
 Se o texto não bater exatamente (por causa de edições anteriores nesta sessão), localize a função pelo nome `DisplayManager::desenharMenuPrincipal` e use o conteúdo atual como base para o Step 2.
 
-- [ ] **Step 2: Substituir pela nova implementação em cards**
+- [x] **Step 2: Substituir pela nova implementação em cards**
 
 Troque o corpo inteiro da função por:
 
@@ -267,7 +267,7 @@ void DisplayManager::desenharMenuPrincipal()
 }
 ```
 
-- [ ] **Step 3: Adicionar o include de `menu_cards.h` em `display_manager.h`**
+- [x] **Step 3: Adicionar o include de `menu_cards.h` em `display_manager.h`**
 
 Em `display_manager.h`, localize o bloco de includes (linhas 15-22) e adicione a nova linha após `#include "menu_controller.h"`:
 
@@ -276,13 +276,13 @@ Em `display_manager.h`, localize o bloco de includes (linhas 15-22) e adicione a
 #include "menu_cards.h"
 ```
 
-- [ ] **Step 4: Compilar o firmware completo no Arduino IDE**
+- [x] **Step 4: Compilar o firmware completo no Arduino IDE**
 
 Abra o projeto no Arduino IDE (ou use a ferramenta de build habitual) e compile. Não há build automatizado para o firmware completo neste ambiente (depende de bibliotecas de hardware — U8g2, RTClib, ESP32Encoder — não disponíveis no build nativo `platformio.ini`).
 
 Expected: compilação sem erros. Se houver erro de símbolo não encontrado para `MenuCards::proximoIndice`, confirme que `menu_cards.cpp` está no mesmo diretório do sketch (raiz do projeto) — o Arduino IDE compila automaticamente todos os `.cpp` da pasta do sketch, não precisa de configuração adicional.
 
-- [ ] **Step 5: Testar no hardware ou revisar visualmente a lógica**
+- [x] **Step 5: Testar no hardware ou revisar visualmente a lógica**
 
 Se tiver o ESP32 conectado: grave o firmware, entre no Menu Principal (gire o encoder a partir da tela de Status) e confira:
 - Card superior mostra o item selecionado com ícone, texto grande e seta à direita.
@@ -292,7 +292,7 @@ Se tiver o ESP32 conectado: grave o firmware, entre no Menu Principal (gire o en
 
 Se não tiver hardware disponível agora: revise o código do Step 2 manualmente contra a spec (`docs/brainstorms/2026-07-15-menu-principal-cards.md`) e confirme que `MenuCards::proximoIndice` (testado na Task 1) cobre a lógica de wrap corretamente — a parte visual (coordenadas, texto) não tem como ser testada fora do hardware real, mas a lógica de qual índice mostrar já está coberta por teste.
 
-- [ ] **Step 6: Commitar**
+- [x] **Step 6: Commitar**
 
 ```bash
 git add display_manager.h display_manager.cpp

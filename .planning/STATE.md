@@ -2,10 +2,12 @@
 
 **Status:** phase-1-complete
 **Active Phase:** 2
-**Last Updated:** 2026-07-15
+**Last Updated:** 2026-07-16
 
 ## Current Focus
 Phase 2: Testes - Persistência e Execução - 2/3 tasks done (Task 2.2 repartida, gerou Task 2.3). Próxima: Task 2.3 (retomada de janela ativa).
+
+Trabalho paralelo (fora do roadmap, 2026-07-15/16): histórico de sensores + gráfico na tela Sensores, correções da revisão estrutural, e redesign do Menu Principal em cards empilhados — tudo mergeado no main. Pendente: validação visual do novo menu em hardware real.
 
 ## Decisions
 | Date | Decision | Rationale |
@@ -20,6 +22,9 @@ Phase 2: Testes - Persistência e Execução - 2/3 tasks done (Task 2.2 repartid
 | 2026-07-15 | Task 2.1 complete | CRC16 + checagem versão extraída pra `schedule_persistence.h/.cpp`, 5 testes novos; removeu duplicação (`calcularCrc16` usado em 4 pontos, agora 1 só) |
 | 2026-07-15 | Task 2.2 repartida em 2.2+2.3 | Escopo original (motor de lotes completo) misturava 3 preocupações; usuário aprovou fazer seleção de lote + conflito de duração agora, adiar retomada de janela (maior, ~150 linhas de aritmética de época, sem toolchain ESP32 pra validar) pra Task 2.3 |
 | 2026-07-15 | Task 2.2 complete (escopo parcial) | Seleção de lote + conflito de duração extraídos pra `schedule_execution.h/.cpp`, 7 testes novos; `IrrigacaoInteligente.ino` delega pra lá |
+| 2026-07-15 | Histórico de sensores + gráfico | `sensor_historico.h/.cpp` (buffer circular 24 pontos, 10 testes) integrado ao Dht11Driver; mini-gráfico de temperatura (~4h) na tela Sensores |
+| 2026-07-15 | Revisão estrutural completa aplicada | 8 ângulos paralelos + verificação: bug do eixo X do gráfico (CONFIRMED), staleness em obterProximaExecucao, bounds check, contarBitsSetor/contarAbertas* compartilhados, AgendaExecutor extraído do main.ino (bitmask), rodapé unificado |
+| 2026-07-16 | Menu Principal em cards empilhados | Layout B (2 linhas: selecionado grande + próximo dimmed), wrap circular via `MenuCards::proximoIndice` (5 testes TDD); spec em docs/brainstorms, plano em docs/plans; fix de overflow de label (fonte 6px) pego na revisão final |
 
 ## Blockers
 None.

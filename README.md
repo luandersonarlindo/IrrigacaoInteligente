@@ -182,7 +182,7 @@ Módulos:
 
 ## 7. 🕹️ Operação da interface
 
-Menu principal:
+Menu principal (layout em cards empilhados — item selecionado em destaque com ícone e seta, próximo item abaixo em fonte menor; navegação circular):
 
 - Irrigar Agora
 - Programar
@@ -205,7 +205,8 @@ Irrigação manual:
 
 Sensores:
 
-- Exibe temperatura e umidade do ar do DHT11, status da leitura e backend em uso.
+- Exibe temperatura e umidade atuais do DHT11 e um mini-gráfico da temperatura das últimas ~4h (24 amostras, 1 a cada 10 min, buffer em RAM).
+- Em falha de leitura, mostra o status do erro no lugar dos valores.
 
 Programar:
 
