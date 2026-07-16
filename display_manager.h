@@ -63,8 +63,11 @@ private:
 
     // Componentes reutilizáveis
     void desenharCabecalho(const char *titulo);
-    void desenharRodapeHora();
     void desenharCursor(int y);
+    // Rodapé padrão: linha separadora em y=54 + texto de dica em y=56
+    void desenharRodapeDica(const char *texto);
+    // Par de botões SIM/NAO com destaque no selecionado (opcaoSelecionada: 0=SIM, 1=NAO)
+    void desenharConfirmacaoSimNao(int opcaoSelecionada);
 
     // Controle de atualização (evita redesenho desnecessário)
     unsigned long _ultimaAtualizacao;

@@ -3,3 +3,6 @@ Config_privado.h
 
 # PlatformIO build artifacts (testes em host)
 .pio/
+
+# Sessões do companheiro visual de brainstorming (mockups temporários)
+.superpowers/

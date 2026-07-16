@@ -3,6 +3,7 @@
 // ============================================================
 
 #include "display_manager.h"
+#include <string.h>
 
 namespace
 {
@@ -103,6 +104,28 @@ namespace
         0xE0, 0xFF, 0x07, 0xF0, 0xFF, 0x0F, 0xE0, 0x81, 0x07, 0xC0, 0x00, 0x03,
         0x00, 0x3C, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x7E, 0x00, 0x00, 0x3C, 0x00,
         0x00, 0x18, 0x00, 0x00, 0x00, 0x00};
+
+    // Corta o texto (com "..." no final) até caber em larguraMaxPx na fonte padrão.
+    void truncarParaLargura(DisplayDriverOled &d, char *texto, int larguraMaxPx)
+    {
+        if (d.larguraTexto(texto) <= larguraMaxPx)
+            return;
+
+        int len = (int)strlen(texto);
+        while (len > 0)
+        {
+            len--;
+            texto[len] = '\0';
+            char comReticencias[40];
+            snprintf(comReticencias, sizeof(comReticencias), "%s...", texto);
+            if (d.larguraTexto(comReticencias) <= larguraMaxPx)
+            {
+                strncpy(texto, comReticencias, len + 4);
+                texto[len + 4] = '\0';
+                return;
+            }
+        }
+    }
 
     void desenharBitmap1Bpp(DisplayDriverOled &d,
                             int x,
@@ -580,19 +603,9 @@ void DisplayManager::desenharTelaStatus()
     // Dashboard operacional: foco em irrigacao e agenda.
     DateTime agora = _rtc.agora();
 
-    uint16_t maskAbertas = 0;
-    uint16_t maskAutoAbertaReal = 0;
-    int totalAbertas = 0;
-    for (int i = 0; i < NUM_VALVULAS; i++)
-    {
-        if (_irrigacao.estadoValvula(i) != EstadoValvula::ABERTA)
-            continue;
-
-        maskAbertas |= (uint16_t)(1U << i);
-        if (_irrigacao.valvulaEmAgendamento(i))
-            maskAutoAbertaReal |= (uint16_t)(1U << i);
-        totalAbertas++;
-    }
+    int qtdMan = _irrigacao.contarAbertasManual();
+    int qtdAuto = _irrigacao.contarAbertasAutomatico();
+    int totalAbertas = qtdMan + qtdAuto;
 
     _display.desenharRetangulo(0, 0, OLED_LARGURA, 26);
     desenharIconeStatusRelogio(_display, 3, 3);
@@ -609,26 +622,9 @@ void DisplayManager::desenharTelaStatus()
     _display.desenharTextoMini(95, 4, linhaOn);
 
     char linhaIrrigacao[32];
-    auto contarBits = [](uint16_t mask)
-    {
-        int total = 0;
-        for (int i = 0; i < NUM_VALVULAS; i++)
-        {
-            if (mask & (1U << i))
-                total++;
-        }
-        return total;
-    };
 
     if (totalAbertas > 0)
     {
-        uint16_t maskAutoAgora = maskAutoAbertaReal;
-        uint16_t maskManualAgora = (uint16_t)(maskAbertas & (~maskAutoAgora));
-        uint16_t maskAutoLigada = (uint16_t)(maskAbertas & maskAutoAgora);
-
-        int qtdMan = contarBits(maskManualAgora);
-        int qtdAuto = contarBits(maskAutoLigada);
-
         if (qtdMan > 0 && qtdAuto > 0)
             snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "MAN S%d/%d AUTO S%d/%d", qtdMan, NUM_VALVULAS, qtdAuto, NUM_VALVULAS);
         else if (qtdMan > 0)
@@ -641,7 +637,7 @@ void DisplayManager::desenharTelaStatus()
     else if (agendaAtivaNoCiclo)
     {
         uint16_t mask = (uint16_t)(_agendaSetoresLoteMask | _agendaSetoresPendentesMask);
-        int qtdAutoCiclo = contarBits(mask);
+        int qtdAutoCiclo = contarBitsSetor(mask);
 
         if (qtdAutoCiclo > 0)
             snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "AUTO S%d/%d", qtdAutoCiclo, NUM_VALVULAS);
@@ -656,6 +652,7 @@ void DisplayManager::desenharTelaStatus()
     {
         snprintf(linhaIrrigacao, sizeof(linhaIrrigacao), "Nenhum setor ativo");
     }
+    truncarParaLargura(_display, linhaIrrigacao, OLED_LARGURA - 6);
     _display.desenharTexto(3, 13, linhaIrrigacao);
 
     _display.desenharRetangulo(0, 29, OLED_LARGURA, 20);
@@ -679,7 +676,7 @@ void DisplayManager::desenharTelaStatus()
                  dias[dow], proximaDataHora.hour(), proximaDataHora.minute());
         _display.desenharTextoMini(17, 38, linhaProxima);
 
-        int qtdSetoresProxima = contarBits(proximaAgenda.setoresMask);
+        int qtdSetoresProxima = contarBitsSetor(proximaAgenda.setoresMask);
 
         char linhaSetores[32];
         if (qtdSetoresProxima == 0)
@@ -693,8 +690,7 @@ void DisplayManager::desenharTelaStatus()
         _display.desenharTexto(3, 38, "Nenhuma agenda ativa");
     }
 
-    _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-    _display.desenharTextoMini(0, 56, "Gire para abrir menu");
+    desenharRodapeDica("Gire para abrir menu");
 }
 
 void DisplayManager::desenharTelaSensores()
@@ -705,42 +701,84 @@ void DisplayManager::desenharTelaSensores()
     float umidade = _dht11.umidadePct();
     bool sensorOk = _dht11.leituraValida();
     const char *statusTxt = _dht11.statusTexto();
-    const char *backend = _dht11.backendNome();
 
     char linha1[24];
     char linha2[24];
-    char linha3[24];
-    char linha4[24];
 
     if (sensorOk)
     {
-        snprintf(linha1, sizeof(linha1), "Temp: %.1f C", tempC);
-        snprintf(linha2, sizeof(linha2), "Umidade: %.0f%%", umidade);
-        snprintf(linha3, sizeof(linha3), "Atual: 2s");
+        snprintf(linha1, sizeof(linha1), "%.1fC", tempC);
+        snprintf(linha2, sizeof(linha2), "%.0f%%", umidade);
     }
     else
     {
-        snprintf(linha1, sizeof(linha1), "Temp: --.- C");
-        snprintf(linha2, sizeof(linha2), "Umidade: --%%");
-        if (statusTxt == nullptr || statusTxt[0] == '\0')
-        {
-            snprintf(linha3, sizeof(linha3), "Sem leitura valida");
-        }
-        else
-        {
-            snprintf(linha3, sizeof(linha3), "Status: %s", statusTxt);
-        }
+        snprintf(linha1, sizeof(linha1), "--.-C");
+        snprintf(linha2, sizeof(linha2), "--%%");
     }
 
-    snprintf(linha4, sizeof(linha4), "GPIO %d %s", PIN_DHT11, backend);
-
     _display.desenharTexto(0, 16, linha1);
-    _display.desenharTexto(0, 28, linha2);
-    _display.desenharTextoMini(0, 42, linha3);
-    _display.desenharTextoMini(0, 48, linha4);
+    _display.desenharTexto(0, 30, linha2);
 
-    _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-    _display.desenharTextoMini(0, 56, "OK: voltar");
+    if (!sensorOk)
+    {
+        char linhaErro[24];
+        if (statusTxt == nullptr || statusTxt[0] == '\0')
+            snprintf(linhaErro, sizeof(linhaErro), "Sem leitura");
+        else
+            snprintf(linhaErro, sizeof(linhaErro), "%s", statusTxt);
+        _display.desenharTextoMini(0, 42, linhaErro);
+    }
+
+    // Mini-gráfico de temperatura (últimas amostras, ~4h de janela)
+    const SensorHistorico::Buffer &hist = _dht11.historico();
+    int totalPontos = SensorHistorico::total(hist);
+
+    const int graficoX = 46;
+    const int graficoY = 14;
+    const int graficoW = OLED_LARGURA - graficoX;
+    const int graficoH = 30;
+
+    _display.desenharRetangulo(graficoX, graficoY, graficoW, graficoH);
+
+    if (totalPontos >= 2)
+    {
+        float minTemp, maxTemp;
+        SensorHistorico::faixaTemperatura(hist, minTemp, maxTemp);
+        if ((maxTemp - minTemp) < 1.0f)
+        {
+            // Evita gráfico "achatado" quando a variação é mínima.
+            minTemp -= 0.5f;
+            maxTemp += 0.5f;
+        }
+
+        int usavelW = graficoW - 2;
+        int usavelH = graficoH - 2;
+
+        float tempAnterior, umidAnterior;
+        SensorHistorico::obter(hist, 0, tempAnterior, umidAnterior);
+        int xAnterior = graficoX + 1;
+        int yAnterior = graficoY + 1 + usavelH - (int)(((tempAnterior - minTemp) / (maxTemp - minTemp)) * usavelH);
+
+        for (int i = 1; i < totalPontos; i++)
+        {
+            float temp, umid;
+            SensorHistorico::obter(hist, i, temp, umid);
+            int x = graficoX + 1 + (usavelW * i) / (totalPontos - 1);
+            int y = graficoY + 1 + usavelH - (int)(((temp - minTemp) / (maxTemp - minTemp)) * usavelH);
+
+            _display.desenharLinha(xAnterior, yAnterior, x, y);
+            xAnterior = x;
+            yAnterior = y;
+        }
+    }
+    else
+    {
+        _display.desenharTextoMini(graficoX + 6, graficoY + 12, "Coletando...");
+    }
+
+    _display.desenharTextoMini(0, 46, "4h");
+
+    desenharRodapeDica("OK: voltar");
 }
 
 void DisplayManager::desenharTelaIrrigacao()
@@ -803,7 +841,6 @@ void DisplayManager::desenharTelaIrrigacao()
     }
     else
     {
-        _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
         char rodape[28];
         snprintf(rodape, sizeof(rodape), "OK=toggle Pg %d/%d", (inicio / linhasVisiveis) + 1,
                  (totalItens + linhasVisiveis - 1) / linhasVisiveis);
@@ -812,7 +849,7 @@ void DisplayManager::desenharTelaIrrigacao()
             snprintf(rodape, sizeof(rodape), "OK=voltar Pg %d/%d", (inicio / linhasVisiveis) + 1,
                      (totalItens + linhasVisiveis - 1) / linhasVisiveis);
         }
-        _display.desenharTextoMini(0, 56, rodape);
+        desenharRodapeDica(rodape);
     }
 }
 
@@ -898,8 +935,7 @@ void DisplayManager::desenharTelaProgramar()
             _display.desenharLinha(10, 38, 15, 33);
             _display.desenharLinha(10, 38, 15, 43);
             _display.desenharTexto(34, 34, "< Voltar");
-            _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-            _display.desenharTextoMini(0, 56, "OK sair da programacao");
+            desenharRodapeDica("OK sair da programacao");
             return;
         }
 
@@ -912,13 +948,10 @@ void DisplayManager::desenharTelaProgramar()
             snprintf(linhaHorario, sizeof(linhaHorario), "%02dh:%02d  %umin", ag.hora, ag.minuto, ag.duracaoMin);
 
             int totalDias = 0;
-            int totalSetores = 0;
             for (int i = 0; i < 7; i++)
                 if (ag.diasMask & (1 << i))
                     totalDias++;
-            for (int i = 0; i < NUM_VALVULAS; i++)
-                if (ag.setoresMask & (1 << i))
-                    totalSetores++;
+            int totalSetores = contarBitsSetor(ag.setoresMask);
 
             _display.desenharTexto(19, 28, linhaHorario);
 
@@ -942,8 +975,7 @@ void DisplayManager::desenharTelaProgramar()
         else if (fb == FeedbackProgramacao::ERRO_PERSISTENCIA)
             _display.desenharTexto(0, 48, "Erro ao salvar");
 
-        _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        _display.desenharTextoMini(0, 56, "Gire agenda | OK editar");
+        desenharRodapeDica("Gire agenda | OK editar");
         return;
     }
 
@@ -1008,8 +1040,7 @@ void DisplayManager::desenharTelaProgramar()
                 _display.setCorDesenho(1);
         }
 
-        _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        _display.desenharTextoMini(0, 56, "OK: entrar");
+        desenharRodapeDica("OK: entrar");
         return;
     }
 
@@ -1020,29 +1051,9 @@ void DisplayManager::desenharTelaProgramar()
         _display.desenharTextoMini(0, 30, "Gire: SIM/NAO | OK confirma");
 
         int opc = _menu.opcaoConfirmarExclusao(); // 0=SIM, 1=NÃO
+        desenharConfirmacaoSimNao(opc);
 
-        if (opc == 0)
-        {
-            _display.desenharRetanguloPreenchido(8, 40, 48, 12);
-            _display.setCorDesenho(0);
-            _display.desenharTexto(22, 42, "SIM");
-            _display.setCorDesenho(1);
-
-            _display.desenharRetangulo(72, 40, 48, 12);
-            _display.desenharTexto(88, 42, "NAO");
-        }
-        else
-        {
-            _display.desenharRetangulo(8, 40, 48, 12);
-            _display.desenharTexto(22, 42, "SIM");
-
-            _display.desenharRetanguloPreenchido(72, 40, 48, 12);
-            _display.setCorDesenho(0);
-            _display.desenharTexto(88, 42, "NAO");
-            _display.setCorDesenho(1);
-        }
-
-        _display.desenharTextoMini(0, 56, "Gire para NAO");
+        desenharRodapeDica("Gire para NAO");
         return;
     }
 
@@ -1309,8 +1320,7 @@ void DisplayManager::desenharTelaConfig()
                 _display.setCorDesenho(1);
         }
 
-        _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        _display.desenharTextoMini(0, 56, "OK entra");
+        desenharRodapeDica("OK entra");
         return;
     }
 
@@ -1378,8 +1388,7 @@ void DisplayManager::desenharTelaConfig()
                 _display.setCorDesenho(1);
         }
 
-        _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        _display.desenharTextoMini(0, 56, "OK entra");
+        desenharRodapeDica("OK entra");
         return;
     }
 
@@ -1421,16 +1430,12 @@ void DisplayManager::desenharTelaConfig()
             else
                 snprintf(linha, sizeof(linha), "%s", opcoes[idx]);
 
-            if (idx == 0)
-                desenharIconeSubmenu(_display, 2, y, 2);
-            else if (idx == 1)
-                desenharIconeSubmenu(_display, 2, y, 4);
-            else if (idx == 2)
-                desenharIconeSubmenu(_display, 2, y, 6);
-            else if (idx == 3)
-                desenharIconeSubmenu(_display, 2, y, 5);
-            else if (idx == 4)
-                desenharIconeSubmenu(_display, 2, y, 1);
+            // Ícones reaproveitados do submenu de agenda: mapeamento explícito
+            // por opção (duracao, teste, limpar, restaurar, info); "Voltar"
+            // (idx==5) desenha a seta abaixo, fora desta tabela.
+            static const int iconesSubmenuSistema[5] = {2, 4, 6, 5, 1};
+            if (idx < 5)
+                desenharIconeSubmenu(_display, 2, y, iconesSubmenuSistema[idx]);
             else
             {
                 _display.desenharLinha(3, y + 4, 10, y + 4);
@@ -1443,8 +1448,7 @@ void DisplayManager::desenharTelaConfig()
                 _display.setCorDesenho(1);
         }
 
-        _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-        _display.desenharTextoMini(0, 56, "OK entra");
+        desenharRodapeDica("OK entra");
         return;
     }
 
@@ -1580,26 +1584,9 @@ void DisplayManager::desenharTelaConfig()
         _display.desenharTextoMini(0, 30, "Gire: SIM/NAO | OK confirma");
 
         int opc = _menu.opcaoConfirmarLimparAgendas();
-        if (opc == 0)
-        {
-            _display.desenharRetanguloPreenchido(8, 40, 48, 12);
-            _display.setCorDesenho(0);
-            _display.desenharTexto(22, 42, "SIM");
-            _display.setCorDesenho(1);
+        desenharConfirmacaoSimNao(opc);
 
-            _display.desenharRetangulo(72, 40, 48, 12);
-            _display.desenharTexto(88, 42, "NAO");
-        }
-        else
-        {
-            _display.desenharRetangulo(8, 40, 48, 12);
-            _display.desenharTexto(22, 42, "SIM");
-
-            _display.desenharRetanguloPreenchido(72, 40, 48, 12);
-            _display.setCorDesenho(0);
-            _display.desenharTexto(88, 42, "NAO");
-            _display.setCorDesenho(1);
-        }
+        desenharRodapeDica("Gire para NAO");
         return;
     }
 
@@ -1610,26 +1597,9 @@ void DisplayManager::desenharTelaConfig()
         _display.desenharTextoMini(0, 30, "Gire: SIM/NAO | OK confirma");
 
         int opc = _menu.opcaoConfirmarRestaurarPadrao();
-        if (opc == 0)
-        {
-            _display.desenharRetanguloPreenchido(8, 40, 48, 12);
-            _display.setCorDesenho(0);
-            _display.desenharTexto(22, 42, "SIM");
-            _display.setCorDesenho(1);
+        desenharConfirmacaoSimNao(opc);
 
-            _display.desenharRetangulo(72, 40, 48, 12);
-            _display.desenharTexto(88, 42, "NAO");
-        }
-        else
-        {
-            _display.desenharRetangulo(8, 40, 48, 12);
-            _display.desenharTexto(22, 42, "SIM");
-
-            _display.desenharRetanguloPreenchido(72, 40, 48, 12);
-            _display.setCorDesenho(0);
-            _display.desenharTexto(88, 42, "NAO");
-            _display.setCorDesenho(1);
-        }
+        desenharRodapeDica("Gire para NAO");
         return;
     }
 
@@ -1654,7 +1624,7 @@ void DisplayManager::desenharTelaConfig()
         snprintf(linha4, sizeof(linha4), "Dur.Pad: %dmin", _menu.configDuracaoPadraoMin());
         _display.desenharTextoMini(0, 48, linha4);
 
-        _display.desenharTextoMini(0, 56, "OK para voltar");
+        desenharRodapeDica("OK para voltar");
         return;
     }
 }
@@ -1744,17 +1714,15 @@ void DisplayManager::desenharTelaWebServer()
         _display.desenharTexto(0, y, linhas[indiceLinha].c_str());
     }
 
-    _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-
     if (totalPaginas > 1)
     {
         char rodape[26];
         snprintf(rodape, sizeof(rodape), "Pag %d/%d Gire OK volta", paginaAtual + 1, totalPaginas);
-        _display.desenharTextoMini(0, 56, rodape);
+        desenharRodapeDica(rodape);
     }
     else
     {
-        _display.desenharTextoMini(0, 56, "OK: voltar");
+        desenharRodapeDica("OK: voltar");
     }
 }
 
@@ -1768,15 +1736,39 @@ void DisplayManager::desenharCabecalho(const char *titulo)
     _display.desenharLinha(0, 12, OLED_LARGURA - 1, 12);
 }
 
-void DisplayManager::desenharRodapeHora()
+void DisplayManager::desenharRodapeDica(const char *texto)
 {
-    DateTime agora = _rtc.agora();
-
-    char hora[9]; // "HH:MM:SS\0"
-    snprintf(hora, sizeof(hora), "%02d:%02d:%02d",
-             agora.hour(), agora.minute(), agora.second());
-
-    // Rodapé: linha separadora + hora alinhada à direita
     _display.desenharLinha(0, 54, OLED_LARGURA - 1, 54);
-    _display.desenharTexto(80, 56, hora);
+    _display.desenharTextoMini(0, 56, texto);
+}
+
+void DisplayManager::desenharConfirmacaoSimNao(int opcaoSelecionada)
+{
+    const int y = 40;
+    const int altura = 12;
+    const int simX = 8;
+    const int naoX = 72;
+    const int largura = 48;
+
+    bool simSelecionado = (opcaoSelecionada == 0);
+
+    if (simSelecionado)
+        _display.desenharRetanguloPreenchido(simX, y, largura, altura);
+    else
+        _display.desenharRetangulo(simX, y, largura, altura);
+    if (simSelecionado)
+        _display.setCorDesenho(0);
+    _display.desenharTexto(simX + 14, y + 2, "SIM");
+    if (simSelecionado)
+        _display.setCorDesenho(1);
+
+    if (!simSelecionado)
+        _display.desenharRetanguloPreenchido(naoX, y, largura, altura);
+    else
+        _display.desenharRetangulo(naoX, y, largura, altura);
+    if (!simSelecionado)
+        _display.setCorDesenho(0);
+    _display.desenharTexto(naoX + 16, y + 2, "NAO");
+    if (!simSelecionado)
+        _display.setCorDesenho(1);
 }

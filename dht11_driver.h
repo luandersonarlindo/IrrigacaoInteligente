@@ -9,6 +9,7 @@
 
 #include <Arduino.h>
 #include "Config.h"
+#include "sensor_historico.h"
 
 #if DHT11_USE_DHTESP
 #include <DHTesp.h>
@@ -49,6 +50,9 @@ public:
     const char *statusTexto() const;
     const char *backendNome() const;
 
+    // Histórico para o mini-gráfico da tela Sensores (últimas amostras).
+    const SensorHistorico::Buffer &historico() const;
+
 private:
 #if IRRIGACAO_DHT_BACKEND_DHTESP
     DHTesp _dht;
@@ -62,4 +66,7 @@ private:
     unsigned long _ultimoOkMs;
     int _ultimoStatus;
     char _ultimoStatusTexto[28];
+
+    SensorHistorico::Buffer _historico;
+    unsigned long _ultimaAmostraHistoricoMs;
 };

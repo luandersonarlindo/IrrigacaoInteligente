@@ -25,6 +25,29 @@ int selecionarLote(bool pendentes[], bool selecionados[], int totalSetores, int 
     return iniciados;
 }
 
+int selecionarLoteMask(uint16_t &pendentes, uint16_t &selecionados, int totalSetores, int limiteSimultaneo)
+{
+    int iniciados = 0;
+    for (int i = 0; i < totalSetores; i++)
+    {
+        uint16_t bit = (uint16_t)(1U << i);
+        if ((pendentes & bit) == 0)
+        {
+            continue;
+        }
+
+        pendentes = (uint16_t)(pendentes & ~bit);
+        selecionados = (uint16_t)(selecionados | bit);
+        iniciados++;
+
+        if (iniciados >= limiteSimultaneo)
+        {
+            break;
+        }
+    }
+    return iniciados;
+}
+
 bool deveAtualizarDuracaoPendente(bool jaPendente, uint16_t duracaoAtual, uint16_t duracaoNova)
 {
     return !jaPendente || duracaoNova > duracaoAtual;

@@ -17,7 +17,7 @@
 #include "display_manager.h"
 #include "irrigation_controller.h"
 #include "schedule_manager.h"
-#include "schedule_execution.h"
+#include "agenda_executor.h"
 #include "runtime_config_manager.h"
 #include "web_ap_manager.h"
 
@@ -32,196 +32,8 @@ MenuController        menu(scheduleManager, rtc, runtimeConfig);
 IrrigationController  irrigacao(runtimeConfig);
 WebApManager          webApManager(irrigacao, scheduleManager, runtimeConfig, rtc);
 DisplayManager        displayManager(oled, menu, rtc, irrigacao, webApManager, dht11);
+AgendaExecutor        agendaExecutor(irrigacao);
 bool                  rtcDisponivel = false;
-
-struct ExecucaoAgendaSequencial {
-    bool ativa;
-    bool aguardandoIntervalo;
-    unsigned long proximoLoteMs;
-    bool setorPendente[NUM_VALVULAS];
-    bool setorNoLote[NUM_VALVULAS];
-    uint16_t duracaoPendenteMin[NUM_VALVULAS];
-};
-
-ExecucaoAgendaSequencial execAgenda = {};
-
-bool haSetorPendenteAgenda() {
-    for (int i = 0; i < NUM_VALVULAS; i++) {
-        if (execAgenda.setorPendente[i]) {
-            return true;
-        }
-    }
-    return false;
-}
-
-int contarSetoresPendentesAgenda() {
-    int total = 0;
-    for (int i = 0; i < NUM_VALVULAS; i++) {
-        if (execAgenda.setorPendente[i]) {
-            total++;
-        }
-    }
-    return total;
-}
-
-int contarSetoresNoLoteAgenda() {
-    int total = 0;
-    for (int i = 0; i < NUM_VALVULAS; i++) {
-        if (execAgenda.setorNoLote[i]) {
-            total++;
-        }
-    }
-    return total;
-}
-
-uint16_t maskSetoresNoLoteAgenda() {
-    uint16_t mask = 0;
-    for (int i = 0; i < NUM_VALVULAS; i++) {
-        if (execAgenda.setorNoLote[i]) {
-            mask |= (uint16_t)(1U << i);
-        }
-    }
-    return mask;
-}
-
-uint16_t maskSetoresPendentesAgenda() {
-    uint16_t mask = 0;
-    for (int i = 0; i < NUM_VALVULAS; i++) {
-        if (execAgenda.setorPendente[i]) {
-            mask |= (uint16_t)(1U << i);
-        }
-    }
-    return mask;
-}
-
-bool loteAtualAindaAberto() {
-    for (int i = 0; i < NUM_VALVULAS; i++) {
-        if (execAgenda.setorNoLote[i] && irrigacao.estadoValvula(i) == EstadoValvula::ABERTA) {
-            return true;
-        }
-    }
-    return false;
-}
-
-void limparLoteAtual() {
-    for (int i = 0; i < NUM_VALVULAS; i++) {
-        execAgenda.setorNoLote[i] = false;
-    }
-}
-
-void cancelarExecucaoAgendaAutomatica() {
-    execAgenda.ativa = false;
-    execAgenda.aguardandoIntervalo = false;
-    execAgenda.proximoLoteMs = 0;
-
-    for (int i = 0; i < NUM_VALVULAS; i++) {
-        execAgenda.setorPendente[i] = false;
-        execAgenda.setorNoLote[i] = false;
-        execAgenda.duracaoPendenteMin[i] = 0;
-
-        // Fecha apenas setores em origem automatica; manual permanece.
-        if (irrigacao.valvulaEmAgendamento(i)) {
-            irrigacao.fecharValvula(i);
-        }
-    }
-
-    if (DEBUG_SERIAL) {
-        Serial.println("[Agenda] Execucao automatica cancelada por exclusao de agenda.");
-    }
-}
-
-void iniciarProximoLoteAgenda() {
-    bool selecionados[NUM_VALVULAS] = {};
-    int iniciados = ScheduleExecution::selecionarLote(execAgenda.setorPendente, selecionados,
-                                                        NUM_VALVULAS, MAX_SETOR_SIMULTANEOS_AGENDA);
-
-    for (int i = 0; i < NUM_VALVULAS; i++) {
-        if (!selecionados[i]) {
-            continue;
-        }
-        irrigacao.iniciarAgendamento(i, execAgenda.duracaoPendenteMin[i]);
-        execAgenda.setorNoLote[i] = true;
-        execAgenda.duracaoPendenteMin[i] = 0;
-    }
-
-    execAgenda.ativa = (iniciados > 0) || haSetorPendenteAgenda();
-    execAgenda.aguardandoIntervalo = false;
-}
-
-void enfileirarDisparosAgenda(const uint16_t duracoesMinPorSetor[NUM_VALVULAS]) {
-    bool recebeuNovoDisparo = false;
-
-    for (int i = 0; i < NUM_VALVULAS; i++) {
-        uint16_t duracao = duracoesMinPorSetor[i];
-        if (duracao == 0) {
-            continue;
-        }
-
-        recebeuNovoDisparo = true;
-
-        if (execAgenda.setorNoLote[i] && irrigacao.estadoValvula(i) == EstadoValvula::ABERTA) {
-            // Se o setor já está em execução, estende apenas se necessário.
-            irrigacao.iniciarAgendamento(i, duracao);
-            continue;
-        }
-
-        if (ScheduleExecution::deveAtualizarDuracaoPendente(execAgenda.setorPendente[i], execAgenda.duracaoPendenteMin[i], duracao)) {
-            execAgenda.setorPendente[i] = true;
-            execAgenda.duracaoPendenteMin[i] = duracao;
-        }
-    }
-
-    if (recebeuNovoDisparo) {
-        execAgenda.ativa = true;
-    }
-}
-
-void atualizarExecucaoAgendaSequencial() {
-    if (!execAgenda.ativa) {
-        return;
-    }
-
-    bool tinhaLoteAtual = false;
-    for (int i = 0; i < NUM_VALVULAS; i++) {
-        if (execAgenda.setorNoLote[i]) {
-            tinhaLoteAtual = true;
-            break;
-        }
-    }
-
-    if (loteAtualAindaAberto()) {
-        return;
-    }
-
-    if (tinhaLoteAtual) {
-        limparLoteAtual();
-
-        if (!haSetorPendenteAgenda()) {
-            execAgenda.ativa = false;
-            execAgenda.aguardandoIntervalo = false;
-            return;
-        }
-
-        execAgenda.aguardandoIntervalo = true;
-        execAgenda.proximoLoteMs = millis() + INTERVALO_LOTE_AGENDA_MS;
-        return;
-    }
-
-    if (!haSetorPendenteAgenda()) {
-        execAgenda.ativa = false;
-        execAgenda.aguardandoIntervalo = false;
-        return;
-    }
-
-    if (!execAgenda.aguardandoIntervalo) {
-        iniciarProximoLoteAgenda();
-        return;
-    }
-
-    if ((long)(millis() - execAgenda.proximoLoteMs) >= 0) {
-        iniciarProximoLoteAgenda();
-    }
-}
 
 // ============================================================
 void setup() {
@@ -255,15 +67,6 @@ void setup() {
     irrigacao.begin();     // configura GPIOs e garante relés desligados
     webApManager.begin();
     displayManager.begin();
-
-    execAgenda.ativa = false;
-    execAgenda.aguardandoIntervalo = false;
-    execAgenda.proximoLoteMs = 0;
-    for (int i = 0; i < NUM_VALVULAS; i++) {
-        execAgenda.setorPendente[i] = false;
-        execAgenda.setorNoLote[i] = false;
-        execAgenda.duracaoPendenteMin[i] = 0;
-    }
 
     if (DEBUG_SERIAL) {
         Serial.println("[SETUP] Todos os modulos inicializados.");
@@ -320,7 +123,7 @@ void loop() {
 
     // Exclusão de agenda interrompe imediatamente a execução automática em andamento.
     if (menu.consumirEventoAgendaExcluida()) {
-        cancelarExecucaoAgendaAutomatica();
+        agendaExecutor.cancelar();
     }
 
     bool emTesteValvulasDepois =
@@ -343,23 +146,23 @@ void loop() {
         DateTime agora = rtc.agora();
         uint16_t duracoesMinPorSetor[NUM_VALVULAS] = {0};
         scheduleManager.avaliarDisparos(agora, duracoesMinPorSetor);
-        enfileirarDisparosAgenda(duracoesMinPorSetor);
+        agendaExecutor.enfileirarDisparos(duracoesMinPorSetor);
     }
 
     // 6. Processa lotes da agenda (máx. simultâneos + intervalo entre lotes)
-    atualizarExecucaoAgendaSequencial();
+    agendaExecutor.atualizar();
 
     // 6.1 Publica estado da agenda sequencial para o dashboard de status
     displayManager.atualizarEstadoAgendaSequencial(
-        execAgenda.ativa,
-        execAgenda.aguardandoIntervalo,
-        (uint8_t)contarSetoresNoLoteAgenda(),
-        (uint8_t)contarSetoresPendentesAgenda(),
-        maskSetoresNoLoteAgenda(),
-        maskSetoresPendentesAgenda());
+        agendaExecutor.ativa(),
+        agendaExecutor.aguardandoIntervalo(),
+        agendaExecutor.setoresEmLote(),
+        agendaExecutor.setoresPendentes(),
+        agendaExecutor.maskSetoresEmLote(),
+        agendaExecutor.maskSetoresPendentes());
     webApManager.atualizarEstadoAgendaSequencial(
-        maskSetoresPendentesAgenda(),
-        execAgenda.aguardandoIntervalo);
+        agendaExecutor.maskSetoresPendentes(),
+        agendaExecutor.aguardandoIntervalo());
 
     // 6.2 Atualiza leitura do DHT11 e publica no dashboard
     dht11.atualizar();

@@ -77,6 +77,53 @@ void test_deveAtualizarDuracaoPendente_nova_menor_ou_igual_retorna_falso(void)
         /*jaPendente=*/true, /*duracaoAtual=*/10, /*duracaoNova=*/5));
 }
 
+void test_selecionarLoteMask_menos_pendentes_que_limite_seleciona_todos(void)
+{
+    uint16_t pendentes = 0b0011;
+    uint16_t selecionados = 0;
+
+    int qtd = ScheduleExecution::selecionarLoteMask(pendentes, selecionados, 4, /*limiteSimultaneo=*/2);
+
+    TEST_ASSERT_EQUAL_INT(2, qtd);
+    TEST_ASSERT_EQUAL_HEX16(0b0011, selecionados);
+    TEST_ASSERT_EQUAL_HEX16(0, pendentes);
+}
+
+void test_selecionarLoteMask_mais_pendentes_que_limite_respeita_limite(void)
+{
+    uint16_t pendentes = 0b1111;
+    uint16_t selecionados = 0;
+
+    int qtd = ScheduleExecution::selecionarLoteMask(pendentes, selecionados, 4, /*limiteSimultaneo=*/2);
+
+    TEST_ASSERT_EQUAL_INT(2, qtd);
+    TEST_ASSERT_EQUAL_HEX16(0b0011, selecionados);
+    // Os que nao entraram no lote continuam pendentes.
+    TEST_ASSERT_EQUAL_HEX16(0b1100, pendentes);
+}
+
+void test_selecionarLoteMask_sem_pendentes_seleciona_zero(void)
+{
+    uint16_t pendentes = 0;
+    uint16_t selecionados = 0;
+
+    int qtd = ScheduleExecution::selecionarLoteMask(pendentes, selecionados, 4, /*limiteSimultaneo=*/2);
+
+    TEST_ASSERT_EQUAL_INT(0, qtd);
+    TEST_ASSERT_EQUAL_HEX16(0, selecionados);
+}
+
+void test_selecionarLoteMask_exatamente_no_limite_seleciona_todos(void)
+{
+    uint16_t pendentes = 0b11;
+    uint16_t selecionados = 0;
+
+    int qtd = ScheduleExecution::selecionarLoteMask(pendentes, selecionados, 2, /*limiteSimultaneo=*/2);
+
+    TEST_ASSERT_EQUAL_INT(2, qtd);
+    TEST_ASSERT_EQUAL_HEX16(0b11, selecionados);
+}
+
 int main(int argc, char **argv)
 {
     UNITY_BEGIN();
@@ -87,5 +134,9 @@ int main(int argc, char **argv)
     RUN_TEST(test_deveAtualizarDuracaoPendente_ainda_nao_pendente_retorna_verdadeiro);
     RUN_TEST(test_deveAtualizarDuracaoPendente_nova_maior_retorna_verdadeiro);
     RUN_TEST(test_deveAtualizarDuracaoPendente_nova_menor_ou_igual_retorna_falso);
+    RUN_TEST(test_selecionarLoteMask_menos_pendentes_que_limite_seleciona_todos);
+    RUN_TEST(test_selecionarLoteMask_mais_pendentes_que_limite_respeita_limite);
+    RUN_TEST(test_selecionarLoteMask_sem_pendentes_seleciona_zero);
+    RUN_TEST(test_selecionarLoteMask_exatamente_no_limite_seleciona_todos);
     return UNITY_END();
 }

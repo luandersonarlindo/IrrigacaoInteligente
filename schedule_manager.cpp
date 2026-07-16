@@ -199,14 +199,10 @@ bool ScheduleManager::obterProximaExecucao(const DateTime &agora, DateTime &prox
             DateTime candidata(dataBase.year(), dataBase.month(), dataBase.day(), atual.hora, atual.minuto, 0);
             uint32_t epoch = candidata.unixtime();
 
-            if (deltaDia == 0)
+            if (deltaDia == 0 && epoch <= agora.unixtime())
             {
-                bool minutoJaPassou = (agora.hour() > atual.hora) ||
-                                      (agora.hour() == atual.hora && agora.minute() > atual.minuto);
-                if (minutoJaPassou)
-                {
-                    continue;
-                }
+                // Já passou (ou é exatamente agora, já disparado por avaliarDisparos) — não é mais "próxima".
+                continue;
             }
 
             if (!encontrou || epoch < menorEpoch)

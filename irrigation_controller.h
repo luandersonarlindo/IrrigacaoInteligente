@@ -20,6 +20,20 @@ enum class EstadoValvula
     ABERTA
 };
 
+// Conta quantos bits (setores) estão marcados em uma máscara. Usado por
+// DisplayManager e WebApManager para resumir quantos setores estão em cada
+// estado (abertos, em agenda, selecionados etc.).
+inline int contarBitsSetor(uint16_t mask)
+{
+    int total = 0;
+    for (int i = 0; i < NUM_VALVULAS; i++)
+    {
+        if (mask & (1U << i))
+            total++;
+    }
+    return total;
+}
+
 class IrrigationController
 {
 public:
@@ -49,6 +63,12 @@ public:
 
     // Origem da válvula aberta: false = manual, true = agendamento automático.
     bool valvulaEmAgendamento(int indice) const;
+
+    // Quantas válvulas estão abertas por origem manual (não-agendamento).
+    int contarAbertasManual() const;
+
+    // Quantas válvulas estão abertas por origem de agendamento automático.
+    int contarAbertasAutomatico() const;
 
     // Tempo restante até o fechamento automático (0 se fechada ou vencida)
     unsigned long tempoRestanteMs(int indice) const;

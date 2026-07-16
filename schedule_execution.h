@@ -14,6 +14,12 @@ namespace ScheduleExecution
 // Retorna a quantidade de setores selecionados para este lote.
 int selecionarLote(bool pendentes[], bool selecionados[], int totalSetores, int limiteSimultaneo);
 
+// Equivalente a selecionarLote, mas operando sobre máscaras de bits: os
+// setores selecionados são setados em `selecionados` (deve começar em 0) e
+// removidos de `pendentes` (efeito colateral no parâmetro passado por
+// referência). Retorna a quantidade de setores selecionados para este lote.
+int selecionarLoteMask(uint16_t &pendentes, uint16_t &selecionados, int totalSetores, int limiteSimultaneo);
+
 // Decide se a duração pendente de um setor deve ser atualizada para
 // `duracaoNova`: verdadeiro se o setor ainda não está pendente, ou se a
 // nova duração é maior que a pendente atual (mantém sempre a maior).

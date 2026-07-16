@@ -42,6 +42,7 @@
 // --- DHT11 ---
 #define DHT11_READ_INTERVAL_MS 2000
 #define DHT11_MAX_STALE_MS 10000
+#define DHT11_HISTORICO_INTERVALO_MS 600000 // 10 min entre amostras do histórico (24 pontos = 4h)
 
 // --- DHT11 (biblioteca) ---
 // Selecione apenas um backend: DHTesp (recomendado no ESP32) ou DHT (Adafruit).

@@ -179,6 +179,28 @@ bool IrrigationController::valvulaEmAgendamento(int indice) const
     return (_estados[indice] == EstadoValvula::ABERTA) && !_origemManual[indice];
 }
 
+int IrrigationController::contarAbertasManual() const
+{
+    int total = 0;
+    for (int i = 0; i < NUM_VALVULAS; i++)
+    {
+        if (_estados[i] == EstadoValvula::ABERTA && _origemManual[i])
+            total++;
+    }
+    return total;
+}
+
+int IrrigationController::contarAbertasAutomatico() const
+{
+    int total = 0;
+    for (int i = 0; i < NUM_VALVULAS; i++)
+    {
+        if (_estados[i] == EstadoValvula::ABERTA && !_origemManual[i])
+            total++;
+    }
+    return total;
+}
+
 unsigned long IrrigationController::tempoRestanteMs(int indice) const
 {
     if (!indiceValido(indice) || _estados[indice] != EstadoValvula::ABERTA)

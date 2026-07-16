@@ -2357,29 +2357,12 @@ void WebApManager::registrarEvento(const char *tipo, const char *nivel, const St
 
 int WebApManager::contarValvulasManuaisAbertas() const
 {
-  int total = 0;
-  for (int i = 0; i < NUM_VALVULAS; i++)
-  {
-    bool aberta = (_irrigacao.estadoValvula(i) == EstadoValvula::ABERTA);
-    if (aberta && !_irrigacao.valvulaEmAgendamento(i))
-    {
-      total++;
-    }
-  }
-  return total;
+  return _irrigacao.contarAbertasManual();
 }
 
 int WebApManager::contarValvulasAutomaticasAbertas() const
 {
-  int total = 0;
-  for (int i = 0; i < NUM_VALVULAS; i++)
-  {
-    if (_irrigacao.valvulaEmAgendamento(i))
-    {
-      total++;
-    }
-  }
-  return total;
+  return _irrigacao.contarAbertasAutomatico();
 }
 
 String WebApManager::escaparJson(const char *texto)

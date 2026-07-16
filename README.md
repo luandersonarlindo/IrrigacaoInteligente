@@ -31,6 +31,7 @@ Este README descreve o comportamento real implementado no firmware.
 13. 🩺 Troubleshooting rápido
 14. ✅ Validação recomendada
 15. 🛣️ Limites atuais e roadmap
+16. 📚 Bibliotecas utilizadas
 
 ## 1. 🎯 Escopo
 
@@ -399,6 +400,33 @@ Próximos passos sugeridos:
 - Adicionar testes automatizados para agenda, persistência e API web.
 - Criar checklist de homologação de campo (elétrica, rede e UX).
 
+## 16. 📚 Bibliotecas utilizadas
+
+Instaláveis via Gerenciador de Bibliotecas da IDE Arduino (Sketch > Incluir Biblioteca > Gerenciar Bibliotecas):
+
+| Biblioteca | Autor | Uso no projeto |
+| --- | --- | --- |
+| RTClib | Adafruit | Leitura e ajuste do RTC DS3231 |
+| ESP32Encoder | Kevin Harrington (madhephaestus) | Leitura do encoder rotativo (CLK/DT) |
+| DHTesp | beegee-tokyo | Leitura de temperatura/umidade do DHT11 (backend padrão) |
+| DHT sensor library | Adafruit (depende de Adafruit Unified Sensor) | Leitura de temperatura/umidade do DHT11 (backend alternativo, selecionável em `Config.h`) |
+| U8g2 | oliver (olikraus) | Desenho no OLED SSD1306 128x64 (I2C) |
+| WebSockets | Links2004 (Markus Sattler) | Push de status em tempo real no dashboard (porta 81); opcional, com fallback HTTP se ausente |
+
+Incluídas no core ESP32 (Arduino-ESP32, sem instalação manual — só selecionar a placa ESP32 no Boards Manager):
+
+| Biblioteca | Uso no projeto |
+| --- | --- |
+| WiFi | Modo AP + tentativas de conexão STA |
+| WebServer | Servidor HTTP do dashboard e da API `/api/*` |
+| ESPmDNS | Resolução `http://irrigacaoesp32.local/` quando STA conectado |
+| Preferences | Persistência em NVS (agendas, cache de execução, config runtime) |
+| Wire | Barramento I2C (OLED + RTC) |
+
+Bibliotecas padrão do C++ (sem instalação):
+
+- `cstdint`, `cstddef`, `math.h`, `stdint.h`, `stdlib.h`, `string.h`
+
 ---
 
-Última revisão deste documento: 2026-07-13
+Última revisão deste documento: 2026-07-15

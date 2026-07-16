@@ -18,6 +18,8 @@ Dht11Driver::Dht11Driver()
     _ultimoOkMs = 0;
     _ultimoStatus = 0;
     snprintf(_ultimoStatusTexto, sizeof(_ultimoStatusTexto), "OK");
+    SensorHistorico::iniciar(_historico);
+    _ultimaAmostraHistoricoMs = 0;
 }
 
 void Dht11Driver::begin()
@@ -97,6 +99,14 @@ void Dht11Driver::atualizar()
     _umidadePct = umidade;
     _temLeitura = true;
     _ultimoOkMs = agora;
+
+    bool primeiraAmostra = (SensorHistorico::total(_historico) == 0);
+    bool intervaloVencido = (unsigned long)(agora - _ultimaAmostraHistoricoMs) >= DHT11_HISTORICO_INTERVALO_MS;
+    if (primeiraAmostra || intervaloVencido)
+    {
+        SensorHistorico::inserir(_historico, _temperaturaC, _umidadePct);
+        _ultimaAmostraHistoricoMs = agora;
+    }
 #endif
 }
 
@@ -145,4 +155,9 @@ const char *Dht11Driver::backendNome() const
 #else
     return "Nenhum";
 #endif
+}
+
+const SensorHistorico::Buffer &Dht11Driver::historico() const
+{
+    return _historico;
 }
