@@ -469,6 +469,22 @@ namespace
                 d.desenharRetanguloPreenchido(x + 24, py, 3, 3);
         }
     }
+
+    // Ícone 8x8 da opção, ou seta "voltar" se icone < 0.
+    void desenharIconeOuVoltar(DisplayDriverOled &d, int x, int y, int icone)
+    {
+        if (icone < 0)
+        {
+            d.desenharLinha(x + 1, y + 4, x + 8, y + 4);
+            d.desenharLinha(x + 1, y + 4, x + 4, y + 1);
+            d.desenharLinha(x + 1, y + 4, x + 4, y + 7);
+        }
+        else
+        {
+            desenharIconeSubmenu(d, x, y, icone);
+        }
+    }
+
 }
 
 DisplayManager::DisplayManager(DisplayDriverOled &display,
@@ -1199,6 +1215,39 @@ void DisplayManager::desenharTelaProgramar()
         _display.desenharTexto(0, 50, "Erro ao excluir");
 }
 
+void DisplayManager::desenharCardsOpcao(const char *rotuloAtual, const char *rotuloProximo,
+                                         int iconeAtual, int posicaoAtual, int totalOpcoes)
+{
+    const int cardSelY = 4;
+    const int cardSelH = 34;
+    const int iconX = 4;
+    const int iconY = cardSelY + 4;
+
+    _display.desenharRetangulo(0, cardSelY, OLED_LARGURA, cardSelH);
+    _display.desenharRetangulo(1, cardSelY + 1, OLED_LARGURA - 2, cardSelH - 2);
+
+    desenharIconeOuVoltar(_display, iconX, iconY, iconeAtual);
+
+    char linhaAtual[40];
+    snprintf(linhaAtual, sizeof(linhaAtual), "%s", rotuloAtual);
+    truncarParaLargura(_display, linhaAtual, OLED_LARGURA - 20);
+    _display.desenharTexto(18, cardSelY + 12, linhaAtual);
+
+    const int cardProxY = cardSelY + cardSelH + 2;
+    const int cardProxH = 12;
+
+    _display.desenharRetangulo(0, cardProxY, OLED_LARGURA, cardProxH);
+
+    char linhaProxima[40];
+    snprintf(linhaProxima, sizeof(linhaProxima), "%s", rotuloProximo);
+    truncarParaLargura(_display, linhaProxima, OLED_LARGURA - 12);
+    _display.desenharTexto(6, cardProxY + 1, linhaProxima);
+
+    char rodape[24];
+    snprintf(rodape, sizeof(rodape), "%d/%d  OK entra", posicaoAtual + 1, totalOpcoes);
+    desenharRodapeDica(rodape);
+}
+
 void DisplayManager::desenharTelaConfig()
 {
     EtapaConfiguracao etapa = _menu.etapaConfiguracao();
@@ -1292,38 +1341,14 @@ void DisplayManager::desenharTelaConfig()
     {
         desenharCabecalho("CONFIGURACOES");
 
-        const char *opcoes[3] = {
-            "Relogio",
-            "Sistema",
-            "Voltar"};
+        const char *opcoes[3] = {"Relogio", "Sistema", "Voltar"};
+        const int icones[3] = {0, 2, -1};
 
         int selecionada = _menu.opcaoConfiguracao();
-        for (int idx = 0; idx < 3; idx++)
-        {
-            int y = 18 + (idx * 12);
-            if (idx == selecionada)
-            {
-                _display.desenharRetanguloPreenchido(0, y - 1, OLED_LARGURA, 10);
-                _display.setCorDesenho(0);
-            }
+        int proxima = MenuCards::proximoIndice(selecionada, 3);
 
-            if (idx == 0)
-                desenharIconeSubmenu(_display, 2, y, 0);
-            else if (idx == 1)
-                desenharIconeSubmenu(_display, 2, y, 2);
-            else
-            {
-                _display.desenharLinha(3, y + 4, 10, y + 4);
-                _display.desenharLinha(3, y + 4, 6, y + 1);
-                _display.desenharLinha(3, y + 4, 6, y + 7);
-            }
-
-            _display.desenharTexto(14, y, opcoes[idx]);
-            if (idx == selecionada)
-                _display.setCorDesenho(1);
-        }
-
-        desenharRodapeDica("OK entra");
+        desenharCardsOpcao(opcoes[selecionada], opcoes[proxima],
+                            icones[selecionada], selecionada, 3);
         return;
     }
 
@@ -1332,66 +1357,39 @@ void DisplayManager::desenharTelaConfig()
         desenharCabecalho("CONFIG > RELOGIO");
 
         const char *opcoes[8] = {
-            "Hora",
-            "Minuto",
-            "Dia",
-            "Mes",
-            "Ano",
-            "Timeout",
-            "Salvar relogio",
-            "Voltar"};
+            "Hora", "Minuto", "Dia", "Mes", "Ano",
+            "Timeout", "Salvar relogio", "Voltar"};
+
+        auto formatarRotulo = [this, &opcoes](int idx, char *out, size_t outLen)
+        {
+            if (idx == 0)
+                snprintf(out, outLen, "Hora: %02d", _menu.configHora());
+            else if (idx == 1)
+                snprintf(out, outLen, "Minuto: %02d", _menu.configMinuto());
+            else if (idx == 2)
+                snprintf(out, outLen, "Dia: %02d", _menu.configDia());
+            else if (idx == 3)
+                snprintf(out, outLen, "Mes: %02d", _menu.configMes());
+            else if (idx == 4)
+                snprintf(out, outLen, "Ano: %04d", _menu.configAno());
+            else if (idx == 5)
+                snprintf(out, outLen, "Timeout: %d min", _menu.configTimeoutManualMin());
+            else
+                snprintf(out, outLen, "%s", opcoes[idx]);
+        };
+        auto iconePara = [](int idx)
+        { return idx <= 5 ? idx : (idx == 6 ? 5 : -1); };
 
         int selecionada = _menu.opcaoConfiguracao();
-        int inicio = 0;
-        if (selecionada > 2)
-            inicio = selecionada - 2;
-        if (inicio > 4)
-            inicio = 4;
+        int proxima = MenuCards::proximoIndice(selecionada, 8);
 
-        for (int i = 0; i < 4; i++)
-        {
-            int idx = inicio + i;
-            int y = 16 + (i * 10);
-            if (idx >= 8)
-                break;
+        char rotuloAtual[32];
+        char rotuloProximo[32];
+        formatarRotulo(selecionada, rotuloAtual, sizeof(rotuloAtual));
+        formatarRotulo(proxima, rotuloProximo, sizeof(rotuloProximo));
 
-            if (idx == selecionada)
-            {
-                _display.desenharRetanguloPreenchido(0, y - 1, OLED_LARGURA, 9);
-                _display.setCorDesenho(0);
-            }
-
-            char linha[32];
-            if (idx == 0)
-                snprintf(linha, sizeof(linha), "Hora: %02d", _menu.configHora());
-            else if (idx == 1)
-                snprintf(linha, sizeof(linha), "Minuto: %02d", _menu.configMinuto());
-            else if (idx == 2)
-                snprintf(linha, sizeof(linha), "Dia: %02d", _menu.configDia());
-            else if (idx == 3)
-                snprintf(linha, sizeof(linha), "Mes: %02d", _menu.configMes());
-            else if (idx == 4)
-                snprintf(linha, sizeof(linha), "Ano: %04d", _menu.configAno());
-            else if (idx == 5)
-                snprintf(linha, sizeof(linha), "Timeout: %d min", _menu.configTimeoutManualMin());
-            else
-                snprintf(linha, sizeof(linha), "%s", opcoes[idx]);
-
-            if (idx <= 6)
-                desenharIconeSubmenu(_display, 2, y, idx <= 5 ? idx : 5);
-            else
-            {
-                _display.desenharLinha(3, y + 4, 10, y + 4);
-                _display.desenharLinha(3, y + 4, 6, y + 1);
-                _display.desenharLinha(3, y + 4, 6, y + 7);
-            }
-
-            _display.desenharTexto(14, y, linha);
-            if (idx == selecionada)
-                _display.setCorDesenho(1);
-        }
-
-        desenharRodapeDica("OK entra");
+        desenharCardsOpcao(rotuloAtual, rotuloProximo,
+                            iconePara(selecionada), selecionada, 8);
         return;
     }
 
@@ -1400,58 +1398,33 @@ void DisplayManager::desenharTelaConfig()
         desenharCabecalho("CONFIG > SISTEMA");
 
         const char *opcoes[6] = {
-            "Duracao padrao",
-            "Teste valvulas",
-            "Limpar agendas",
-            "Restaurar padrao",
-            "Info do sistema",
-            "Voltar"};
+            "Duracao padrao", "Teste valvulas", "Limpar agendas",
+            "Restaurar padrao", "Info do sistema", "Voltar"};
+        // Ícones reaproveitados do submenu de agenda: mapeamento explícito
+        // por opção (duracao, teste, limpar, restaurar, info); "Voltar"
+        // (idx==5) usa a seta, fora desta tabela (sentinel -1).
+        static const int iconesSubmenuSistema[5] = {2, 4, 6, 5, 1};
+
+        auto formatarRotulo = [this, &opcoes](int idx, char *out, size_t outLen)
+        {
+            if (idx == 0)
+                snprintf(out, outLen, "Duracao: %d min", _menu.configDuracaoPadraoMin());
+            else
+                snprintf(out, outLen, "%s", opcoes[idx]);
+        };
+        auto iconePara = [](int idx)
+        { return idx < 5 ? iconesSubmenuSistema[idx] : -1; };
 
         int selecionada = _menu.opcaoConfiguracao();
-        int inicio = 0;
-        if (selecionada > 2)
-            inicio = selecionada - 2;
-        if (inicio > 2)
-            inicio = 2;
+        int proxima = MenuCards::proximoIndice(selecionada, 6);
 
-        for (int i = 0; i < 4; i++)
-        {
-            int idx = inicio + i;
-            int y = 16 + (i * 10);
-            if (idx >= 6)
-                break;
+        char rotuloAtual[32];
+        char rotuloProximo[32];
+        formatarRotulo(selecionada, rotuloAtual, sizeof(rotuloAtual));
+        formatarRotulo(proxima, rotuloProximo, sizeof(rotuloProximo));
 
-            if (idx == selecionada)
-            {
-                _display.desenharRetanguloPreenchido(0, y - 1, OLED_LARGURA, 9);
-                _display.setCorDesenho(0);
-            }
-
-            char linha[32];
-            if (idx == 0)
-                snprintf(linha, sizeof(linha), "Duracao: %d min", _menu.configDuracaoPadraoMin());
-            else
-                snprintf(linha, sizeof(linha), "%s", opcoes[idx]);
-
-            // Ícones reaproveitados do submenu de agenda: mapeamento explícito
-            // por opção (duracao, teste, limpar, restaurar, info); "Voltar"
-            // (idx==5) desenha a seta abaixo, fora desta tabela.
-            static const int iconesSubmenuSistema[5] = {2, 4, 6, 5, 1};
-            if (idx < 5)
-                desenharIconeSubmenu(_display, 2, y, iconesSubmenuSistema[idx]);
-            else
-            {
-                _display.desenharLinha(3, y + 4, 10, y + 4);
-                _display.desenharLinha(3, y + 4, 6, y + 1);
-                _display.desenharLinha(3, y + 4, 6, y + 7);
-            }
-
-            _display.desenharTexto(14, y, linha);
-            if (idx == selecionada)
-                _display.setCorDesenho(1);
-        }
-
-        desenharRodapeDica("OK entra");
+        desenharCardsOpcao(rotuloAtual, rotuloProximo,
+                            iconePara(selecionada), selecionada, 6);
         return;
     }
 

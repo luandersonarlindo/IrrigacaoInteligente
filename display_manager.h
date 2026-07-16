@@ -69,6 +69,10 @@ private:
     void desenharRodapeDica(const char *texto);
     // Par de botões SIM/NAO com destaque no selecionado (opcaoSelecionada: 0=SIM, 1=NAO)
     void desenharConfirmacaoSimNao(int opcaoSelecionada);
+    // Cards empilhados (estilo Menu Principal) com contador "N/total" no rodapé,
+    // usados pelos submenus de Configurações. icone < 0 desenha seta "voltar".
+    void desenharCardsOpcao(const char *rotuloAtual, const char *rotuloProximo,
+                             int iconeAtual, int posicaoAtual, int totalOpcoes);
 
     // Controle de atualização (evita redesenho desnecessário)
     unsigned long _ultimaAtualizacao;
