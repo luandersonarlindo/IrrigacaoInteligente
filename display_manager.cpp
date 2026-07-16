@@ -581,7 +581,7 @@ void DisplayManager::desenharMenuPrincipal()
     desenharIconeMenuPrincipal(_display, iconX, iconY, itemAtual);
 
     const char *rotuloSelecionado = _menu.nomeItem(itemAtual);
-    _display.desenharTextoGrande(40, cardSelY + 8, rotuloSelecionado);
+    _display.desenharTexto(40, cardSelY + 12, rotuloSelecionado);
 
     // Seta indicando "OK confirma"
     const int setaX = OLED_LARGURA - 10;
@@ -596,7 +596,7 @@ void DisplayManager::desenharMenuPrincipal()
     _display.desenharRetangulo(0, cardProxY, OLED_LARGURA, cardProxH);
 
     const char *rotuloProximo = _menu.nomeItem(itemProximo);
-    _display.desenharTexto(6, cardProxY + 2, rotuloProximo);
+    _display.desenharTexto(6, cardProxY + 1, rotuloProximo);
 
     desenharRodapeDica("Gire | OK confirma");
 }
