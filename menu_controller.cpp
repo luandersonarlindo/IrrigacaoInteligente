@@ -7,7 +7,7 @@
 // Nomes exibidos no display — ordem deve bater com enum ItemMenu
 const char *MenuController::_nomesItens[] = {
     "Irrigar",
-    "Programar",
+    "Agendas",
     "Web Server",
     "Sensores",
     "Configuracoes"};
