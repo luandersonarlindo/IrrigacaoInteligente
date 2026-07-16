@@ -281,6 +281,28 @@ namespace
         0x80, 0xFF, 0x1F, 0x00, 0x00, 0xFF, 0x0F, 0x00, 0x00, 0xF8, 0x01, 0x00,
         0x00, 0x00, 0x00, 0x00};
 
+    // Lucide "clock" 14x14, 1bpp
+    const uint8_t ICON_CLOCK_14X14[] = {
+        0x00, 0x00, 0xF0, 0x03, 0x0C, 0x0E, 0xC4, 0x08, 0xC2, 0x18, 0xC2, 0x10,
+        0xC2, 0x10, 0x82, 0x11, 0x02, 0x12, 0x06, 0x18, 0x04, 0x08, 0x0C, 0x0C,
+        0xF0, 0x03, 0x00, 0x00};
+
+    // Lucide "calendar-clock" 14x14, 1bpp
+    const uint8_t ICON_CALENDAR_CLOCK_14X14[] = {
+        0x00, 0x00, 0x10, 0x02, 0xFE, 0x0F, 0x12, 0x12, 0x02, 0x10, 0x1E, 0x07,
+        0xCE, 0x1F, 0x42, 0x10, 0x62, 0x12, 0x62, 0x12, 0x62, 0x10, 0x42, 0x18,
+        0x9E, 0x0F, 0x18, 0x00};
+
+    // Lucide "wifi" 12x12, 1bpp
+    const uint8_t ICON_WIFI_12X12[] = {
+        0x00, 0x00, 0x00, 0x00, 0xF0, 0x00, 0x04, 0x02, 0x02, 0x04, 0xF8, 0x01,
+        0x04, 0x02, 0x60, 0x00, 0x90, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+    // Lucide "wifi-off" 12x12, 1bpp
+    const uint8_t ICON_WIFI_OFF_12X12[] = {
+        0x00, 0x00, 0x02, 0x00, 0xE4, 0x00, 0x0C, 0x02, 0x12, 0x04, 0x38, 0x01,
+        0x44, 0x02, 0xE0, 0x00, 0x90, 0x01, 0x00, 0x02, 0x00, 0x04, 0x00, 0x00};
+
     // Wi-Fi icon derived from the provided icons8 image (id 9922), converted to 1-bit 24x18.
     const uint8_t WIFI_ICON_9922_24X18[] = {
         0x00, 0xFF, 0x00, 0xE0, 0xFF, 0x07, 0xF8, 0xFF, 0x1F, 0xFC, 0xFF, 0x3F,
@@ -448,20 +470,6 @@ namespace
         }
     }
 
-    void desenharIconeStatusIrrigacao(DisplayDriverOled &d, int x, int y, bool ativa)
-    {
-        d.desenharRetangulo(x, y, 10, 10);
-        d.desenharRetanguloPreenchido(x + 4, y + 2, 2, 4);
-        d.desenharLinha(x + 2, y + 7, x + 7, y + 7);
-
-        if (ativa)
-        {
-            d.desenharRetanguloPreenchido(x + 1, y + 8, 1, 1);
-            d.desenharRetanguloPreenchido(x + 4, y + 8, 1, 1);
-            d.desenharRetanguloPreenchido(x + 7, y + 8, 1, 1);
-        }
-    }
-
     void desenharIconeStatusValvula(DisplayDriverOled &d, int x, int y)
     {
         d.desenharRetangulo(x, y, 10, 10);
@@ -470,24 +478,6 @@ namespace
         d.desenharLinha(x + 8, y + 2, x + 6, y + 4);
         d.desenharLinha(x + 2, y + 8, x + 4, y + 6);
         d.desenharLinha(x + 8, y + 8, x + 6, y + 6);
-    }
-
-    void desenharIconeStatusAgenda(DisplayDriverOled &d, int x, int y)
-    {
-        d.desenharRetangulo(x, y + 1, 10, 9);
-        d.desenharLinha(x, y + 3, x + 9, y + 3);
-        d.desenharRetanguloPreenchido(x + 2, y, 1, 2);
-        d.desenharRetanguloPreenchido(x + 7, y, 1, 2);
-        d.desenharRetanguloPreenchido(x + 2, y + 5, 1, 1);
-        d.desenharRetanguloPreenchido(x + 4, y + 5, 1, 1);
-        d.desenharRetanguloPreenchido(x + 6, y + 5, 1, 1);
-    }
-
-    void desenharIconeStatusRelogio(DisplayDriverOled &d, int x, int y)
-    {
-        d.desenharRetangulo(x, y, 10, 10);
-        d.desenharLinha(x + 5, y + 5, x + 5, y + 2);
-        d.desenharLinha(x + 5, y + 5, x + 7, y + 6);
     }
 
     // Feedback de ação (salvo/excluído/limpo/restaurado): ícone Lucide 28x28
@@ -658,18 +648,16 @@ void DisplayManager::desenharTelaStatus()
     int totalAbertas = qtdMan + qtdAuto;
 
     _display.desenharRetangulo(0, 0, OLED_LARGURA, 26);
-    desenharIconeStatusRelogio(_display, 3, 3);
+    desenharBitmap1Bpp(_display, 3, 3, 14, 14, ICON_CLOCK_14X14);
 
     char linhaHora[16];
     snprintf(linhaHora, sizeof(linhaHora), "%02d:%02d:%02d", agora.hour(), agora.minute(), agora.second());
-    _display.desenharTexto(17, 2, linhaHora);
+    _display.desenharTexto(21, 4, linhaHora);
 
     bool agendaAtivaNoCiclo = _agendaExecucaoAtiva &&
                               (_agendaAguardandoIntervalo || _agendaSetoresEmLote > 0 || _agendaSetoresPendentes > 0);
-    desenharIconeStatusIrrigacao(_display, 82, 3, (totalAbertas > 0) || agendaAtivaNoCiclo);
-    char linhaOn[16];
-    snprintf(linhaOn, sizeof(linhaOn), "ON %d/%d", totalAbertas, NUM_VALVULAS);
-    _display.desenharTextoMini(95, 4, linhaOn);
+    const uint8_t *iconeWifi = _webAp.staConectada() ? ICON_WIFI_12X12 : ICON_WIFI_OFF_12X12;
+    desenharBitmap1Bpp(_display, OLED_LARGURA - 15, 4, 12, 12, iconeWifi);
 
     char linhaIrrigacao[32];
 
@@ -720,11 +708,11 @@ void DisplayManager::desenharTelaStatus()
         if (dow < 0 || dow > 6)
             dow = 0;
 
-        desenharIconeStatusAgenda(_display, 4, 38);
+        desenharBitmap1Bpp(_display, 4, 33, 14, 14, ICON_CALENDAR_CLOCK_14X14);
         char linhaProxima[24];
         snprintf(linhaProxima, sizeof(linhaProxima), "%s %02d:%02d",
                  dias[dow], proximaDataHora.hour(), proximaDataHora.minute());
-        _display.desenharTextoMini(17, 38, linhaProxima);
+        _display.desenharTextoMini(21, 38, linhaProxima);
 
         int qtdSetoresProxima = contarBitsSetor(proximaAgenda.setoresMask);
 
