@@ -16,6 +16,7 @@
 #include "Config.h"
 #include "display_driver_oled.h"
 #include "menu_controller.h"
+#include "menu_cards.h"
 #include "rtc_driver_ds3231.h"
 #include "dht11_driver.h"
 #include "irrigation_controller.h"

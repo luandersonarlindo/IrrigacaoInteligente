@@ -565,37 +565,40 @@ void DisplayManager::atualizar()
 
 void DisplayManager::desenharMenuPrincipal()
 {
-    const int iconW = 32;
-    const int iconGap = 6;
-    const int iconY = 8;
-    const int centerX = (OLED_LARGURA - iconW) / 2;
-
     int totalItens = _menu.totalItens();
     int itemAtual = _menu.itemSelecionado();
+    int itemProximo = MenuCards::proximoIndice(itemAtual, totalItens);
 
-    int x = centerX - (itemAtual * (iconW + iconGap));
-    for (int i = 0; i < totalItens; i++)
-    {
-        if (x >= 0 && (x + iconW) <= OLED_LARGURA)
-        {
-            desenharIconeMenuPrincipal(_display, x, iconY, i);
-        }
-        x += iconW + iconGap;
-    }
+    // --- Card superior: item selecionado (em destaque) ---
+    const int cardSelY = 4;
+    const int cardSelH = 34;
+    const int iconX = 2;
+    const int iconY = cardSelY + 1;
 
-    // Moldura tripla no item selecionado para reforcar foco
-    _display.desenharRetangulo(centerX - 1, iconY - 1, iconW + 2, iconW + 2);
-    _display.desenharRetangulo(centerX - 2, iconY - 2, iconW + 4, iconW + 4);
-    _display.desenharRetangulo(centerX - 3, iconY - 3, iconW + 6, iconW + 6);
+    _display.desenharRetangulo(0, cardSelY, OLED_LARGURA, cardSelH);
+    _display.desenharRetangulo(1, cardSelY + 1, OLED_LARGURA - 2, cardSelH - 2);
 
-    // Rotulo centralizado no rodape
-    const char *rotulo = _menu.nomeItem(itemAtual);
-    int larguraRotulo = _display.larguraTexto(rotulo);
-    int xRotulo = (OLED_LARGURA - larguraRotulo) / 2;
-    if (xRotulo < 0)
-        xRotulo = 0;
+    desenharIconeMenuPrincipal(_display, iconX, iconY, itemAtual);
 
-    _display.desenharTexto(xRotulo, 54, rotulo);
+    const char *rotuloSelecionado = _menu.nomeItem(itemAtual);
+    _display.desenharTextoGrande(40, cardSelY + 8, rotuloSelecionado);
+
+    // Seta indicando "OK confirma"
+    const int setaX = OLED_LARGURA - 10;
+    const int setaY = cardSelY + (cardSelH / 2);
+    _display.desenharLinha(setaX, setaY - 4, setaX + 4, setaY);
+    _display.desenharLinha(setaX + 4, setaY, setaX, setaY + 4);
+
+    // --- Card inferior: próximo item (dimmed, só texto) ---
+    const int cardProxY = cardSelY + cardSelH + 2;
+    const int cardProxH = 12;
+
+    _display.desenharRetangulo(0, cardProxY, OLED_LARGURA, cardProxH);
+
+    const char *rotuloProximo = _menu.nomeItem(itemProximo);
+    _display.desenharTexto(6, cardProxY + 2, rotuloProximo);
+
+    desenharRodapeDica("Gire | OK confirma");
 }
 
 void DisplayManager::desenharTelaStatus()
