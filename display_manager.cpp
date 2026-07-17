@@ -281,6 +281,32 @@ namespace
         0x80, 0xFF, 0x1F, 0x00, 0x00, 0xFF, 0x0F, 0x00, 0x00, 0xF8, 0x01, 0x00,
         0x00, 0x00, 0x00, 0x00};
 
+    // Lucide "calendar-check" 28x28, 1bpp
+    const uint8_t ICON_CALENDAR_CHECK_28X28[] = {
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x04, 0x00, 0x00, 0x07, 0x0E, 0x00,
+        0x00, 0x07, 0x0E, 0x00, 0xF8, 0xFF, 0xFF, 0x01, 0xF8, 0xFF, 0xFF, 0x01,
+        0x1C, 0x07, 0x8E, 0x03, 0x1C, 0x03, 0x8C, 0x03, 0x1C, 0x00, 0x80, 0x03,
+        0x1C, 0x00, 0x80, 0x03, 0x1C, 0x00, 0x80, 0x03, 0xFC, 0xFF, 0xFF, 0x03,
+        0xFC, 0xFF, 0xFF, 0x03, 0x1C, 0x00, 0x80, 0x03, 0x1C, 0x00, 0x80, 0x03,
+        0x1C, 0x00, 0x82, 0x03, 0x1C, 0x00, 0x87, 0x03, 0x1C, 0x80, 0x83, 0x03,
+        0x1C, 0xCE, 0x81, 0x03, 0x1C, 0xFC, 0x80, 0x03, 0x1C, 0x78, 0x80, 0x03,
+        0x1C, 0x30, 0x80, 0x03, 0x1C, 0x00, 0x80, 0x03, 0x1C, 0x00, 0x80, 0x03,
+        0x3C, 0x00, 0xC0, 0x03, 0xF8, 0xFF, 0xFF, 0x01, 0xF0, 0xFF, 0xFF, 0x00,
+        0x00, 0x00, 0x00, 0x00};
+
+    // Lucide "calendar-plus" 28x28, 1bpp
+    const uint8_t ICON_CALENDAR_PLUS_28X28[] = {
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x04, 0x00, 0x00, 0x07, 0x0E, 0x00,
+        0x00, 0x07, 0x0E, 0x00, 0xF8, 0xFF, 0xFF, 0x01, 0xF8, 0xFF, 0xFF, 0x01,
+        0x1C, 0x07, 0x8E, 0x03, 0x1C, 0x03, 0x8C, 0x03, 0x1C, 0x00, 0x80, 0x03,
+        0x1C, 0x00, 0x80, 0x03, 0x1C, 0x00, 0x80, 0x03, 0xFC, 0xFF, 0xFF, 0x03,
+        0xFC, 0xFF, 0xFF, 0x03, 0x1C, 0x00, 0x80, 0x03, 0x1C, 0x00, 0x80, 0x03,
+        0x1C, 0x00, 0x00, 0x00, 0x1C, 0x00, 0x00, 0x00, 0x1C, 0x00, 0x00, 0x00,
+        0x1C, 0x00, 0x60, 0x00, 0x1C, 0x00, 0x60, 0x00, 0x1C, 0x00, 0x60, 0x00,
+        0x1C, 0x00, 0xFC, 0x07, 0x1C, 0x00, 0xFC, 0x07, 0x1C, 0x00, 0x60, 0x00,
+        0x3C, 0x00, 0x60, 0x00, 0xF8, 0xFF, 0x61, 0x00, 0xF0, 0xFF, 0x60, 0x00,
+        0x00, 0x00, 0x00, 0x00};
+
     // Lucide "clock" 14x14, 1bpp
     const uint8_t ICON_CLOCK_14X14[] = {
         0x00, 0x00, 0xF0, 0x03, 0x0C, 0x0E, 0xC4, 0x08, 0xC2, 0x18, 0xC2, 0x10,
@@ -446,27 +472,6 @@ namespace
             d.desenharRetanguloPreenchido(x + 10, y + 8, 4, 4);
             d.desenharRetanguloPreenchido(x + 18, y + 14, 4, 4);
             d.desenharRetanguloPreenchido(x + 13, y + 20, 4, 4);
-        }
-    }
-
-    void desenharIconeAgendaSlot(DisplayDriverOled &d, int x, int y, bool ativa)
-    {
-        // Moldura do slot
-        d.desenharRetangulo(x, y, 16, 16);
-        d.desenharRetangulo(x + 2, y + 2, 12, 4);
-
-        if (ativa)
-        {
-            // Relógio pequeno (agenda ativa)
-            d.desenharRetangulo(x + 4, y + 8, 8, 6);
-            d.desenharLinha(x + 8, y + 11, x + 8, y + 9);
-            d.desenharLinha(x + 8, y + 11, x + 10, y + 12);
-        }
-        else
-        {
-            // Sinal de mais (slot vazio)
-            d.desenharLinha(x + 8, y + 8, x + 8, y + 13);
-            d.desenharLinha(x + 6, y + 11, x + 10, y + 11);
         }
     }
 
@@ -954,29 +959,24 @@ void DisplayManager::desenharTelaProgramar()
             animTipo = FeedbackProgramacao::NENHUM;
         }
 
-        desenharCabecalho("PROGRAMAR");
-
         bool opcaoVoltar = _menu.opcaoVoltarProgramacaoSelecionada();
-        char linhaAgenda[24];
-        if (opcaoVoltar)
-            snprintf(linhaAgenda, sizeof(linhaAgenda), "Opcao: Voltar");
-        else
-            snprintf(linhaAgenda, sizeof(linhaAgenda), "Agenda %d de %d", agenda, MAX_AGENDAS_TOTAIS);
-        _display.desenharTexto(0, 16, linhaAgenda);
 
         if (opcaoVoltar)
         {
-            _display.desenharRetangulo(0, 27, OLED_LARGURA, 22);
-            _display.desenharLinha(10, 38, 28, 38);
-            _display.desenharLinha(10, 38, 15, 33);
-            _display.desenharLinha(10, 38, 15, 43);
-            _display.desenharTexto(34, 34, "< Voltar");
+            _display.desenharTexto(0, 2, "Opcao: Voltar");
+            desenharBitmap1Bpp(_display, 2, 14, 28, 28, ICON_CORNER_UP_LEFT_28X28);
+            _display.desenharTexto(36, 24, "Voltar");
             desenharRodapeDica("OK sair da programacao");
             return;
         }
 
+        char linhaAgenda[24];
+        snprintf(linhaAgenda, sizeof(linhaAgenda), "Agenda %d de %d", agenda, MAX_AGENDAS_TOTAIS);
+        _display.desenharTexto(0, 2, linhaAgenda);
+
         AgendaSetor ag = _menu.agendaSelecionada();
-        desenharIconeAgendaSlot(_display, 0, 27, ag.ativa);
+        desenharBitmap1Bpp(_display, 2, 14, 28, 28,
+                           ag.ativa ? ICON_CALENDAR_CHECK_28X28 : ICON_CALENDAR_PLUS_28X28);
 
         if (ag.ativa)
         {
@@ -989,27 +989,27 @@ void DisplayManager::desenharTelaProgramar()
                     totalDias++;
             int totalSetores = contarBitsSetor(ag.setoresMask);
 
-            _display.desenharTexto(19, 28, linhaHorario);
+            _display.desenharTexto(36, 18, linhaHorario);
 
             char linhaResumo[24];
-            snprintf(linhaResumo, sizeof(linhaResumo), "Dias:%d  Set:%d", totalDias, totalSetores);
-            _display.desenharTexto(19, 38, linhaResumo);
+            snprintf(linhaResumo, sizeof(linhaResumo), "Dias:%d Set:%d", totalDias, totalSetores);
+            _display.desenharTexto(36, 30, linhaResumo);
             // Sem texto de acao: o proprio icone indica que a agenda e editavel.
         }
         else
         {
-            _display.desenharTexto(19, 30, "Slot vazio");
-            _display.desenharTextoMini(19, 48, "OK para criar agenda");
+            _display.desenharTexto(36, 18, "Slot vazio");
+            _display.desenharTextoMini(36, 32, "OK para criar");
         }
 
         if (fb == FeedbackProgramacao::ERRO_SEM_DIA)
-            _display.desenharTexto(0, 48, "Marque ao menos 1 dia");
+            _display.desenharTextoMini(0, 46, "Marque ao menos 1 dia");
         else if (fb == FeedbackProgramacao::ERRO_SEM_SETOR)
-            _display.desenharTexto(0, 48, "Marque ao menos 1 setor");
+            _display.desenharTextoMini(0, 46, "Marque ao menos 1 setor");
         else if (fb == FeedbackProgramacao::ERRO_DUPLICADA)
-            _display.desenharTexto(0, 48, "Agenda duplicada");
+            _display.desenharTextoMini(0, 46, "Agenda duplicada");
         else if (fb == FeedbackProgramacao::ERRO_PERSISTENCIA)
-            _display.desenharTexto(0, 48, "Erro ao salvar");
+            _display.desenharTextoMini(0, 46, "Erro ao salvar");
 
         desenharRodapeDica("Gire agenda | OK editar");
         return;
