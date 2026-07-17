@@ -111,6 +111,9 @@ private:
 
     void configurarRotas();
     void tentarConexaoSta();
+    // Busca hora via NTP (a.st1.ntp.br / pool.ntp.org, fuso Brasília fixo) e ajusta o RTC.
+    // Chamado ao detectar transição de STA desconectado -> conectado.
+    void sincronizarHoraNtp();
     void atualizarMdns();
     void desativarMdns();
 #if WIFI_WEBSOCKET_ENABLED && IRRIGACAO_WS_LIB_AVAILABLE

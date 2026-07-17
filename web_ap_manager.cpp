@@ -2109,6 +2109,7 @@ void WebApManager::tentarConexaoSta()
   }
 
   wl_status_t statusAtual = WiFi.status();
+  bool acabouDeConectar = statusAtual == WL_CONNECTED && _ultimoStatusSta != WL_CONNECTED;
   if (statusAtual != _ultimoStatusSta)
   {
     _ultimoStatusSta = statusAtual;
@@ -2116,6 +2117,12 @@ void WebApManager::tentarConexaoSta()
 
   if (statusAtual == WL_CONNECTED)
   {
+    if (acabouDeConectar)
+    {
+      // Corrige a hora a cada reconexão (não só no boot) — cobre tanto o RTC
+      // "perdido" após queda de energia quanto drift acumulado ao longo do uso.
+      sincronizarHoraNtp();
+    }
     return;
   }
 
@@ -2249,6 +2256,39 @@ void WebApManager::enviarStatusWebSocket(int clienteId)
   _webSocket.broadcastTXT(pacote);
 }
 #endif
+
+// Chamado a cada transição STA desconectado->conectado (não só no boot), pra
+// corrigir tanto um RTC "perdido" após queda de energia quanto drift acumulado
+// ao longo do uso. Bloqueia o loop principal por até TIMEOUT_MS enquanto
+// espera resposta do servidor NTP — aceitável aqui (irrigação de jardim, não
+// é sistema de tempo real crítico), mas mantido curto de propósito.
+void WebApManager::sincronizarHoraNtp()
+{
+  const long GMT_OFFSET_SEC = -3 * 3600; // Horário de Brasília (UTC-3, sem horário de verão desde 2019)
+  const int DAYLIGHT_OFFSET_SEC = 0;
+  const unsigned long TIMEOUT_MS = 3000;
+
+  configTime(GMT_OFFSET_SEC, DAYLIGHT_OFFSET_SEC, "a.st1.ntp.br", "pool.ntp.org");
+
+  struct tm horaNtp;
+  if (!getLocalTime(&horaNtp, TIMEOUT_MS))
+  {
+    if (DEBUG_SERIAL)
+    {
+      Serial.println("[NTP] Falha ao obter hora — RTC mantido como estava.");
+    }
+    return;
+  }
+
+  DateTime novaHora(horaNtp.tm_year + 1900, horaNtp.tm_mon + 1, horaNtp.tm_mday,
+                    horaNtp.tm_hour, horaNtp.tm_min, horaNtp.tm_sec);
+  _rtc.ajustarHora(novaHora);
+
+  if (DEBUG_SERIAL)
+  {
+    Serial.println("[NTP] RTC sincronizado com sucesso.");
+  }
+}
 
 void WebApManager::inicializarMonitoramentoEstado()
 {

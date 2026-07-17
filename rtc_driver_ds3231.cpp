@@ -15,13 +15,13 @@ bool RtcDriverDs3231::begin() {
     }
 
     if (perdeuEnergia()) {
-        // Ajusta para a hora da compilação como fallback
-        // Em produção isso deve vir de uma tela de configuração
-        _rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-
+        // O Oscillator Stop Flag pode disparar por instabilidade elétrica
+        // momentânea no boot, mesmo com a bateria de backup presente e boa —
+        // não implica perda real da hora gravada. Não sobrescrever aqui:
+        // a hora é corrigida via NTP (WebApManager) ao conectar no WiFi, ou
+        // manualmente pelo usuário (web/display).
         if (DEBUG_SERIAL) {
-            Serial.println("[RTC] Aviso: RTC sem bateria ou primeira inicialização.");
-            Serial.println("[RTC] Hora ajustada para hora da compilação.");
+            Serial.println("[RTC] Aviso: oscillator stop flag ativo (possível perda de hora).");
         }
     }
 
