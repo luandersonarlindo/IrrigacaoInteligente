@@ -293,9 +293,9 @@ namespace
         0xCE, 0x1F, 0x42, 0x10, 0x62, 0x12, 0x62, 0x12, 0x62, 0x10, 0x42, 0x18,
         0x9E, 0x0F, 0x18, 0x00};
 
-    // Lucide "wifi-high" 12x12, 1bpp
-    const uint8_t ICON_WIFI_HIGH_12X12[] = {
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF8, 0x01,
+    // Lucide "wifi" 12x12, 1bpp
+    const uint8_t ICON_WIFI_12X12[] = {
+        0x00, 0x00, 0x00, 0x00, 0xF0, 0x00, 0x04, 0x02, 0x02, 0x04, 0xF8, 0x01,
         0x04, 0x02, 0x60, 0x00, 0x90, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
     // Lucide "wifi-off" 12x12, 1bpp
@@ -521,6 +521,7 @@ DisplayManager::DisplayManager(DisplayDriverOled &display,
       _irrigacao(irrigacao),
       _webAp(webAp),
       _ultimaAtualizacao(0),
+      _displayLigado(true),
       _agendaExecucaoAtiva(false),
       _agendaAguardandoIntervalo(false),
       _agendaSetoresEmLote(0),
@@ -563,6 +564,26 @@ void DisplayManager::atualizar()
     if (agora - _ultimaAtualizacao < intervalo)
         return;
     _ultimaAtualizacao = agora;
+
+    bool dashboardOcioso = _menu.estadoAtual() == EstadoMenu::STATUS &&
+                           !_menu.menuAtivo() &&
+                           _menu.msDesdeUltimaInteracao() >= DASHBOARD_TIMEOUT_MS;
+
+    if (dashboardOcioso)
+    {
+        if (_displayLigado)
+        {
+            _display.setLigado(false);
+            _displayLigado = false;
+        }
+        return;
+    }
+
+    if (!_displayLigado)
+    {
+        _display.setLigado(true);
+        _displayLigado = true;
+    }
 
     _display.limpar();
 
@@ -656,7 +677,7 @@ void DisplayManager::desenharTelaStatus()
 
     bool agendaAtivaNoCiclo = _agendaExecucaoAtiva &&
                               (_agendaAguardandoIntervalo || _agendaSetoresEmLote > 0 || _agendaSetoresPendentes > 0);
-    const uint8_t *iconeWifi = _webAp.staConectada() ? ICON_WIFI_HIGH_12X12 : ICON_WIFI_OFF_12X12;
+    const uint8_t *iconeWifi = _webAp.staConectada() ? ICON_WIFI_12X12 : ICON_WIFI_OFF_12X12;
     desenharBitmap1Bpp(_display, OLED_LARGURA - 15, 4, 12, 12, iconeWifi);
 
     char linhaIrrigacao[32];

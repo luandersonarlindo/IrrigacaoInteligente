@@ -220,6 +220,7 @@ void MenuController::processar(DirecaoEncoder direcao, bool botaoPressionado, bo
 EstadoMenu MenuController::estadoAtual() const { return _estado; }
 int MenuController::itemSelecionado() const { return _itemAtual; }
 bool MenuController::menuAtivo() const { return _menuAtivo; }
+unsigned long MenuController::msDesdeUltimaInteracao() const { return (unsigned long)(millis() - _ultimoEventoMenuMs); }
 int MenuController::setorAtual() const { return _setorAtual; }
 bool MenuController::opcaoVoltarIrrigacaoSelecionada() const { return _setorAtual == NUM_VALVULAS; }
 int MenuController::paginaWebServer() const { return _paginaWebServer; }

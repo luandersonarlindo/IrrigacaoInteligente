@@ -79,6 +79,10 @@ private:
     unsigned long _ultimaAtualizacao;
     static const unsigned long INTERVALO_ATUALIZACAO_MS = 200;
 
+    // Apaga o painel após inatividade no dashboard (Status, sem menu ativo)
+    bool _displayLigado;
+    static const unsigned long DASHBOARD_TIMEOUT_MS = 60000;
+
     // Estado operacional da agenda automática sequencial
     bool _agendaExecucaoAtiva;
     bool _agendaAguardandoIntervalo;

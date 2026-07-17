@@ -47,6 +47,9 @@ public:
     // Altura de uma linha de texto na fonte padrão (útil para calcular posição)
     int alturaFonte();
 
+    // Liga/desliga o painel (comando SSD1306 de power-save; não afeta o buffer)
+    void setLigado(bool ligado);
+
 private:
     // Modo: SSD1306 128x64, I2C, sem reset
     // U8G2_SSD1306_128X64_NONAME_F_HW_I2C usa buffer completo (mais fluido)

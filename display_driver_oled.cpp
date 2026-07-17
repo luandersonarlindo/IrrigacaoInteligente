@@ -100,3 +100,8 @@ void DisplayDriverOled::setCorDesenho(uint8_t cor)
 {
     _u8g2.setDrawColor(cor);
 }
+
+void DisplayDriverOled::setLigado(bool ligado)
+{
+    _u8g2.setPowerSave(ligado ? 0 : 1);
+}

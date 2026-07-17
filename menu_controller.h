@@ -93,6 +93,8 @@ public:
     EstadoMenu estadoAtual() const;
     int itemSelecionado() const;
     bool menuAtivo() const;
+    // ms desde a última interação do encoder (rotação/clique), independente do estado
+    unsigned long msDesdeUltimaInteracao() const;
 
     // Irrigação manual — setor selecionado no encoder (0 a NUM_VALVULAS-1)
     int setorAtual() const;
