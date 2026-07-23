@@ -9,19 +9,9 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-#include <WebServer.h>
+#include <ESPAsyncWebServer.h>
 #include <stdint.h>
 #include "Config.h"
-#if defined(__has_include)
-#if __has_include(<WebSocketsServer.h>)
-#define IRRIGACAO_WS_LIB_AVAILABLE 1
-#include <WebSocketsServer.h>
-#else
-#define IRRIGACAO_WS_LIB_AVAILABLE 0
-#endif
-#else
-#define IRRIGACAO_WS_LIB_AVAILABLE 0
-#endif
 #include "irrigation_controller.h"
 #include "schedule_manager.h"
 #include "runtime_config_manager.h"
@@ -80,7 +70,7 @@ private:
     RuntimeConfigManager &_config;
     RtcDriverDs3231 &_rtc;
 
-    WebServer _server;
+    AsyncWebServer _server;
     bool _ativo;
     bool _rotasConfiguradas;
     bool _staConfigurada;
@@ -88,8 +78,8 @@ private:
     unsigned long _ultimoRetryStaMs;
     bool _mdnsAtivo;
     bool _mdnsFalhaLogada;
-#if WIFI_WEBSOCKET_ENABLED && IRRIGACAO_WS_LIB_AVAILABLE
-    WebSocketsServer _webSocket;
+#if WIFI_WEBSOCKET_ENABLED
+    AsyncWebSocket _webSocket;
     bool _webSocketIniciado;
     unsigned long _ultimoPushStatusWsMs;
 #endif
@@ -116,28 +106,32 @@ private:
     void sincronizarHoraNtp();
     void atualizarMdns();
     void desativarMdns();
-#if WIFI_WEBSOCKET_ENABLED && IRRIGACAO_WS_LIB_AVAILABLE
+#if WIFI_WEBSOCKET_ENABLED
     void iniciarWebSocket();
     void atualizarWebSocket();
     void enviarStatusWebSocket(int clienteId = -1);
+    void aoEventoWebSocket(AsyncWebSocket *servidor, AsyncWebSocketClient *cliente,
+                           AwsEventType tipo, void *arg, uint8_t *dados, size_t len);
 #endif
     void inicializarMonitoramentoEstado();
     void atualizarHistoricoEstado();
     void registrarEvento(const char *tipo, const char *nivel, const String &mensagem);
-    void enviarAlertasHistorico();
+    void enviarAlertasHistorico(AsyncWebServerRequest *request);
     int contarValvulasManuaisAbertas() const;
     int contarValvulasAutomaticasAbertas() const;
     static String escaparJson(const char *texto);
 
-    void enviarPaginaPrincipal();
-    void enviarStatusSistema();
-    void enviarListaAgendas();
+    void enviarPaginaPrincipal(AsyncWebServerRequest *request);
+    void enviarStatusSistema(AsyncWebServerRequest *request);
+    void enviarListaAgendas(AsyncWebServerRequest *request);
     String montarJsonStatusSistema();
-    void enviarRespostaJson(int statusCode, const String &json);
-    void enviarErroJson(int statusCode, const char *mensagem);
+    static void enviarRespostaJson(AsyncWebServerRequest *request, int statusCode, const String &json);
+    static void enviarErroJson(AsyncWebServerRequest *request, int statusCode, const char *mensagem);
 
-    int lerIndiceValvula() const;
-    int lerSlotAgenda() const;
+    static int lerIndiceValvula(AsyncWebServerRequest *request);
+    static int lerSlotAgenda(AsyncWebServerRequest *request);
     static uint8_t gpioValvula(int indice);
     static bool textoParaBool(const String &texto);
+    static bool temArg(AsyncWebServerRequest *request, const char *nome);
+    static String lerArg(AsyncWebServerRequest *request, const char *nome);
 };

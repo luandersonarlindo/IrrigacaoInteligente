@@ -6,25 +6,27 @@
 **Key decisions:**
 - Testes rodam em host (sem hardware) via PlatformIO + Unity, ambiente `native`, sem alterar o build Arduino IDE existente
 - Lógica de negócio pura (validação, parsing, motor de execução) é extraída para funções testáveis, isolada de hardware (Preferences/NVS, WiFi, Wire)
-- Requisitos que dependem de hardware real (sensores, timing físico, RTC físico, WebSocket real) não são unit-testáveis em host — cobertos pelo checklist de homologação de campo (Fase 6) em vez de teste automatizado
+- Requisitos que dependem de hardware real (sensores, timing físico, RTC físico, WebSocket real) não são unit-testáveis em host — cobertos pelo checklist de homologação de campo (Fase 7) em vez de teste automatizado
 
 ## Requirements Coverage Map
 | Requisito | Cobertura |
 |-----------|-----------|
-| R1 (irrigação manual) | Campo (Fase 6) — depende de relé físico e timeout real |
-| R2 (agendamento) | Automatizado (Fase 1) + revisão de modelo (Fase 4) |
+| R1 (irrigação manual) | Campo (Fase 7) — depende de relé físico e timeout real |
+| R2 (agendamento) | Automatizado (Fase 1) + revisão de modelo (Fase 5) |
 | R3 (execução por lotes) | Automatizado (Fase 2) |
-| R4 (dashboard web) | Parcial automatizado (Fase 3, API) + Campo (Fase 6, UI) |
-| R5 (DHT11) | Campo (Fase 6) — depende de sensor físico |
+| R4 (dashboard web) | Parcial automatizado (Fase 3, API) + Campo (Fase 7, UI) |
+| R5 (DHT11) | Campo (Fase 7) — depende de sensor físico |
 | R6 (persistência NVS) | Automatizado (Fase 2) |
 | R7 (API REST) | Automatizado (Fase 3) |
-| R8 (histórico eventos) | Campo (Fase 6) — depende de execução real ao longo do tempo |
-| R9 (botão emergência) | Automatizado (Fase 3, endpoint off-all) + Campo (Fase 6, UI) |
+| R8 (histórico eventos) | Campo (Fase 7) — depende de execução real ao longo do tempo |
+| R9 (botão emergência) | Automatizado (Fase 3, endpoint off-all) + Campo (Fase 7, UI) |
+| R10 (servidor web assíncrono) | Fase 4 (migração) — validação manual no hardware (Task 4.4) |
 | NF1 (recuperação corrompida) | Automatizado (Fase 2) |
 | NF2 (clamp de segurança) | Automatizado (Fase 1) |
-| NF3 (dashboard standalone) | Campo (Fase 6) |
-| NF4 (push tempo real) | Campo (Fase 6) — depende de WebSocket real |
-| NF5 (resiliência sem RTC) | Campo (Fase 6) |
+| NF3 (dashboard standalone) | Campo (Fase 7) |
+| NF4 (push tempo real) | Campo (Fase 7) — depende de WebSocket real |
+| NF5 (resiliência sem RTC) | Campo (Fase 7) |
+| NF6 (sem travamento no acesso web) | Fase 4 (migração) — validação manual no hardware (Task 4.4) |
 
 ## Phase Overview
 
@@ -33,9 +35,12 @@
 | 1 | Fundação de Testes | Criar harness de teste em host, cobrir validação de agenda | 2 | - | pending |
 | 2 | Testes - Persistência e Execução | Cobrir CRC/versão e motor de execução por lotes | 3 | Phase 1 | in-progress |
 | 3 | Testes - API Web | Cobrir parsing/contrato da API REST | 1 | Phase 1 | pending |
-| 4 | Modelo de Agenda | Definir e migrar modelo final (resolve gap com contrato ABNT) | 2 | Phase 1, Phase 2 | pending |
-| 5 | UX de Configurações | Reduzir profundidade do menu de configuração | 2 | Phase 1 | pending |
-| 6 | Homologação de Campo | Checklist e validação manual no hardware real | 2 | Phase 1-5 | pending |
+| 4 | Migração ESPAsyncWebServer (bug crítico) | Eliminar travamento do firmware ao acessar a página web | 4 | - | pending |
+| 5 | Modelo de Agenda | Definir e migrar modelo final (resolve gap com contrato ABNT) | 2 | Phase 1, Phase 2 | pending |
+| 6 | UX de Configurações | Reduzir profundidade do menu de configuração | 2 | Phase 1 | pending |
+| 7 | Homologação de Campo | Checklist e validação manual no hardware real | 2 | Phase 1-6 | pending |
+
+**Nota de prioridade:** Fase 4 é bug crítico em produção (travamento reprodutível), inserida fora de ordem — não depende das Fases 1-3 e pode/deve ser executada antes delas se o usuário priorizar estabilidade sobre a rede de testes em andamento.
 
 ---
 
@@ -126,7 +131,51 @@
 
 ---
 
-## Phase 4: Modelo de Agenda
+## Phase 4: Migração ESPAsyncWebServer (bug crítico)
+
+**Goal:** Eliminar o travamento do firmware inteiro (display, encoder, irrigação) que ocorre ao acessar a página web, causado pelo `WebServer` síncrono do Arduino-ESP32 bloqueando o loop principal durante o envio do HTML (~35-40KB) e agravado por mDNS.
+
+**Success Criteria:**
+- [ ] `WebServer` (core) substituído por `ESPAsyncWebServer`; `WebSocketsServer` (Links2004) substituído por `AsyncWebSocket`
+- [ ] Página web acessada repetidamente (10-20x, com e sem mDNS) sem travar o firmware
+- [ ] Toggle de válvula, salvar/excluir/limpar agenda, ajustar RTC, salvar config runtime e push WebSocket ao vivo continuam funcionando como antes
+- [ ] `pio test -e native` continua passando (nenhuma regressão na lógica extraída em Fases 1-2)
+
+**Requirements:** R10, NF6
+
+### Tasks
+
+#### Task 4.1: Instalar ESPAsyncWebServer + AsyncTCP
+- **What:** Documentar e instalar manualmente as bibliotecas (não disponíveis no Library Manager padrão) — `ESPAsyncWebServer` (mathieucarbou ou me-no-dev, conferir fork ativo/compatível com o core ESP32 instalado) + `AsyncTCP` (dependência)
+- **Files:** guia de instalação (fora do repo ou em `docs/solutions/`), `Documents/Arduino/libraries/`
+- **Acceptance:** Sketch de teste mínimo (`AsyncWebServer` respondendo em `/`) compila e roda no hardware
+- **Estimate:** S
+- **Status:** complete — já instaladas: `ESPAsyncWebServer` (lacamera/esphome fork, v3.1.0) + `AsyncTCP` (dvarrel, v1.1.4), combinação padrão compatível com core ESP32 3.3.10 instalado
+
+#### Task 4.2: Migrar rotas HTTP (`/`, `/api/*`) para ESPAsyncWebServer
+- **What:** Reescrever `configurarRotas()` e os handlers (`enviarPaginaPrincipal`, `enviarStatusSistema`, `enviarListaAgendas`, POSTs de válvula/agenda/config/RTC) usando a API assíncrona (`AsyncWebServerRequest *`); tratar leitura de body de POST (JSON ou form) no padrão async (`onBody` ou `request->arg()` conforme o caso)
+- **Files:** `web_ap_manager.h`, `web_ap_manager.cpp`
+- **Acceptance:** Todas as rotas respondem igual ao comportamento atual (validado manualmente); build ESP32/Arduino IDE compila
+- **Estimate:** L
+- **Status:** complete — todos os 13 handlers (GET+POST) migrados de `WebServer`/`_server.hasArg`/`arg` para `AsyncWebServerRequest*`/`temArg`/`lerArg` (novos helpers que checam param de POST-form e querystring); `enviarRespostaJson`/`enviarErroJson`/`lerIndiceValvula`/`lerSlotAgenda` viraram estáticos recebendo `request`; `send_P`/`beginResponse` no lugar de `send`/`sendHeader`. Nenhum handler usava JSON body (só form/querystring), então não precisou de `onBody`
+
+#### Task 4.3: Migrar WebSocket para AsyncWebSocket
+- **What:** Substituir `WebSocketsServer _webSocket` por `AsyncWebSocket`, adaptar `iniciarWebSocket()`/`atualizarWebSocket()`/`enviarStatusWebSocket()` para a API assíncrona (evento `onEvent` com `AwsEventType`); remover dependência da lib `WebSockets` (Links2004) e a flag `IRRIGACAO_WS_LIB_AVAILABLE`
+- **Files:** `web_ap_manager.h`, `web_ap_manager.cpp`, `Config.h`
+- **Acceptance:** Dashboard recebe push de status a cada 2s via WebSocket igual a antes; fallback HTTP continua funcionando
+- **Estimate:** M
+- **Status:** complete — `AsyncWebSocket` embutido no mesmo `AsyncWebServer` (porta 80, path `/ws`, em vez de porta 81 separada); `WIFI_WEBSOCKET_PORT` removido de `Config.h`/`Config_privado.h.example`. JS do dashboard (`WEB_DASHBOARD_HTML`) ajustado: `wsPortaAtual` → `wsPathAtual`, URL de conexão `ws://host/ws`, campo `rede.websocket.porta`/`biblioteca` do JSON → `rede.websocket.path`. **Mudança de contrato**: qualquer cliente externo que dependia da porta 81 direta precisa ser atualizado (só o próprio dashboard embutido depende disso hoje)
+
+#### Task 4.4: Validar no hardware e fechar o bug
+- **What:** Rodar critério de sucesso completo no ESP32 físico — acesso repetido à página (com/sem mDNS), todas as ações web, WebSocket ao vivo; registrar resultado
+- **Files:** `docs/solutions/fix-travamento-webserver-2026-07.md`
+- **Acceptance:** NF6 satisfeito; nenhum travamento em 10-20 acessos consecutivos
+- **Estimate:** M
+- **Status:** complete — usuário validou no hardware: acesso repetido por IP e por mDNS sem travar, toggle de válvula/agenda/RTC/config runtime ok, WebSocket conectando ("tempo real"). NF6 satisfeito, bug fechado
+
+---
+
+## Phase 5: Modelo de Agenda
 
 **Goal:** Definir oficialmente o modelo de agenda (mantém 4 global ou migra para 4×setor) e migrar dados com segurança, resolvendo o gap com o contrato ABNT.
 
@@ -154,7 +203,7 @@
 
 ---
 
-## Phase 5: UX de Configurações
+## Phase 6: UX de Configurações
 
 **Goal:** Reduzir a profundidade de navegação do menu OLED de Configurações.
 
@@ -182,7 +231,7 @@
 
 ---
 
-## Phase 6: Homologação de Campo
+## Phase 7: Homologação de Campo
 
 **Goal:** Formalizar checklist de validação em campo (elétrica, rede, UX) cobrindo os requisitos não testáveis em host.
 

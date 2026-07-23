@@ -738,7 +738,7 @@ namespace
   var wsPainel = null;
   var wsConectado = false;
   var wsTimerReconexao = null;
-  var wsPortaAtual = 81;
+  var wsPathAtual = '/ws';
 
   // ---- Utilitários ----
   function $(id) { return document.getElementById(id); }
@@ -1416,7 +1416,7 @@ namespace
     else linhaSta = '<span><strong>STA</strong> tentando conectar em ' + escapeHtml(sta.ssid) + '</span>';
 
     var linhaWs = ws.habilitado
-      ? (ws.biblioteca ? '<span><strong>WebSocket</strong> porta ' + ws.porta + '</span>' : '<span><strong>WebSocket</strong> biblioteca ausente (fallback HTTP)</span>')
+      ? '<span><strong>WebSocket</strong> ' + (ws.path || '/ws') + '</span>'
       : '<span><strong>WebSocket</strong> desativado</span>';
 
     $('netFooter').innerHTML =
@@ -1437,8 +1437,8 @@ namespace
       agendaCfg.intervaloLoteS = Number(dados.agenda_cfg.intervaloLoteS || agendaCfg.intervaloLoteS);
     }
 
-    var wsPorta = Number(dados.rede && dados.rede.websocket && dados.rede.websocket.porta || 0);
-    if (isFinite(wsPorta) && wsPorta > 0) wsPortaAtual = wsPorta;
+    var wsPath = dados.rede && dados.rede.websocket && dados.rede.websocket.path;
+    if (wsPath) wsPathAtual = wsPath;
 
     renderStrip(dados);
     renderSensores(dados.sensores);
@@ -1492,7 +1492,7 @@ namespace
 
     var protocolo = location.protocol === 'https:' ? 'wss://' : 'ws://';
     try {
-      wsPainel = new WebSocket(protocolo + location.hostname + ':' + wsPortaAtual + '/');
+      wsPainel = new WebSocket(protocolo + location.host + wsPathAtual);
     } catch (e) {
       wsConectado = false;
       atualizarBadgeWs();
@@ -1601,8 +1601,8 @@ WebApManager::WebApManager(IrrigationController &irrigacao,
       _ultimoRetryStaMs(0),
       _mdnsAtivo(false),
       _mdnsFalhaLogada(false),
-#if WIFI_WEBSOCKET_ENABLED && IRRIGACAO_WS_LIB_AVAILABLE
-      _webSocket(WIFI_WEBSOCKET_PORT),
+#if WIFI_WEBSOCKET_ENABLED
+      _webSocket("/ws"),
       _webSocketIniciado(false),
       _ultimoPushStatusWsMs(0),
 #endif
@@ -1649,8 +1649,9 @@ void WebApManager::atualizar()
     return;
   }
 
-  _server.handleClient();
-#if WIFI_WEBSOCKET_ENABLED && IRRIGACAO_WS_LIB_AVAILABLE
+  // AsyncWebServer não precisa de handleClient(): requisições são atendidas
+  // em background (task própria), sem bloquear o loop principal.
+#if WIFI_WEBSOCKET_ENABLED
   atualizarWebSocket();
 #endif
   tentarConexaoSta();
@@ -1693,10 +1694,10 @@ bool WebApManager::iniciarApServidor()
     _rotasConfiguradas = true;
   }
 
-  _server.begin();
-#if WIFI_WEBSOCKET_ENABLED && IRRIGACAO_WS_LIB_AVAILABLE
+#if WIFI_WEBSOCKET_ENABLED
   iniciarWebSocket();
 #endif
+  _server.begin();
   _ativo = true;
 
   return true;
@@ -1709,8 +1710,8 @@ void WebApManager::pararApServidor()
     return;
   }
 
-  _server.stop();
-#if WIFI_WEBSOCKET_ENABLED && IRRIGACAO_WS_LIB_AVAILABLE
+  _server.end();
+#if WIFI_WEBSOCKET_ENABLED
   _webSocketIniciado = false;
 #endif
   desativarMdns();
@@ -1837,50 +1838,50 @@ unsigned long WebApManager::idadeLeituraClimaMs() const
 
 void WebApManager::configurarRotas()
 {
-  _server.on("/", HTTP_GET, [this]()
-             { enviarPaginaPrincipal(); });
+  _server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request)
+             { enviarPaginaPrincipal(request); });
 
-  _server.on("/status", HTTP_GET, [this]()
-             { enviarStatusSistema(); });
+  _server.on("/status", HTTP_GET, [this](AsyncWebServerRequest *request)
+             { enviarStatusSistema(request); });
 
-  _server.on("/api/status", HTTP_GET, [this]()
-             { enviarStatusSistema(); });
+  _server.on("/api/status", HTTP_GET, [this](AsyncWebServerRequest *request)
+             { enviarStatusSistema(request); });
 
-  _server.on("/api/schedules", HTTP_GET, [this]()
-             { enviarListaAgendas(); });
+  _server.on("/api/schedules", HTTP_GET, [this](AsyncWebServerRequest *request)
+             { enviarListaAgendas(request); });
 
-  _server.on("/api/events", HTTP_GET, [this]()
-             { enviarAlertasHistorico(); });
+  _server.on("/api/events", HTTP_GET, [this](AsyncWebServerRequest *request)
+             { enviarAlertasHistorico(request); });
 
-  _server.on("/api/valve/toggle", HTTP_POST, [this]()
+  _server.on("/api/valve/toggle", HTTP_POST, [this](AsyncWebServerRequest *request)
              {
-        int indice = lerIndiceValvula();
+        int indice = lerIndiceValvula(request);
         if (indice < 0)
         {
-            enviarErroJson(400, "indice de valvula invalido");
+            enviarErroJson(request, 400, "indice de valvula invalido");
             return;
         }
 
         _irrigacao.toggleValvula(indice);
 
-        enviarStatusSistema(); });
+        enviarStatusSistema(request); });
 
-  _server.on("/api/valve/set", HTTP_POST, [this]()
+  _server.on("/api/valve/set", HTTP_POST, [this](AsyncWebServerRequest *request)
              {
-        int indice = lerIndiceValvula();
+        int indice = lerIndiceValvula(request);
         if (indice < 0)
         {
-            enviarErroJson(400, "indice de valvula invalido");
+            enviarErroJson(request, 400, "indice de valvula invalido");
             return;
         }
 
-        if (!_server.hasArg("state"))
+        if (!temArg(request, "state"))
         {
-            enviarErroJson(400, "parametro state ausente");
+            enviarErroJson(request, 400, "parametro state ausente");
             return;
         }
 
-        String state = _server.arg("state");
+        String state = lerArg(request, "state");
         state.trim();
         String lower = state;
         lower.toLowerCase();
@@ -1891,7 +1892,7 @@ void WebApManager::configurarRotas()
                             lower == "ligado" || lower == "desligado");
         if (!valorValido)
         {
-            enviarErroJson(400, "state invalido");
+            enviarErroJson(request, 400, "state invalido");
             return;
         }
 
@@ -1907,9 +1908,9 @@ void WebApManager::configurarRotas()
             _irrigacao.fecharValvula(indice);
         }
 
-        enviarStatusSistema(); });
+        enviarStatusSistema(request); });
 
-  _server.on("/api/valves/off-all", HTTP_POST, [this]()
+  _server.on("/api/valves/off-all", HTTP_POST, [this](AsyncWebServerRequest *request)
              {
         int abertasAntes = 0;
         for (int i = 0; i < NUM_VALVULAS; i++)
@@ -1927,71 +1928,71 @@ void WebApManager::configurarRotas()
           registrarEvento("irrigacao", "warning", String("Todas as valvulas foram desligadas via API (") + String(abertasAntes) + " abertas)");
         }
 
-        enviarStatusSistema(); });
+        enviarStatusSistema(request); });
 
-  _server.on("/api/schedule/save", HTTP_POST, [this]()
+  _server.on("/api/schedule/save", HTTP_POST, [this](AsyncWebServerRequest *request)
              {
-        int slot = lerSlotAgenda();
+        int slot = lerSlotAgenda(request);
         if (slot < 0)
         {
-            enviarErroJson(400, "slot de agenda invalido");
+            enviarErroJson(request, 400, "slot de agenda invalido");
             return;
         }
 
         AgendaSetor agenda;
         if (!_schedule.obterAgenda(slot, agenda))
         {
-            enviarErroJson(500, "falha ao obter agenda");
+            enviarErroJson(request, 500, "falha ao obter agenda");
             return;
         }
 
-        if (_server.hasArg("active"))
-            agenda.ativa = textoParaBool(_server.arg("active"));
+        if (temArg(request, "active"))
+            agenda.ativa = textoParaBool(lerArg(request, "active"));
         else
             agenda.ativa = true;
 
-        if (_server.hasArg("hour"))
-            agenda.hora = (uint8_t)_server.arg("hour").toInt();
-        if (_server.hasArg("minute"))
-            agenda.minuto = (uint8_t)_server.arg("minute").toInt();
-        if (_server.hasArg("duration"))
-            agenda.duracaoMin = (uint16_t)_server.arg("duration").toInt();
-        if (_server.hasArg("diasMask"))
-            agenda.diasMask = (uint8_t)_server.arg("diasMask").toInt();
-        if (_server.hasArg("setoresMask"))
-            agenda.setoresMask = (uint8_t)_server.arg("setoresMask").toInt();
+        if (temArg(request, "hour"))
+            agenda.hora = (uint8_t)lerArg(request, "hour").toInt();
+        if (temArg(request, "minute"))
+            agenda.minuto = (uint8_t)lerArg(request, "minute").toInt();
+        if (temArg(request, "duration"))
+            agenda.duracaoMin = (uint16_t)lerArg(request, "duration").toInt();
+        if (temArg(request, "diasMask"))
+            agenda.diasMask = (uint8_t)lerArg(request, "diasMask").toInt();
+        if (temArg(request, "setoresMask"))
+            agenda.setoresMask = (uint8_t)lerArg(request, "setoresMask").toInt();
 
         String erro;
         if (!_schedule.salvarAgenda(slot, agenda, erro))
         {
-            enviarErroJson(400, erro.c_str());
+            enviarErroJson(request, 400, erro.c_str());
             return;
         }
 
         registrarEvento("agenda", "info", String("Agenda ") + String(slot + 1) + " salva via dashboard");
 
-        enviarListaAgendas(); });
+        enviarListaAgendas(request); });
 
-  _server.on("/api/schedule/delete", HTTP_POST, [this]()
+  _server.on("/api/schedule/delete", HTTP_POST, [this](AsyncWebServerRequest *request)
              {
-        int slot = lerSlotAgenda();
+        int slot = lerSlotAgenda(request);
         if (slot < 0)
         {
-            enviarErroJson(400, "slot de agenda invalido");
+            enviarErroJson(request, 400, "slot de agenda invalido");
             return;
         }
 
         if (!_schedule.removerAgenda(slot))
         {
-            enviarErroJson(500, "falha ao remover agenda");
+            enviarErroJson(request, 500, "falha ao remover agenda");
             return;
         }
 
         registrarEvento("agenda", "warning", String("Agenda ") + String(slot + 1) + " removida via dashboard");
 
-        enviarListaAgendas(); });
+        enviarListaAgendas(request); });
 
-  _server.on("/api/schedule/clear", HTTP_POST, [this]()
+  _server.on("/api/schedule/clear", HTTP_POST, [this](AsyncWebServerRequest *request)
              {
         int agendasAtivasAntes = _schedule.totalAtivas();
         int setoresInterrompidos = 0;
@@ -2008,7 +2009,7 @@ void WebApManager::configurarRotas()
 
         if (!_schedule.limparTodasAgendas())
         {
-            enviarErroJson(500, "falha ao limpar agendas");
+            enviarErroJson(request, 500, "falha ao limpar agendas");
             return;
         }
 
@@ -2030,32 +2031,32 @@ void WebApManager::configurarRotas()
 
         registrarEvento("agenda", "critical", msg);
 
-        enviarListaAgendas(); });
+        enviarListaAgendas(request); });
 
-  _server.on("/api/config/runtime", HTTP_POST, [this]()
+  _server.on("/api/config/runtime", HTTP_POST, [this](AsyncWebServerRequest *request)
              {
         uint32_t timeoutMin = _config.timeoutManualMs() / 60000UL;
         uint16_t duracaoMin = _config.duracaoPadraoMin();
 
-        if (_server.hasArg("timeoutMin"))
-            timeoutMin = (uint32_t)_server.arg("timeoutMin").toInt();
-        if (_server.hasArg("duracaoMin"))
-            duracaoMin = (uint16_t)_server.arg("duracaoMin").toInt();
+        if (temArg(request, "timeoutMin"))
+            timeoutMin = (uint32_t)lerArg(request, "timeoutMin").toInt();
+        if (temArg(request, "duracaoMin"))
+            duracaoMin = (uint16_t)lerArg(request, "duracaoMin").toInt();
 
         bool okTimeout = _config.salvarTimeoutManualMs(timeoutMin * 60000UL);
         bool okDuracao = _config.salvarDuracaoPadraoMin(duracaoMin);
 
         if (!okTimeout || !okDuracao)
         {
-            enviarErroJson(500, "falha ao salvar configuracao runtime");
+            enviarErroJson(request, 500, "falha ao salvar configuracao runtime");
             return;
         }
 
         registrarEvento("config", "info", String("Runtime atualizado: timeout=") + String(timeoutMin) + " min, duracao=" + String(duracaoMin) + " min");
 
-        enviarStatusSistema(); });
+        enviarStatusSistema(request); });
 
-  _server.on("/api/rtc/set", HTTP_POST, [this]()
+  _server.on("/api/rtc/set", HTTP_POST, [this](AsyncWebServerRequest *request)
              {
         DateTime atual = _rtc.agora();
         int ano = atual.year();
@@ -2064,16 +2065,16 @@ void WebApManager::configurarRotas()
         int hora = atual.hour();
         int minuto = atual.minute();
 
-        if (_server.hasArg("year"))
-            ano = _server.arg("year").toInt();
-        if (_server.hasArg("month"))
-            mes = _server.arg("month").toInt();
-        if (_server.hasArg("day"))
-            dia = _server.arg("day").toInt();
-        if (_server.hasArg("hour"))
-            hora = _server.arg("hour").toInt();
-        if (_server.hasArg("minute"))
-            minuto = _server.arg("minute").toInt();
+        if (temArg(request, "year"))
+            ano = lerArg(request, "year").toInt();
+        if (temArg(request, "month"))
+            mes = lerArg(request, "month").toInt();
+        if (temArg(request, "day"))
+            dia = lerArg(request, "day").toInt();
+        if (temArg(request, "hour"))
+            hora = lerArg(request, "hour").toInt();
+        if (temArg(request, "minute"))
+            minuto = lerArg(request, "minute").toInt();
 
         if (ano < 2000 || ano > 2099 ||
             mes < 1 || mes > 12 ||
@@ -2081,7 +2082,7 @@ void WebApManager::configurarRotas()
             hora < 0 || hora > 23 ||
             minuto < 0 || minuto > 59)
         {
-            enviarErroJson(400, "data/hora invalida");
+            enviarErroJson(request, 400, "data/hora invalida");
             return;
         }
 
@@ -2089,16 +2090,16 @@ void WebApManager::configurarRotas()
         char bufferDataHora[24];
         snprintf(bufferDataHora, sizeof(bufferDataHora), "%02d/%02d/%04d %02d:%02d", dia, mes, ano, hora, minuto);
         registrarEvento("rtc", "info", String("RTC ajustado via dashboard para ") + String(bufferDataHora));
-        enviarStatusSistema(); });
+        enviarStatusSistema(request); });
 
-  _server.onNotFound([this]()
+  _server.onNotFound([](AsyncWebServerRequest *request)
                      {
-        if (_server.uri().startsWith("/api/"))
+        if (request->url().startsWith("/api/"))
         {
-            enviarErroJson(404, "rota nao encontrada");
+            enviarErroJson(request, 404, "rota nao encontrada");
             return;
         }
-        _server.send(404, "text/plain; charset=utf-8", "Rota nao encontrada"); });
+        request->send(404, "text/plain; charset=utf-8", "Rota nao encontrada"); });
 }
 
 void WebApManager::tentarConexaoSta()
@@ -2192,7 +2193,7 @@ void WebApManager::desativarMdns()
   _mdnsAtivo = false;
 }
 
-#if WIFI_WEBSOCKET_ENABLED && IRRIGACAO_WS_LIB_AVAILABLE
+#if WIFI_WEBSOCKET_ENABLED
 void WebApManager::iniciarWebSocket()
 {
   if (_webSocketIniciado)
@@ -2200,16 +2201,10 @@ void WebApManager::iniciarWebSocket()
     return;
   }
 
-  _webSocket.begin();
-  _webSocket.onEvent([this](uint8_t clienteId, WStype_t tipo, uint8_t *payload, size_t length)
-                     {
-    (void)payload;
-    (void)length;
-
-    if (tipo == WStype_CONNECTED)
-    {
-      enviarStatusWebSocket((int)clienteId);
-    } });
+  _webSocket.onEvent([this](AsyncWebSocket *servidor, AsyncWebSocketClient *cliente,
+                            AwsEventType tipo, void *arg, uint8_t *dados, size_t len)
+                     { aoEventoWebSocket(servidor, cliente, tipo, arg, dados, len); });
+  _server.addHandler(&_webSocket);
 
   _webSocketIniciado = true;
   _ultimoPushStatusWsMs = millis();
@@ -2222,7 +2217,7 @@ void WebApManager::atualizarWebSocket()
     return;
   }
 
-  _webSocket.loop();
+  _webSocket.cleanupClients();
 
   unsigned long agora = millis();
   if ((unsigned long)(agora - _ultimoPushStatusWsMs) < WIFI_WEBSOCKET_PUSH_STATUS_MS)
@@ -2232,6 +2227,20 @@ void WebApManager::atualizarWebSocket()
 
   _ultimoPushStatusWsMs = agora;
   enviarStatusWebSocket();
+}
+
+void WebApManager::aoEventoWebSocket(AsyncWebSocket *servidor, AsyncWebSocketClient *cliente,
+                                    AwsEventType tipo, void *arg, uint8_t *dados, size_t len)
+{
+  (void)servidor;
+  (void)arg;
+  (void)dados;
+  (void)len;
+
+  if (tipo == WS_EVT_CONNECT)
+  {
+    enviarStatusWebSocket((int)cliente->id());
+  }
 }
 
 void WebApManager::enviarStatusWebSocket(int clienteId)
@@ -2249,11 +2258,11 @@ void WebApManager::enviarStatusWebSocket(int clienteId)
 
   if (clienteId >= 0)
   {
-    _webSocket.sendTXT((uint8_t)clienteId, pacote);
+    _webSocket.text((uint32_t)clienteId, pacote);
     return;
   }
 
-  _webSocket.broadcastTXT(pacote);
+  _webSocket.textAll(pacote);
 }
 #endif
 
@@ -2444,7 +2453,7 @@ String WebApManager::escaparJson(const char *texto)
   return saida;
 }
 
-void WebApManager::enviarAlertasHistorico()
+void WebApManager::enviarAlertasHistorico(AsyncWebServerRequest *request)
 {
   int manuaisAbertas = contarValvulasManuaisAbertas();
   int automaticasAbertas = contarValvulasAutomaticasAbertas();
@@ -2588,12 +2597,12 @@ void WebApManager::enviarAlertasHistorico()
   json += "]";
   json += "}";
 
-  enviarRespostaJson(200, json);
+  enviarRespostaJson(request, 200, json);
 }
 
-void WebApManager::enviarPaginaPrincipal()
+void WebApManager::enviarPaginaPrincipal(AsyncWebServerRequest *request)
 {
-  _server.send_P(200, "text/html; charset=utf-8", WEB_DASHBOARD_HTML);
+  request->send(200, "text/html; charset=utf-8", WEB_DASHBOARD_HTML);
 }
 
 String WebApManager::montarJsonStatusSistema()
@@ -2641,21 +2650,15 @@ String WebApManager::montarJsonStatusSistema()
   json += ",";
   json += "\"websocket\":{";
   json += "\"habilitado\":true,";
-  json += "\"biblioteca\":" + String(IRRIGACAO_WS_LIB_AVAILABLE ? "true" : "false") + ",";
-#if IRRIGACAO_WS_LIB_AVAILABLE
   json += "\"ativo\":" + String(_webSocketIniciado ? "true" : "false") + ",";
-#else
-  json += "\"ativo\":false,";
-#endif
-  json += "\"porta\":" + String(WIFI_WEBSOCKET_PORT);
+  json += "\"path\":\"/ws\"";
   json += "}";
 #else
   json += ",";
   json += "\"websocket\":{";
   json += "\"habilitado\":false,";
-  json += "\"biblioteca\":false,";
   json += "\"ativo\":false,";
-  json += "\"porta\":" + String(WIFI_WEBSOCKET_PORT);
+  json += "\"path\":\"/ws\"";
   json += "}";
 #endif
   json += "},";
@@ -2746,16 +2749,16 @@ String WebApManager::montarJsonStatusSistema()
   return json;
 }
 
-void WebApManager::enviarStatusSistema()
+void WebApManager::enviarStatusSistema(AsyncWebServerRequest *request)
 {
-  enviarRespostaJson(200, montarJsonStatusSistema());
+  enviarRespostaJson(request, 200, montarJsonStatusSistema());
 
-#if WIFI_WEBSOCKET_ENABLED && IRRIGACAO_WS_LIB_AVAILABLE
+#if WIFI_WEBSOCKET_ENABLED
   enviarStatusWebSocket();
 #endif
 }
 
-void WebApManager::enviarListaAgendas()
+void WebApManager::enviarListaAgendas(AsyncWebServerRequest *request)
 {
   DateTime agora = _rtc.agora();
 
@@ -2811,16 +2814,17 @@ void WebApManager::enviarListaAgendas()
 
   json += "}";
 
-  enviarRespostaJson(200, json);
+  enviarRespostaJson(request, 200, json);
 }
 
-void WebApManager::enviarRespostaJson(int statusCode, const String &json)
+void WebApManager::enviarRespostaJson(AsyncWebServerRequest *request, int statusCode, const String &json)
 {
-  _server.sendHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
-  _server.send(statusCode, "application/json; charset=utf-8", json);
+  AsyncWebServerResponse *response = request->beginResponse(statusCode, "application/json; charset=utf-8", json);
+  response->addHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+  request->send(response);
 }
 
-void WebApManager::enviarErroJson(int statusCode, const char *mensagem)
+void WebApManager::enviarErroJson(AsyncWebServerRequest *request, int statusCode, const char *mensagem)
 {
   String json;
   json.reserve(160);
@@ -2828,17 +2832,32 @@ void WebApManager::enviarErroJson(int statusCode, const char *mensagem)
   json += mensagem;
   json += "\"}";
 
-  enviarRespostaJson(statusCode, json);
+  enviarRespostaJson(request, statusCode, json);
 }
 
-int WebApManager::lerIndiceValvula() const
+bool WebApManager::temArg(AsyncWebServerRequest *request, const char *nome)
 {
-  if (!_server.hasArg("index"))
+  return request->hasParam(nome, true) || request->hasParam(nome, false);
+}
+
+String WebApManager::lerArg(AsyncWebServerRequest *request, const char *nome)
+{
+  const AsyncWebParameter *param = request->getParam(nome, true);
+  if (param == nullptr)
+  {
+    param = request->getParam(nome, false);
+  }
+  return (param != nullptr) ? param->value() : String("");
+}
+
+int WebApManager::lerIndiceValvula(AsyncWebServerRequest *request)
+{
+  if (!temArg(request, "index"))
   {
     return -1;
   }
 
-  String txt = _server.arg("index");
+  String txt = lerArg(request, "index");
   txt.trim();
 
   char *endPtr = nullptr;
@@ -2861,14 +2880,14 @@ int WebApManager::lerIndiceValvula() const
   return -1;
 }
 
-int WebApManager::lerSlotAgenda() const
+int WebApManager::lerSlotAgenda(AsyncWebServerRequest *request)
 {
-  if (!_server.hasArg("slot"))
+  if (!temArg(request, "slot"))
   {
     return -1;
   }
 
-  String txt = _server.arg("slot");
+  String txt = lerArg(request, "slot");
   txt.trim();
 
   char *endPtr = nullptr;

@@ -99,9 +99,7 @@
 #ifndef WIFI_WEBSOCKET_ENABLED
 #define WIFI_WEBSOCKET_ENABLED true
 #endif
-#ifndef WIFI_WEBSOCKET_PORT
-#define WIFI_WEBSOCKET_PORT 81
-#endif
+// WebSocket embutido no mesmo servidor HTTP (AsyncWebSocket), path "/ws" — sem porta separada.
 #ifndef WIFI_WEBSOCKET_PUSH_STATUS_MS
 #define WIFI_WEBSOCKET_PUSH_STATUS_MS 2000
 #endif

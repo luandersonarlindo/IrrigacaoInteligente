@@ -26,7 +26,6 @@
 // #define WIFI_MDNS_ENABLED true
 // #define WIFI_MDNS_HOSTNAME "irrigacaoesp32"
 // #define WIFI_WEBSOCKET_ENABLED true
-// #define WIFI_WEBSOCKET_PORT 81
 // #define WIFI_WEBSOCKET_PUSH_STATUS_MS 2000
 
 // --- Opcional: backend do sensor DHT11 ---

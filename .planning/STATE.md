@@ -1,11 +1,11 @@
 # Project State
 
-**Status:** phase-1-complete
-**Active Phase:** 2
-**Last Updated:** 2026-07-16
+**Status:** phase-4-complete
+**Active Phase:** 2 (retomada)
+**Last Updated:** 2026-07-23
 
 ## Current Focus
-Phase 2: Testes - Persistência e Execução - 2/3 tasks done (Task 2.2 repartida, gerou Task 2.3). Próxima: Task 2.3 (retomada de janela ativa).
+Phase 4 (Migração ESPAsyncWebServer, bug crítico) concluída e validada em hardware — travamento resolvido. Retomando Phase 2: Testes - Persistência e Execução, 2/3 tasks done. Próxima: Task 2.3 (retomada de janela ativa).
 
 Trabalho paralelo (fora do roadmap, 2026-07-15/16): histórico de sensores + gráfico na tela Sensores, correções da revisão estrutural, redesign do Menu Principal em cards empilhados, expansão do estilo cards pros 3 submenus de Configurações, e ajuste pós-validação em hardware real (ícones Lucide 28x28, cabeçalho removido dos cards) — tudo mergeado ou pronto pra commit no main. Pendente: validação visual do ajuste de ícones em hardware real (ainda não visto fisicamente).
 
@@ -34,6 +34,8 @@ Trabalho paralelo (fora do roadmap, 2026-07-15/16): histórico de sensores + gr�
 | 2026-07-16 | Reverte ícone WiFi + adiciona screensaver do dashboard | Usuário viu no hardware que `wifi-high` (3 arcos) tinha ficado invertido com a intenção — revertido pro `wifi` original (4 arcos), byte-a-byte idêntico ao commit 342527e. Novo recurso: display apaga (via `setPowerSave` do U8g2, comando I2C, não corta alimentação) após 60s sem interação, só quando parado no dashboard (`EstadoMenu::STATUS && !menuAtivo()` — não afeta navegação em outras telas). Novo getter `MenuController::msDesdeUltimaInteracao()` reusa o `_ultimoEventoMenuMs` que já existia pro timeout de 30s do menu; religa assim que detecta qualquer interação |
 | 2026-07-16 | Polish tela seleção de agenda (Agendas > slots) | Estrutura mantida (pedido do usuário — não virou cards): cabeçalho "PROGRAMAR" removido, ícone custom 16x16 do slot trocado por Lucide 28x28 (`calendar-check` ativo / `calendar-plus` vazio / `corner-up-left` voltar), textos realinhados (contexto y=2, detalhes x=36), erros de feedback passaram pra fonte mini y=46 (a fonte grande em y=48 colidia com o rodapé); `desenharIconeAgendaSlot` removida (órfã) |
 | 2026-07-16 | Fix: RTC perdia hora ajustada ao reiniciar | Causa raiz: `RtcDriverDs3231::begin()` sobrescrevia com hora de COMPILAÇÃO (`__DATE__`/`__TIME__`) sempre que `lostPower()` (Oscillator Stop Flag do DS3231) disparava — flag pode ser falso-positivo por instabilidade elétrica no boot, mesmo com bateria de backup boa. Removido esse fallback perigoso (só loga aviso agora). Adicionado `WebApManager::sincronizarHoraNtp()` (NTP via `configTime`/`getLocalTime`, servidores `a.st1.ntp.br`+`pool.ntp.org`, fuso fixo UTC-3 sem DST), disparado em toda transição STA desconectado→conectado (não só boot — corrige drift também). Timeout de 3s (bloqueia loop principal, aceitável pro caso de uso, sem watchdog/lógica crítica afetada — confirmado por revisão) |
+| 2026-07-23 | Bug crítico: travamento total ao acessar página web | Debug sistemático confirmou causa raiz: `WebServer` síncrono (Arduino-ESP32) bloqueia o loop inteiro (display/encoder/irrigação param) ao enviar o HTML monolítico (~35-40KB) da página `/`; mDNS agrava competindo pelo rádio WiFi. Testes de isolamento no hardware: desativar WebSocket não mudou nada (descartada hipótese WS+HTTP concorrente); desativar mDNS reduziu de "trava total até desistir" pra "trava curta no início, página nunca completa" (confirma mDNS como agravante, mas resíduo é estrutural no WebServer síncrono). Decisão: migrar `WebServer`+`WebSocketsServer` → `ESPAsyncWebServer`+`AsyncWebSocket` (unificado). Inserido como nova Phase 4 no roadmap (fases antigas 4/5/6 renumeradas pra 5/6/7), prioridade sobre Phase 2 por ser bug em produção |
+| 2026-07-23 | Phase 4 completa: migração ESPAsyncWebServer | Todas as 13 rotas HTTP + WebSocket migradas para API assíncrona (`AsyncWebServerRequest*`, `AsyncWebSocket` embutido em `/ws` na porta 80 em vez de porta 81 separada). Lib inicialmente instalada (`lacamera/ESPAsyncWebServer` esphome fork) falhou ao compilar — API mbedTLS antiga (`mbedtls_md5_starts_ret`) incompatível com mbedTLS 3.x do core ESP32 3.3.10. Trocado para fork `ESP32Async/ESPAsyncWebServer` + `ESP32Async/AsyncTCP` (mantido ativamente, compatível com core 3.x) — instalado via Library Manager. 2 ajustes pós-troca de fork: `getParam` retorna `const AsyncWebParameter*` nessa versão (`lerArg` ajustado); `send_P` deprecated, trocado por `send()` direto. Compilou limpo e usuário validou no hardware: sem travamento em acesso repetido (IP e mDNS), todas as funcionalidades web ok, WebSocket conectando. Bug fechado |
 
 ## Blockers
 None.
